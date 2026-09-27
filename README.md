@@ -1,109 +1,82 @@
-# Sistema ERP de Gestión de Combustibles y Control de Vales
-### Estación de Servicios y Combustibles S.A.C. (Grifo Sullcairi)
+# Sistema de Gestión y Punto de Venta para Ferretería
 
-Sistema web integral de alta disponibilidad para la gestión, despacho, control de vales de crédito, cuentas por cobrar, cubicación de tanques y liquidación de clientes para estaciones de servicios.
+Sistema completo, moderno e intuitivo diseñado específicamente para ferreterías y tiendas de materiales.
+
+**Estado:** 100% limpio y listo para usar (**sin datos demo ni productos de prueba**). Permite registrar tus propios productos, reabastecer stock ágilmente, vender con descuento automático de inventario y consultar el resumen detallado de ventas.
 
 ---
 
-## 🚀 Acceso Rápido y Modos de Uso
+## 🚀 Cómo Iniciar el Sistema
 
-### 1. Enlace Web Público (En línea)
-Puedes abrir y compartir el sistema directamente desde cualquier navegador (PC, Tablet o Celular) sin instalar nada:
-👉 **[Abrir Sistema en GitHub Pages](https://ediczon2006.github.io/grifo_sullcairi/)**
-
-### 2. Archivo Único Portable (`grifo_sullcairi_completo.html`)
-- Un archivo HTML 100% autónomo con todos los estilos, scripts y base de datos embebidos.
-- Se puede enviar por WhatsApp, Telegram o correo electrónico a cualquier persona.
-- Basta con hacer doble clic para abrirlo en cualquier navegador sin conexión a internet ni servidor.
-
-### 3. Servidor Local REST con Persistencia (`servidor.py`)
-Para uso operativo en oficina o caja con guardado automático en disco (`datos.json`) y copias de seguridad:
+### Opción 1: Con Servidor Local en Python (Recomendado)
+Guarda automáticamente todos los cambios directamente en el archivo `datos.json`.
 
 ```bash
-# Iniciar servidor local en el puerto 8000
 python servidor.py
-
-# O especificar otro puerto:
-python servidor.py 8080
 ```
+*Se abrirá automáticamente en tu navegador en `http://localhost:8000`.*  
+*(Si deseas usar otro puerto: `python servidor.py 8080`).*
 
-El servidor mostrará en consola:
-- **En tu computadora:** `http://localhost:8000`
-- **En red local (WiFi para celulares o laptops de oficina):** `http://192.168.x.x:8000`
+### Opción 2: Sin Servidor (Doble Clic)
+Puedes abrir `index.html` o `ferreteria_completa.html` con doble clic en cualquier navegador. Funciona de inmediato guardando los datos en la memoria local de tu navegador (`localStorage`).
 
 ---
 
-## 📋 Módulos Principales
+## 🛠️ Características Principales
 
-### 1. Panel de Control (Dashboard)
-- **KPIs en tiempo real:** Galones y soles despachados por combustible (Diesel B5 S-50, Gasohol Premium, Regular y GLP).
-- **Control de Cartera:** Monto total facturado vs. pendiente de cobro.
-- **Top 5 Clientes:** Ranking de mayor consumo en volumen y facturación.
-- **Consumo por Sedes / Lugares:** Métricas agrupadas geográficamente (Lima, Cantera Sur, Almacén Central, Fundo Cañete, etc.).
+### 1. 📦 Inventario y Control de Stock
+- **Agregar Productos:** Registra artículos con Código/Barras, Nombre, Categoría (Construcción, Gasfitería, Electricidad, Pinturas, Herramientas, etc.), Unidad de medida (Unidad, Bolsa, Kg, Metro, Galón, Caja, etc.), Precio de Compra, Precio de Venta y Stock Mínimo.
+- **Agregar Stock / Reabastecer:** Cada producto en la tabla tiene un botón directo **`+ Stock`**. Al hacer clic puedes sumar existencias (+10, +50, etc.), actualizar el costo de compra y registrar el proveedor o motivo.
+- **Alertas de Stock:** Clasificación automática de productos en:
+  - 🟢 **Normal:** Stock adecuado.
+  - 🟡 **Stock Bajo:** Advertencia cuando las unidades llegan al mínimo configurado.
+  - 🔴 **Agotado:** Artículos con 0 unidades.
+- **Importar y Exportar Excel:** Descarga la plantilla oficial en Excel, llénala con tu inventario y súbela de golpe con un solo clic.
 
-### 2. Registro y Control de Vales
-- Formulario de despacho rápido con cálculo de importes en tiempo real según tarifario.
-- Validación de correlatividad y prevención de duplicados de vales.
-- Buscador predictivo multidimensional (cliente, placa, chofer, número de vale, grifero).
-- Filtros instantáneos por combustible, estado (Emitido, Facturado, Anulado) y sede/lugar.
-- Acciones rápidas: Edición, anulación justificada y eliminación.
-- Generación de constancia de despacho para WhatsApp con un solo clic.
+### 2. ⚡ Punto de Venta (POS / Caja)
+- Búsqueda ultrarrápida por nombre o lector de código de barras.
+- Filtro rápido por categorías ferreteras.
+- Validación estricta de inventario: **no permite vender más de lo que hay en stock**.
+- Métodos de pago integrados: **Efectivo (con cálculo automático de vuelto), Yape, Plin, Tarjeta, Transferencia y Al Crédito**.
+- Tipos de comprobante: **Nota de Venta, Boleta y Factura**.
+- **Descuento Automático de Stock:** En el momento exacto en que cobras la venta, el stock de cada producto vendido disminuye de forma instantánea.
+- **Ticket Imprimible:** Genera un ticket formateado listo para impresoras térmicas (80mm) o estándar.
 
-### 3. Cuentas por Cobrar (Liquidación de Clientes)
-- Consolidado por cliente con conteo de vales pendientes vs. históricos.
-- Saldo deudor totalizado por empresa.
-- **Botón directo de cobranza por WhatsApp:** Abre la conversación con un mensaje detallado del estado de cuenta y monto adeudado listo para enviar.
+### 3. 📊 Resumen de Ventas y Reportes
+- **KPIs en tiempo real:**
+  - Total vendido en soles (S/).
+  - Ganancia neta estimada (Ventas menos Costo de compra de la mercadería).
+  - Número de transacciones.
+  - Total de unidades de productos despachados.
+  - Ticket promedio por cliente.
+- **Filtros por periodo:** Consulta las ventas de **Hoy, Ayer, Esta Semana, Este Mes o Todo el Historial**.
+- **Distribución de Cobros:** Gráficos y porcentajes de ventas por método de pago (Efectivo, Yape, Tarjeta, etc.).
+- **Top Productos Más Vendidos:** Ranking con los artículos de mayor rotación y su recaudación.
+- **Historial Detallado y Anulación:** Historial completo con fecha, hora, cliente y detalle de productos.
+  - **Anulación con devolución de stock:** Si anulas una venta, el sistema te pedirá confirmación y **devolverá todo el stock vendido a los productos de forma automática**.
+- **Exportar Reporte a Excel:** Genera un libro Excel con 3 hojas: Resumen General, Historial de Ventas y Detalle de Ítems Vendidos.
 
-### 4. Medición de Tanques de Almacenamiento
-- Monitoreo de niveles de stock actual vs. capacidad máxima por tanque.
-- Indicadores visuales de nivel crítico con alertas por colorimetría (verde, ámbar, rojo).
-
-### 5. Configuración y Tarifario
-- Datos fiscales de la empresa (Razón Social, RUC, Dirección fiscal, Teléfono de contacto).
-- Precios oficiales por galón de cada combustible.
-
----
-
-## 📊 Integración con Microsoft Excel (.xlsx)
-
-1. **Descargar Reporte Excel:** Exporta todos los registros de vales con formato ejecutivo profesional de celdas y columnas.
-2. **Subir / Importar Excel:** Zona Drag-and-Drop para importar hojas de cálculo masivas, con detección inteligente de columnas y opción de anexar o reemplazar.
-3. **Descargar Plantilla Oficial:** Genera una plantilla lista para que griferos o clientes llenen sus vales.
-4. **Generador Automatizado (`crear_excel_grifo.py`):** Script en Python con `openpyxl` que genera el libro de trabajo corporativo con fórmulas automáticas (`SUMIFS`, `COUNTIF`), estilos premium y pestañas de auditoría.
-
-```bash
-python crear_excel_grifo.py
-```
+### 4. ⚙️ Configuración y Respaldos
+- Personaliza el nombre de tu ferretería, RUC, dirección, teléfono, símbolo de moneda y pie de ticket.
+- **Descargar Respaldo JSON:** Crea copias de seguridad de todos tus datos para conservarlos en tu computadora o pendrive.
+- **Restaurar Respaldo:** Carga un archivo de respaldo en cualquier momento.
 
 ---
 
-## 🗂️ Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
-```
-grifo_sullcairi/
-│
-├── index.html                   # Aplicación principal del sistema
-├── grifo_sullcairi_completo.html# Versión portable 100% independiente en un solo archivo
-├── servidor.py                  # Servidor HTTP / REST multihilo en Python 3
-├── datos.json                   # Base de datos local persistente
-├── crear_excel_grifo.py         # Generador de plantilla y libro Excel
-├── build_standalone.py          # Constructor del bundle HTML independiente
-│
+```text
+├── index.html                 # Página principal del sistema
+├── ferreteria_completa.html   # Versión autónoma empaquetada (todo en 1 archivo)
+├── servidor.py                # Servidor local HTTP y API REST en Python
+├── datos.json                 # Base de datos local (inicia sin datos demo)
+├── build_standalone.py        # Generador de la versión autónoma
 ├── css/
-│   └── theme.css                # Sistema de diseño, temas corporativos y tipografía
-│
-├── js/
-│   ├── store.js                 # Store centralizado, cálculo de métricas y persistencia
-│   ├── app.js                   # Controlador de vistas, tablas, WhatsApp y modales
-│   └── export.js                # Motor de importación y exportación SheetJS / Excel
-│
-└── backups/                     # Copias de seguridad automáticas rotativas
+│   └── theme.css              # Estilos modernos, diseño responsive e impresión
+└── js/
+    ├── store.js               # Motor de cálculo, stock automático y guardado
+    ├── export.js              # Exportador a Excel (SheetJS) y generador de tickets
+    ├── app.js                 # Controlador del Punto de Venta, Inventario y Resumen
+    └── lib/
+        └── xlsx.full.min.js   # Biblioteca SheetJS para manejo de archivos Excel
 ```
-
----
-
-## 🔒 Seguridad y Respaldos
-
-- **Respaldos locales:** Cada guardado en `servidor.py` genera copias rotativas fechadas en `/backups` (se conservan las últimas 30 versiones).
-- **Descarga de JSON de respaldo:** Opción en la interfaz para descargar la base de datos completa como archivo `.json`.
-- **Compatibilidad offline:** Si no se dispone de conexión ni servidor, el sistema funciona de manera autónoma almacenando el estado en el navegador (`LocalStorage`).

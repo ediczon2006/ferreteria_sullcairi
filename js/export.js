@@ -1,253 +1,343 @@
 /**
  * ============================================================================
- * MOTOR DE EXPORTACIÓN E IMPORTACIÓN EMPRESARIAL DE EXCEL (js/export.js)
+ * EXPORTADOR Y GENERADOR DE REPORTES / EXCEL / TICKETS (js/export.js)
+ * Soporta SheetJS (xlsx.full.min.js) y plantillas de impresión
  * ============================================================================
  */
 
-const Exporter = (() => {
+const ExportManager = (() => {
 
-  // 1. DESCARGAR EXCEL COMPLETO
-  function exportarExcel() {
-    const state = Store.getState();
-    const vales = state.vales;
+  // Formato de moneda
+  function fmt(monto, moneda = "S/") {
+    return `${moneda} ${(Number(monto) || 0).toFixed(2)}`;
+  }
 
-    if (!vales || vales.length === 0) {
-      alert("No hay registros de vales para exportar.");
+  // ==========================================================================
+  // EXPORTAR INVENTARIO A EXCEL
+  // ==========================================================================
+  function exportarInventarioExcel() {
+    if (typeof XLSX === 'undefined') {
+      alert("La biblioteca de Excel (SheetJS) no está disponible.");
       return;
     }
 
-    const fechaHoy = new Date().toISOString().split('T')[0];
-    const nombreEmpresa = (state.empresa || "Estacion_Servicios").replace(/[^a-zA-Z0-9]/g, '_');
-    const filename = `Reporte_Vales_${nombreEmpresa}_${fechaHoy}.xlsx`;
+    const state = Store.getState();
+    const productos = state.productos || [];
 
-    const filas = vales.map((v, i) => ({
-      "ITEM": i + 1,
-      "FECHA": v.fecha,
-      "TURNO": v.turno,
-      "N° VALE": v.n_vale,
-      "CLIENTE / EMPRESA": v.cliente,
-      "LUGAR / SEDE": v.lugar || "Principal",
-      "WHATSAPP / TEL": v.telefono || "-",
-      "PLACA": v.placa,
-      "CONDUCTOR": v.conductor,
-      "PRODUCTO": v.producto,
-      "CANTIDAD (GLN)": v.cantidad,
-      "PRECIO (S/)": v.precio,
-      "TOTAL (S/)": v.total,
-      "GRIFERO": v.grifero,
-      "ESTADO": v.estado,
-      "OBSERVACIONES": v.observacion || ""
-    }));
-
-    if (typeof XLSX !== 'undefined') {
-      const ws = XLSX.utils.json_to_sheet(filas);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Vales");
-
-      ws['!cols'] = [
-        { wch: 6 },  { wch: 12 }, { wch: 14 }, { wch: 10 },
-        { wch: 28 }, { wch: 18 }, { wch: 16 }, { wch: 12 },
-        { wch: 20 }, { wch: 14 }, { wch: 15 }, { wch: 14 },
-        { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 25 }
-      ];
-      XLSX.writeFile(wb, filename);
-    } else {
-      exportarCSV(filas, filename.replace('.xlsx', '.csv'));
+    if (productos.length === 0) {
+      alert("No hay productos registrados para exportar.");
+      return;
     }
+
+    const filas = productos.map(p => {
+      const pCompra = Number(p.precioCompra) || 0;
+      const pVenta = Number(p.precioVenta) || 0;
+      const stock = Number(p.stock) || 0;
+      const valorTotal = stock * pVenta;
+      const margen = pCompra > 0 ? (((pVenta - pCompra) / pCompra) * 100).toFixed(1) + "%" : "0%";
+      const estado = stock <= 0 ? "Agotado" : (stock <= (p.stockMinimo || 5) ? "Bajo Stock" : "Normal");
+
+      return {
+        "Código": p.codigo || "",
+        "Descripción del Producto": p.nombre || "",
+        "Categoría": p.categoria || "Otros",
+        "Unidad": p.unidad || "Unidad",
+        "P. Compra": pCompra,
+        "P. Venta": pVenta,
+        "Margen %": margen,
+        "Stock Actual": stock,
+        "Stock Mínimo": p.stockMinimo || 5,
+        "Estado": estado,
+        "Valor Total (Venta)": valorTotal,
+        "Ubicación": p.ubicacion || ""
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
+
+    // Ajustar ancho de columnas
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 35 }, { wch: 22 }, { wch: 10 },
+      { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 18 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Inventario_Ferretería");
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Inventario_Ferreteria_${fecha}.xlsx`);
   }
 
-  // 2. DESCARGAR PLANTILLA LIMPIA DE EXCEL PARA IMPORTACIÓN
+  // ==========================================================================
+  // EXPORTAR RESUMEN Y REPORTE DE VENTAS A EXCEL
+  // ==========================================================================
+  function exportarReporteVentasExcel(filtroPeriodo = "todos", fechaInicio = null, fechaFin = null) {
+    if (typeof XLSX === 'undefined') {
+      alert("La biblioteca de Excel (SheetJS) no está disponible.");
+      return;
+    }
+
+    const resumen = Store.getSalesSummary(filtroPeriodo, fechaInicio, fechaFin);
+    const ventas = resumen.ventas || [];
+
+    if (ventas.length === 0) {
+      alert("No hay ventas registradas en el periodo seleccionado para exportar.");
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+
+    // Hoja 1: Resumen General
+    const datosResumen = [
+      { "Métrica": "Periodo del Reporte", "Valor": filtroPeriodo.toUpperCase() },
+      { "Métrica": "Total Recaudado (Ventas)", "Valor": resumen.totalVentas },
+      { "Métrica": "Costo de Mercadería", "Valor": resumen.totalCosto },
+      { "Métrica": "Ganancia Neta Estimada", "Valor": resumen.totalGanancia },
+      { "Métrica": "Margen Promedio", "Valor": resumen.margenPorcentaje.toFixed(2) + "%" },
+      { "Métrica": "Cantidad de Transacciones", "Valor": resumen.cantidadTransacciones },
+      { "Métrica": "Total de Unidades Vendidas", "Valor": resumen.totalUnidades },
+      { "Métrica": "Ticket Promedio", "Valor": resumen.ticketPromedio.toFixed(2) }
+    ];
+    const wsResumen = XLSX.utils.json_to_sheet(datosResumen);
+    wsResumen['!cols'] = [{ wch: 28 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen_General");
+
+    // Hoja 2: Ventas por Comprobante
+    const filasVentas = ventas.map(v => ({
+      "N° Comprobante": v.numero,
+      "Fecha": v.fecha ? v.fecha.replace("T", " ").slice(0, 19) : "",
+      "Tipo": v.tipoComprobante,
+      "Cliente": v.cliente,
+      "Documento (DNI/RUC)": v.docCliente,
+      "Método de Pago": v.metodoPago,
+      "Cant. Productos": v.items ? v.items.length : 0,
+      "Total Venta": Number(v.total) || 0,
+      "Costo": Number(v.totalCosto) || 0,
+      "Ganancia": Number(v.gananciaTotal) || 0,
+      "Estado": v.estado
+    }));
+    const wsVentas = XLSX.utils.json_to_sheet(filasVentas);
+    wsVentas['!cols'] = [
+      { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 25 },
+      { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 14 },
+      { wch: 12 }, { wch: 12 }, { wch: 12 }
+    ];
+    XLSX.utils.book_append_sheet(wb, wsVentas, "Historial_Ventas");
+
+    // Hoja 3: Detalle de Ítems Vendidos
+    const filasDetalle = [];
+    ventas.forEach(v => {
+      (v.items || []).forEach(it => {
+        filasDetalle.push({
+          "N° Comprobante": v.numero,
+          "Fecha": v.fecha ? v.fecha.slice(0, 10) : "",
+          "Código Producto": it.codigo || "",
+          "Producto": it.nombre,
+          "Categoría": it.categoria || "",
+          "Unidad": it.unidad || "Unidad",
+          "Cantidad": it.cantidad,
+          "P. Unitario": it.precioUnitario,
+          "Subtotal": it.subtotal,
+          "Ganancia": it.ganancia
+        });
+      });
+    });
+    const wsDetalle = XLSX.utils.json_to_sheet(filasDetalle);
+    wsDetalle['!cols'] = [
+      { wch: 15 }, { wch: 12 }, { wch: 14 }, { wch: 32 },
+      { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }
+    ];
+    XLSX.utils.book_append_sheet(wb, wsDetalle, "Detalle_Items_Vendidos");
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Reporte_Ventas_Ferreteria_${fecha}.xlsx`);
+  }
+
+  // ==========================================================================
+  // DESCARGAR PLANTILLA EXCEL PARA SUBIR PRODUCTOS
+  // ==========================================================================
   function descargarPlantillaExcel() {
+    if (typeof XLSX === 'undefined') {
+      alert("La biblioteca de Excel (SheetJS) no está disponible.");
+      return;
+    }
+
     const plantilla = [
       {
-        "FECHA": "2026-09-20",
-        "TURNO": "T1 (Mañana)",
-        "N° VALE": 501,
-        "CLIENTE": "Transportes del Pacífico S.A.C.",
-        "LUGAR / SEDE": "Sede Lima",
-        "WHATSAPP": "987654321",
-        "PLACA": "B7X-912",
-        "CONDUCTOR": "Juan Gómez",
-        "PRODUCTO": "DIESEL B5",
-        "CANTIDAD": 15.5,
-        "PRECIO": 16.80,
-        "GRIFERO": "Isla 01 - Pedro",
-        "ESTADO": "PENDIENTE",
-        "OBSERVACIONES": "Factura quincenal"
+        "Codigo": "FER-1001",
+        "Nombre": "Ejemplo: Cemento Sol Tipo I 42.5kg",
+        "Categoria": "Materiales de Construcción",
+        "Unidad": "Bolsa",
+        "PrecioCompra": 24.50,
+        "PrecioVenta": 29.00,
+        "Stock": 50,
+        "StockMinimo": 10,
+        "Ubicacion": "Patio 1"
       },
       {
-        "FECHA": "2026-09-20",
-        "TURNO": "T2 (Tarde)",
-        "N° VALE": 502,
-        "CLIENTE": "Constructora Horizonte",
-        "LUGAR / SEDE": "Cantera Sur",
-        "WHATSAPP": "951234567",
-        "PLACA": "C3F-102",
-        "CONDUCTOR": "Manuel Silva",
-        "PRODUCTO": "PREMIUM",
-        "CANTIDAD": 8.0,
-        "PRECIO": 19.50,
-        "GRIFERO": "Isla 02 - Mario",
-        "ESTADO": "PENDIENTE",
-        "OBSERVACIONES": ""
+        "Codigo": "FER-1002",
+        "Nombre": "Ejemplo: Tubo PVC 1/2 pulgada x 3m Pavco",
+        "Categoria": "Gasfitería y Tuberías",
+        "Unidad": "Unidad",
+        "PrecioCompra": 8.00,
+        "PrecioVenta": 12.50,
+        "Stock": 30,
+        "StockMinimo": 5,
+        "Ubicacion": "Estante B-2"
       }
     ];
 
-    if (typeof XLSX !== 'undefined') {
-      const ws = XLSX.utils.json_to_sheet(plantilla);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Plantilla_Vales");
-      ws['!cols'] = [
-        { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 30 },
-        { wch: 18 }, { wch: 14 }, { wch: 12 }, { wch: 20 },
-        { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 18 },
-        { wch: 14 }, { wch: 24 }
-      ];
-      XLSX.writeFile(wb, "Plantilla_Importar_Vales.xlsx");
-    } else {
-      exportarCSV(plantilla, "Plantilla_Importar_Vales.csv");
-    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(plantilla);
+    ws['!cols'] = [
+      { wch: 14 }, { wch: 35 }, { wch: 25 }, { wch: 12 },
+      { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 15 }
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, "Productos");
+    XLSX.writeFile(wb, "Plantilla_Productos_Ferreteria.xlsx");
   }
 
-  // 3. PROCESAR Y LEER ARCHIVO EXCEL/CSV SUBIDO
-  function procesarArchivoExcel(file, onResultado) {
-    if (!file) return;
+  // ==========================================================================
+  // IMPORTAR PRODUCTOS DESDE EXCEL / CSV
+  // ==========================================================================
+  function importarProductosExcel(file, callback) {
+    if (typeof XLSX === 'undefined') {
+      callback({ ok: false, error: "SheetJS no disponible" });
+      return;
+    }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = function(e) {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const wb = XLSX.read(data, { type: 'array' });
+        const sheetName = wb.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
 
-        if (!json || json.length === 0) {
-          onResultado({ ok: false, error: "El archivo está vacío o no tiene filas válidas." });
+        if (!rows || rows.length === 0) {
+          callback({ ok: false, error: "El archivo no contiene registros legibles." });
           return;
         }
 
-        // Mapeo flexible de encabezados
-        const valesMapeados = [];
-        const errores = [];
+        let importados = 0;
+        rows.forEach(r => {
+          // Detectar columnas flexibles
+          const nombre = r["Nombre"] || r["Producto"] || r["Descripcion"] || r["Descripción del Producto"] || "";
+          if (!nombre || String(nombre).startsWith("Ejemplo:")) return; // ignorar ejemplos
 
-        json.forEach((row, i) => {
-          const numFila = i + 2;
+          const codigo = r["Codigo"] || r["Código"] || "";
+          const categoria = r["Categoria"] || r["Categoría"] || "Otros";
+          const unidad = r["Unidad"] || "Unidad";
+          const precioCompra = parseFloat(r["PrecioCompra"] || r["P. Compra"] || r["Compra"] || 0);
+          const precioVenta = parseFloat(r["PrecioVenta"] || r["P. Venta"] || r["Venta"] || 0);
+          const stock = parseFloat(r["Stock"] || r["Stock Actual"] || r["Cantidad"] || 0);
+          const stockMinimo = parseFloat(r["StockMinimo"] || r["Stock Mínimo"] || 5);
+          const ubicacion = r["Ubicacion"] || r["Ubicación"] || "";
 
-          // Buscar columna de N° Vale
-          const n_vale_raw = row["N° VALE"] || row["N VALE"] || row["VALE"] || row["NUMERO VALE"] || row["NRO VALE"] || row["n_vale"];
-          const n_vale = parseInt(n_vale_raw);
-
-          if (isNaN(n_vale)) {
-            errores.push(`Fila ${numFila}: N° de Vale inválido o vacío.`);
-            return;
-          }
-
-          // Fecha
-          let fecha = row["FECHA"] || row["fecha"] || new Date().toISOString().split('T')[0];
-          if (fecha instanceof Date) {
-            fecha = fecha.toISOString().split('T')[0];
-          } else if (typeof fecha === 'string' && fecha.includes('/')) {
-            const p = fecha.split('/');
-            if (p.length === 3) fecha = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-          }
-
-          const cliente = String(row["CLIENTE"] || row["CLIENTE / EMPRESA"] || row["EMPRESA"] || row["RAZON SOCIAL"] || "-").trim();
-          const lugar = String(row["LUGAR / SEDE"] || row["LUGAR"] || row["SEDE"] || row["ZONA"] || "Principal").trim();
-          const telefono = String(row["WHATSAPP"] || row["TELEFONO"] || row["CELULAR"] || row["WHATSAPP / TEL"] || "").trim();
-          const placa = String(row["PLACA"] || row["PLACA VEHICULAR"] || "-").trim().toUpperCase();
-          const conductor = String(row["CONDUCTOR"] || row["CHOFER"] || "-").trim();
-
-          // Producto
-          let producto = String(row["PRODUCTO"] || row["COMBUSTIBLE"] || "PREMIUM").toUpperCase().trim();
-          if (producto.includes("DIESEL") || producto.includes("DB5") || producto.includes("B5")) producto = "DIESEL B5";
-          else if (producto.includes("PREMIUM")) producto = "PREMIUM";
-          else if (producto.includes("REGULAR")) producto = "REGULAR";
-          else if (producto.includes("GLP")) producto = "GLP";
-
-          const cantidad = parseFloat(row["CANTIDAD"] || row["CANTIDAD (GLN)"] || row["GALONES"] || 0) || 0;
-          const precio = parseFloat(row["PRECIO"] || row["PRECIO (S/)"] || row["P.U."] || 0) || 0;
-          const total = Math.round(cantidad * precio * 100) / 100;
-
-          const turno = String(row["TURNO"] || "T1 (Mañana)").trim();
-          const grifero = String(row["GRIFERO"] || row["BOMBERO"] || "Isla 01").trim();
-
-          let estado = String(row["ESTADO"] || "PENDIENTE").toUpperCase().trim();
-          if (!["PENDIENTE", "FACTURADO", "ANULADO"].includes(estado)) estado = "PENDIENTE";
-
-          const observacion = String(row["OBSERVACIONES"] || row["OBSERVACION"] || "").trim();
-
-          valesMapeados.push({
-            id: Date.now() + i,
-            fecha,
-            n_vale,
-            turno,
-            cliente,
-            lugar,
-            telefono,
-            placa,
-            conductor,
-            producto,
-            cantidad,
-            precio,
-            total,
-            grifero,
-            estado,
-            observacion
+          Store.addProduct({
+            codigo: String(codigo),
+            nombre: String(nombre),
+            categoria: String(categoria),
+            unidad: String(unidad),
+            precioCompra: isNaN(precioCompra) ? 0 : precioCompra,
+            precioVenta: isNaN(precioVenta) ? 0 : precioVenta,
+            stock: isNaN(stock) ? 0 : stock,
+            stockMinimo: isNaN(stockMinimo) ? 5 : stockMinimo,
+            ubicacion: String(ubicacion)
           });
+          importados++;
         });
 
-        onResultado({
-          ok: true,
-          totalFilas: json.length,
-          valesValidos: valesMapeados,
-          errores
-        });
-
+        callback({ ok: true, importados });
       } catch (err) {
-        onResultado({ ok: false, error: "Error al procesar el archivo Excel: " + err.message });
+        callback({ ok: false, error: "Error al procesar el archivo: " + err.message });
       }
     };
     reader.readAsArrayBuffer(file);
   }
 
-  function exportarCSV(filas, filename) {
-    if (filas.length === 0) return;
-    const cabeceras = Object.keys(filas[0]);
-    const lineas = [cabeceras.join(";")];
-
-    filas.forEach(row => {
-      const valores = cabeceras.map(col => {
-        let val = row[col] !== undefined ? String(row[col]) : "";
-        val = val.replace(/"/g, '""');
-        return `"${val}"`;
-      });
-      lineas.push(valores.join(";"));
-    });
-
-    const csvContent = "\uFEFF" + lineas.join("\r\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-  }
-
-  function descargarBackupJSON() {
+  // ==========================================================================
+  // GENERAR TICKET DE VENTA (HTML FORMATEADO)
+  // ==========================================================================
+  function generarTicketHTML(venta) {
     const state = Store.getState();
-    const str = JSON.stringify(state, null, 2);
-    const blob = new Blob([str], { type: 'application/json' });
-    const link = document.createElement("a");
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    link.href = URL.createObjectURL(blob);
-    link.download = `backup_grifo_${timestamp}.json`;
-    link.click();
+    const config = state.configuracion || {};
+    const moneda = config.moneda || "S/";
+
+    const fechaHora = venta.fecha ? new Date(venta.fecha).toLocaleString("es-PE") : "";
+    const lineasItems = (venta.items || []).map(it => `
+      <tr>
+        <td style="padding:3px 0;">${it.cantidad} ${it.unidad}</td>
+        <td style="padding:3px 0;">${it.nombre}</td>
+        <td style="padding:3px 0; text-align:right;">${(it.precioUnitario || 0).toFixed(2)}</td>
+        <td style="padding:3px 0; text-align:right; font-weight:bold;">${(it.subtotal || 0).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <div class="ticket-wrapper">
+        <div class="ticket-header">
+          <h2>${config.empresa || 'FERRETERÍA'}</h2>
+          ${config.ruc ? `<p>RUC: ${config.ruc}</p>` : ''}
+          ${config.direccion ? `<p>${config.direccion}</p>` : ''}
+          ${config.telefono ? `<p>Tel: ${config.telefono}</p>` : ''}
+          <p style="margin-top:4px; font-weight:bold;">${(venta.tipoComprobante || 'NOTA DE VENTA').toUpperCase()}</p>
+          <p style="font-size:14px; font-weight:bold;">N° ${venta.numero}</p>
+        </div>
+
+        <div class="ticket-datos">
+          <p><b>Fecha:</b> ${fechaHora}</p>
+          <p><b>Cliente:</b> ${venta.cliente || 'Cliente General'}</p>
+          ${venta.docCliente && venta.docCliente !== '-' ? `<p><b>Doc:</b> ${venta.docCliente}</p>` : ''}
+          <p><b>Pago:</b> ${venta.metodoPago || 'Efectivo'}</p>
+          ${venta.estado === 'ANULADA' ? `<p style="color:red; font-weight:bold; font-size:14px; text-align:center;">*** ANULADA ***</p>` : ''}
+        </div>
+
+        <table class="ticket-tabla">
+          <thead>
+            <tr>
+              <th style="width:20%;">Cant</th>
+              <th style="width:45%;">Descripción</th>
+              <th style="width:17%; text-align:right;">P.Unit</th>
+              <th style="width:18%; text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lineasItems}
+          </tbody>
+        </table>
+
+        <div class="ticket-totales">
+          <div class="ticket-fila-total" style="font-size:15px; font-weight:bold;">
+            <span>TOTAL:</span>
+            <span>${moneda} ${(Number(venta.total) || 0).toFixed(2)}</span>
+          </div>
+          ${venta.metodoPago === 'Efectivo' ? `
+            <div class="ticket-fila-total" style="font-size:12px;">
+              <span>Recibido:</span>
+              <span>${moneda} ${(Number(venta.montoRecibido) || Number(venta.total)).toFixed(2)}</span>
+            </div>
+            <div class="ticket-fila-total" style="font-size:12px;">
+              <span>Vuelto:</span>
+              <span>${moneda} ${(Number(venta.vuelto) || 0).toFixed(2)}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="ticket-footer">
+          <p>${config.pieTicket || '¡Gracias por su compra!'}</p>
+        </div>
+      </div>
+    `;
   }
 
   return {
-    exportarExcel,
+    fmt,
+    exportarInventarioExcel,
+    exportarReporteVentasExcel,
     descargarPlantillaExcel,
-    procesarArchivoExcel,
-    descargarBackupJSON
+    importarProductosExcel,
+    generarTicketHTML
   };
 })();

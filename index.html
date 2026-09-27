@@ -1,566 +1,600 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-PE">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Gestión de Combustibles y Vales ERP</title>
+  <title>Sistema Ferretero PRO - Control de Stock y Ventas</title>
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/theme.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/theme.css">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- NAVEGACIÓN SUPERIOR EMPRESARIAL (CORPORATIVA) -->
-  <header class="top-nav">
-    <div class="top-nav__inner">
-      <div class="brand-section">
-        <div class="brand-symbol">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 14V6a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2v-4m0 0H9m10 0l-3-3m3 3l-3 3"></path>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1 id="header-empresa">ESTACIÓN DE SERVICIOS Y COMBUSTIBLES S.A.C.</h1>
-          <p><span id="header-ruc">RUC: 20601234567</span> • <span id="header-dir">Cañete, Lima</span></p>
+  <!-- ======================================================================
+       HEADER CORPORATIVO OSCURO CON ESTADO EN TIEMPO REAL
+       ====================================================================== -->
+  <header class="header-principal no-print">
+    <div class="header-contenedor">
+      <div class="marca">
+        <div class="marca-icono">🔨</div>
+        <div class="marca-info">
+          <h1>
+            <span id="cabecera-nombre-empresa">Ferretería Sullcairi</span>
+            <span class="marca-badge">PRO POS</span>
+          </h1>
+          <p>Control de Inventario y Caja Registradora</p>
         </div>
       </div>
 
-      <div class="header-tools">
-        <button type="button" class="btn btn--accent btn--sm" onclick="App.abrirModalImportarExcel()" title="Cargar archivo Excel (.xlsx o .csv) con vales">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-          Subir Excel
+      <!-- Navegación central con las 3 secciones clave -->
+      <nav class="nav-principal" aria-label="Navegación del sistema">
+        <button class="nav-btn activo" data-seccion="pos" id="nav-btn-pos" title="Atajo: Alt+1">
+          <span>⚡</span> Punto de Venta
         </button>
-        <button type="button" class="btn btn--dark-ghost btn--sm" onclick="Exporter.exportarExcel()" title="Descargar registros en formato Excel (.xlsx)">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-          Descargar Excel
+        <button class="nav-btn" data-seccion="inventario" id="nav-btn-inventario" title="Atajo: Alt+2">
+          <span>📦</span> Inventario y Stock
+          <span class="nav-badge-pill" id="nav-badge-stock-alerta" style="display:none; background:#ef4444; color:#fff;">0</span>
         </button>
-        <button type="button" class="btn btn--dark-ghost btn--sm" onclick="App.cargarDemostracion()" title="Visualizar datos de prueba en la tabla y panel">
-          Ver Datos Demo
+        <button class="nav-btn" data-seccion="resumen" id="nav-btn-resumen" title="Atajo: Alt+3">
+          <span>📊</span> Resumen de Ventas
         </button>
-        <button type="button" class="btn btn--dark-ghost btn--sm" onclick="App.limpiarTodo()" title="Vaciar la base de datos para comenzar desde cero">
-          Vaciar Todo
-        </button>
-        <button type="button" class="btn btn--dark-ghost btn--sm" onclick="window.print()" title="Imprimir reporte oficial">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-          Imprimir
+      </nav>
+
+      <!-- Estado, Reloj y Configuración -->
+      <div class="header-acciones">
+        <div class="reloj-sistema" id="reloj-sistema">
+          <span>🕒</span> <span id="reloj-texto">00:00:00</span>
+        </div>
+
+        <div class="badge-estado guardado" id="badge-estado-guardado">
+          <span class="badge-dot"></span>
+          <span id="texto-estado-guardado">En Línea</span>
+        </div>
+
+        <button class="btn btn-outline btn-sm" id="btn-abrir-configuracion" style="color:#ffffff; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.15);" title="Ajustes de la Ferretería y Copias de Seguridad">
+          ⚙️ Ajustes
         </button>
       </div>
     </div>
   </header>
 
-  <!-- PESTAÑAS DE MÓDULOS -->
-  <nav class="sub-nav">
-    <div class="sub-nav__container">
-      <button type="button" class="tab-btn active" data-tab="dashboard">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        Panel de Control (Dashboard)
-      </button>
-      <button type="button" class="tab-btn" data-tab="vales">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        Registro y Control de Vales
-      </button>
-      <button type="button" class="tab-btn" data-tab="cobranza">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-        Cuentas por Cobrar (Clientes)
-      </button>
-      <button type="button" class="tab-btn" data-tab="tanques">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-        Medición de Tanques
-      </button>
-      <button type="button" class="tab-btn" data-tab="configuracion">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        Configuración y Tarifas
-      </button>
-    </div>
-  </nav>
-
-  <main class="app-container">
+  <!-- ======================================================================
+       CONTENIDO PRINCIPAL DEL SISTEMA (3 SECCIONES PRINCIPALES)
+       ====================================================================== -->
+  <main class="app-main no-print">
 
     <!-- ====================================================================
-         1. VISTA DASHBOARD (PANEL DE CONTROL)
+         SECCIÓN 1: PUNTO DE VENTA (POS / CAJA REGISTRADORA)
          ==================================================================== -->
-    <section class="view-pane" id="view-dashboard">
-      <!-- KPIS EJECUTIVOS -->
-      <div class="kpi-row">
-        <div class="kpi-box">
-          <div class="kpi-box__head">Diesel DB5 S-50</div>
-          <div class="kpi-box__val" id="dash-diesel-gln">0.00 Gln</div>
-          <div class="kpi-box__sub" id="dash-diesel-sol">S/ 0.00</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-box__head">Gasohol Premium</div>
-          <div class="kpi-box__val" id="dash-premium-gln">0.00 Gln</div>
-          <div class="kpi-box__sub" id="dash-premium-sol">S/ 0.00</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-box__head">Gasohol Regular</div>
-          <div class="kpi-box__val" id="dash-regular-gln">0.00 Gln</div>
-          <div class="kpi-box__sub" id="dash-regular-sol">S/ 0.00</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-box__head">GLP Automotriz</div>
-          <div class="kpi-box__val" id="dash-glp-gln">0.00 Gln</div>
-          <div class="kpi-box__sub" id="dash-glp-sol">S/ 0.00</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-box__head">Total Despachado</div>
-          <div class="kpi-box__val" id="dash-total-sol" style="color:var(--brand-accent);">S/ 0.00</div>
-          <div class="kpi-box__sub" id="dash-total-gln">0.00 Gln despachados</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-box__head">Cartera por Cobrar</div>
-          <div class="kpi-box__val" id="dash-porcobrar-sol" style="color:#b45309;">S/ 0.00</div>
-          <div class="kpi-box__sub" id="dash-porcobrar-count">0 vales pendientes</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-box__head">Vales Anulados</div>
-          <div class="kpi-box__val" id="dash-anulados-count" style="color:#b91c1c;">0</div>
-          <div class="kpi-box__sub">Sin consumo de inventario</div>
-        </div>
-      </div>
+    <section class="modulo-seccion activo" id="seccion-pos">
+      <div class="pos-layout">
 
-      <!-- DESGLOSE POR SEDES / LUGARES Y TOP CLIENTES -->
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:20px;">
-        <div class="panel">
-          <div class="panel__header">
-            <h3 class="panel__title">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-              Consumo por Lugar / Sede
-            </h3>
+        <!-- Catálogo de productos (Izquierda) -->
+        <div class="pos-catalogo-caja">
+          <div class="pos-busqueda-wrapper">
+            <span class="pos-busqueda-icono">🔍</span>
+            <input type="search" class="input" id="pos-buscar-input" placeholder="Buscar por código de barras o nombre del producto..." autocomplete="off">
+            <span class="pos-atajo-hint">Enter para agregar</span>
           </div>
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Lugar / Sede</th>
-                  <th class="num-cell">Vales</th>
-                  <th class="num-cell">Galones</th>
-                  <th class="num-cell">Total Facturado (S/)</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-lugares-resumen">
-                <!-- Renderizado dinámico -->
-              </tbody>
-            </table>
-          </div>
+
+          <!-- Filtro rápido por categorías -->
+          <div class="pos-categorias-chips" id="pos-categorias-chips"></div>
+
+          <!-- Cuadrícula de productos en venta -->
+          <div class="pos-productos-grid" id="pos-productos-grid"></div>
         </div>
 
-        <div class="panel">
-          <div class="panel__header">
-            <h3 class="panel__title">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              Top Clientes por Consumo
-            </h3>
-            <button type="button" class="btn btn--outline btn--sm" onclick="App.cambiarPestana('cobranza')">Ver Cartera</button>
-          </div>
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th class="num-cell">Vales</th>
-                  <th class="num-cell">Galones</th>
-                  <th class="num-cell">Importe (S/)</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-top-clientes">
-                <!-- Renderizado dinámico -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         2. VISTA CONTROL Y DESPACHO DE VALES
-         ==================================================================== -->
-    <section class="view-pane" id="view-vales" style="display:none;">
-      <!-- FORMULARIO OPERATIVO -->
-      <div class="panel" id="form-vale-panel">
-        <div class="panel__header">
-          <h3 class="panel__title" id="form-vale-title">Registrar Nuevo Vale de Combustible</h3>
-          <button type="button" class="btn btn--outline btn--sm" onclick="App.limpiarFormulario()">Limpiar Campos</button>
-        </div>
-        <form class="panel__body" onsubmit="App.guardarVale(event)">
-          <input type="hidden" id="edit-id" value="">
-
-          <div class="form-grid">
-            <div class="form-item">
-              <label for="input-fecha">Fecha Despacho *</label>
-              <input type="date" id="input-fecha" class="form-input" required>
-            </div>
-
-            <div class="form-item">
-              <label for="input-nvale">N° Vale Correlativo *</label>
-              <input type="number" id="input-nvale" class="form-input" placeholder="Ej. 101" required>
-            </div>
-
-            <div class="form-item">
-              <label for="input-turno">Turno Operativo *</label>
-              <select id="input-turno" class="form-input">
-                <option value="T1 (Mañana)">T1 (Mañana - 06:00 a 14:00)</option>
-                <option value="T2 (Tarde)">T2 (Tarde - 14:00 a 22:00)</option>
-                <option value="T3 (Noche)">T3 (Noche - 22:00 a 06:00)</option>
-              </select>
-            </div>
-
-            <div class="form-item">
-              <label for="input-cliente">Cliente / Razón Social *</label>
-              <input type="text" id="input-cliente" class="form-input" placeholder="Ej. Transportes Andina S.A.C." required>
-            </div>
-
-            <div class="form-item">
-              <label for="input-lugar">Lugar / Sede / Zona *</label>
-              <input type="text" id="input-lugar" class="form-input" list="datalist-lugares" placeholder="Ej. Sede Lima, Cantera Sur, Planta..." required>
-              <datalist id="datalist-lugares"></datalist>
-            </div>
-
-            <div class="form-item">
-              <label for="input-telefono">Celular / WhatsApp</label>
-              <input type="tel" id="input-telefono" class="form-input" placeholder="Ej. 987654321">
-            </div>
-
-            <div class="form-item">
-              <label for="input-placa">Placa Vehicular *</label>
-              <input type="text" id="input-placa" class="form-input" placeholder="Ej. A1B-823" style="text-transform:uppercase" required>
-            </div>
-
-            <div class="form-item">
-              <label for="input-conductor">Conductor / Chofer</label>
-              <input type="text" id="input-conductor" class="form-input" placeholder="Ej. Carlos Rojas">
-            </div>
-
-            <div class="form-item">
-              <label for="input-producto">Tipo Combustible *</label>
-              <select id="input-producto" class="form-input" onchange="App.actualizarPrecioSegunCombustible()">
-                <option value="DIESEL B5">Diesel DB5 S-50</option>
-                <option value="PREMIUM">Gasohol Premium</option>
-                <option value="REGULAR">Gasohol Regular</option>
-                <option value="GLP">GLP Automotriz</option>
-              </select>
-            </div>
-
-            <div class="form-item">
-              <label for="input-cantidad">Cantidad (Galones) *</label>
-              <input type="number" step="0.01" min="0" id="input-cantidad" class="form-input" placeholder="0.00" oninput="App.calcularTotalEnVivo()" required>
-            </div>
-
-            <div class="form-item">
-              <label for="input-precio">Precio x Galón (S/) *</label>
-              <input type="number" step="0.01" min="0" id="input-precio" class="form-input" placeholder="0.00" oninput="App.calcularTotalEnVivo()" required>
-            </div>
-
-            <div class="form-item">
-              <label for="input-total">Total a Pagar (S/)</label>
-              <input type="text" id="input-total" class="form-input form-input--calc" placeholder="S/ 0.00" readonly>
-            </div>
-
-            <div class="form-item">
-              <label for="input-grifero">Grifero / Bombero</label>
-              <input type="text" id="input-grifero" class="form-input" placeholder="Ej. Isla 01 - Pedro">
-            </div>
-
-            <div class="form-item">
-              <label for="input-estado">Estado del Vale *</label>
-              <select id="input-estado" class="form-input" onchange="App.gestionarEstadoAnulado()">
-                <option value="PENDIENTE">EMITIDO (Pendiente de pago)</option>
-                <option value="FACTURADO">FACTURADO / COBRADO</option>
-                <option value="ANULADO">ANULADO</option>
-              </select>
-            </div>
-
-            <div class="form-item">
-              <label for="input-obs">Observación / N° Factura</label>
-              <input type="text" id="input-obs" class="form-input" placeholder="Doc. o motivo">
-            </div>
-
-            <div style="grid-column:1 / -1; display:flex; align-items:center; gap:8px; background:var(--slate-50); border:1px solid var(--slate-200); padding:10px 14px; border-radius:var(--radius-sm);">
-              <input type="checkbox" id="check-auto-wa" style="width:16px; height:16px; accent-color:var(--brand-accent); cursor:pointer;" checked>
-              <label for="check-auto-wa" style="font-size:0.83rem; color:var(--slate-700); font-weight:600; cursor:pointer;">
-                Redireccionar automáticamente a WhatsApp con el detalle del vale al guardar.
-              </label>
-            </div>
-
-            <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--slate-200); padding-top:12px;">
-              <button type="submit" class="btn btn--accent" id="btn-guardar-vale">
-                Guardar Vale
+        <!-- Caja registradora y carrito (Derecha) -->
+        <div class="pos-carrito-caja">
+          <div class="carrito-head">
+            <h2>🛒 Venta en Curso</h2>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="nav-badge-pill" id="carrito-badge-cantidad">0 items</span>
+              <button class="btn btn-outline btn-sm" id="btn-vaciar-carrito" style="padding:0.25rem 0.5rem; font-size:0.75rem; background:transparent; color:#e2e8f0; border-color:rgba(255,255,255,0.2);">
+                Vaciar
               </button>
             </div>
           </div>
-        </form>
-      </div>
 
-      <!-- TABLA DE VALES CON BUSCADOR Y FILTROS -->
-      <div class="panel">
-        <div class="panel__header">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <h3 class="panel__title">Registros de Vales</h3>
-            <span class="pill-status pill-status--billed" id="badge-vales-count">0 Vales</span>
-          </div>
+          <!-- Lista de ítems en carrito -->
+          <div class="carrito-items-scroll" id="carrito-items-lista"></div>
 
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <input type="text" id="search-input" class="form-input" style="width:240px;" placeholder="Buscar cliente, lugar, placa..." oninput="Store.getState(); App.renderizarTodo(Store.getState())">
+          <!-- Panel de Cobro y Facturación -->
+          <div class="carrito-pie">
+            <div class="grid-opciones-pago">
+              <div class="campo-grupo">
+                <label for="pos-tipo-comprobante">Comprobante</label>
+                <select class="select" id="pos-tipo-comprobante">
+                  <option value="Nota de Venta">Nota de Venta</option>
+                  <option value="Boleta">Boleta de Venta</option>
+                  <option value="Factura">Factura</option>
+                </select>
+              </div>
+              <div class="campo-grupo">
+                <label for="pos-metodo-pago">Método de Pago</label>
+                <select class="select" id="pos-metodo-pago">
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Yape">Yape</option>
+                  <option value="Plin">Plin</option>
+                  <option value="Tarjeta">Tarjeta Débito/Crédito</option>
+                  <option value="Transferencia">Transferencia Bancaria</option>
+                  <option value="Al Crédito">Al Crédito</option>
+                </select>
+              </div>
+            </div>
 
-            <select id="filtro-lugar" class="form-input" style="width:180px;" onchange="Store.getState(); App.renderizarTodo(Store.getState())">
-              <option value="">Todos los Lugares</option>
-            </select>
+            <div class="grid-opciones-pago">
+              <div class="campo-grupo">
+                <label for="pos-cliente-nombre">Cliente (Opcional)</label>
+                <input type="text" class="input" id="pos-cliente-nombre" placeholder="Nombre / Razón Social">
+              </div>
+              <div class="campo-grupo">
+                <label for="pos-cliente-doc">DNI / RUC</label>
+                <input type="text" class="input" id="pos-cliente-doc" placeholder="Opcional">
+              </div>
+            </div>
 
-            <select id="filtro-producto" class="form-input" onchange="Store.getState(); App.renderizarTodo(Store.getState())">
-              <option value="">Todos los Combustibles</option>
-              <option value="DIESEL B5">Diesel B5</option>
-              <option value="PREMIUM">Premium</option>
-              <option value="REGULAR">Regular</option>
-              <option value="GLP">GLP</option>
-            </select>
+            <!-- Efectivo y cálculo de vuelto -->
+            <div id="pos-grupo-efectivo">
+              <div class="campo-grupo">
+                <label for="pos-pago-recibido">Efectivo Recibido (S/)</label>
+                <input type="number" step="0.50" min="0" class="input" id="pos-pago-recibido" placeholder="Monto entregado por el cliente" style="font-weight:700; font-size:1.05rem;">
+              </div>
+              <!-- Botones rápidos de billetes -->
+              <div class="botones-billetes-rapidos">
+                <button type="button" class="btn-billete" id="btn-billete-exacto">Exacto</button>
+                <button type="button" class="btn-billete" data-monto="10">S/ 10</button>
+                <button type="button" class="btn-billete" data-monto="20">S/ 20</button>
+                <button type="button" class="btn-billete" data-monto="50">S/ 50</button>
+                <button type="button" class="btn-billete" data-monto="100">S/ 100</button>
+              </div>
+              <div class="caja-vuelto-alert" id="pos-caja-vuelto" style="display:none; margin-top:0.5rem;">
+                <span>VUELTO A ENTREGAR:</span>
+                <span id="pos-texto-vuelto">S/ 0.00</span>
+              </div>
+            </div>
 
-            <select id="filtro-estado" class="form-input" onchange="Store.getState(); App.renderizarTodo(Store.getState())">
-              <option value="">Todos los Estados</option>
-              <option value="PENDIENTE">Pendientes (Crédito)</option>
-              <option value="FACTURADO">Facturados</option>
-              <option value="ANULADO">Anulados</option>
-            </select>
+            <!-- Bloque de Totales -->
+            <div class="total-bloque">
+              <div class="total-fila">
+                <span>Subtotal Venta:</span>
+                <span id="carrito-subtotal-texto">S/ 0.00</span>
+              </div>
+              <div class="total-fila gran-total">
+                <span>TOTAL A COBRAR:</span>
+                <span id="carrito-total-texto">S/ 0.00</span>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg" id="btn-carrito-cobrar" style="width:100%; font-size:1.1rem; padding:0.95rem;" disabled>
+              ⚡ COBRAR Y FINALIZAR VENTA
+            </button>
           </div>
         </div>
 
-        <div class="table-responsive">
-          <table class="data-table">
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         SECCIÓN 2: INVENTARIO Y CONTROL DE STOCK
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-inventario">
+      <!-- Tarjetas KPIs de Inventario -->
+      <div class="kpis-grid">
+        <div class="kpi-card kpi-primary">
+          <div class="kpi-info">
+            <h3>Total Productos</h3>
+            <div class="kpi-valor" id="inv-kpi-total-prod">0</div>
+            <div class="kpi-subtexto">Artículos en catálogo</div>
+          </div>
+          <div class="kpi-icono">📦</div>
+        </div>
+
+        <div class="kpi-card kpi-success">
+          <div class="kpi-info">
+            <h3>Valor Inventario</h3>
+            <div class="kpi-valor" id="inv-kpi-valor-total">S/ 0.00</div>
+            <div class="kpi-subtexto">Valor a precio de venta</div>
+          </div>
+          <div class="kpi-icono">💰</div>
+        </div>
+
+        <div class="kpi-card kpi-warning">
+          <div class="kpi-info">
+            <h3>Bajo Stock</h3>
+            <div class="kpi-valor" id="inv-kpi-bajo-stock">0</div>
+            <div class="kpi-subtexto">Próximos a terminarse</div>
+          </div>
+          <div class="kpi-icono">⚠️</div>
+        </div>
+
+        <div class="kpi-card kpi-danger">
+          <div class="kpi-info">
+            <h3>Productos Agotados</h3>
+            <div class="kpi-valor" id="inv-kpi-agotados">0</div>
+            <div class="kpi-subtexto">Stock en cero unidades</div>
+          </div>
+          <div class="kpi-icono">🚫</div>
+        </div>
+      </div>
+
+      <!-- Panel de Inventario y Tabla -->
+      <div class="panel-modulo">
+        <div class="panel-head-flex">
+          <div class="panel-titulos">
+            <h2>Inventario y Control de Stock</h2>
+            <p>Agrega productos, reabastece existencias en 1 clic con <b>"+ Stock"</b> y supervisa las alertas de reposición.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-primary" id="btn-inv-nuevo-producto">+ Nuevo Producto</button>
+            <button class="btn btn-outline" id="btn-inv-descargar-plantilla" title="Descargar plantilla Excel para rellenar">⬇️ Plantilla Excel</button>
+            <button class="btn btn-outline" id="btn-inv-importar-excel" title="Subir archivo Excel con productos">⬆️ Importar Excel</button>
+            <button class="btn btn-outline" id="btn-inv-exportar-excel" title="Descargar catálogo actual a Excel">📊 Exportar Excel</button>
+            <input type="file" id="input-archivo-importar-excel" accept=".xlsx,.xls,.csv" style="display:none;">
+          </div>
+        </div>
+
+        <!-- Filtros de búsqueda rápida -->
+        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+          <div style="flex:1; min-width:260px;">
+            <input type="search" class="input" id="inv-buscar-input" placeholder="Buscar por código, descripción o categoría...">
+          </div>
+          <select class="select" id="inv-filtro-categoria" style="width:auto; min-width:190px;">
+            <option value="">Todas las Categorías</option>
+          </select>
+          <div style="display:flex; gap:0.35rem;">
+            <button class="chip-cat pastilla-stock activa" data-filtro="">Todos</button>
+            <button class="chip-cat pastilla-stock" data-filtro="normal">En Stock</button>
+            <button class="chip-cat pastilla-stock" data-filtro="bajo">Bajo Stock</button>
+            <button class="chip-cat pastilla-stock" data-filtro="agotado">Agotados</button>
+          </div>
+        </div>
+
+        <!-- Tabla de Inventario -->
+        <div class="tabla-container">
+          <table class="tabla-general">
             <thead>
               <tr>
-                <th style="width:40px;">#</th>
-                <th style="cursor:pointer;" onclick="App.ordenarPor('fecha')">Fecha ⬍</th>
-                <th style="cursor:pointer;" onclick="App.ordenarPor('n_vale')">N° Vale ⬍</th>
-                <th style="cursor:pointer;" onclick="App.ordenarPor('cliente')">Cliente / Razón Social ⬍</th>
-                <th style="cursor:pointer;" onclick="App.ordenarPor('lugar')">Lugar / Sede ⬍</th>
-                <th>Contacto</th>
-                <th>Placa</th>
-                <th>Conductor</th>
-                <th>Combustible</th>
-                <th class="num-cell" style="cursor:pointer;" onclick="App.ordenarPor('cantidad')">Cantidad ⬍</th>
-                <th class="num-cell">P.U.</th>
-                <th class="num-cell" style="cursor:pointer;" onclick="App.ordenarPor('total')">Total (S/) ⬍</th>
-                <th>Grifero / Turno</th>
+                <th style="width:115px;">Código</th>
+                <th>Descripción / Ubicación</th>
+                <th>Categoría</th>
+                <th class="text-right">P. Compra</th>
+                <th class="text-right">P. Venta</th>
+                <th class="text-right">Margen</th>
+                <th style="width:190px;">Stock Actual</th>
                 <th>Estado</th>
-                <th class="actions-col" style="text-align:center;">Acciones</th>
+                <th class="text-right" style="width:110px;">Acciones</th>
               </tr>
             </thead>
-            <tbody id="tbody-vales">
-              <!-- Renderizado dinámico -->
-            </tbody>
-            <tfoot id="tfoot-vales" style="display:none; background:var(--slate-50); font-weight:800; border-top:2px solid var(--slate-300);">
-              <tr>
-                <td colspan="9" style="text-align:right;">TOTALES VISIBLES:</td>
-                <td class="num-cell" id="foot-total-gln">0.00 Gln</td>
-                <td></td>
-                <td class="num-cell" id="foot-total-soles">S/ 0.00</td>
-                <td colspan="3"></td>
-              </tr>
-            </tfoot>
+            <tbody id="inv-tabla-tbody"></tbody>
           </table>
         </div>
       </div>
     </section>
 
     <!-- ====================================================================
-         3. VISTA CUENTAS POR COBRAR (CLIENTES Y LUGARES)
+         SECCIÓN 3: RESUMEN Y REPORTES DE VENTAS
          ==================================================================== -->
-    <section class="view-pane" id="view-cobranza" style="display:none;">
-      <div class="panel">
-        <div class="panel__header">
-          <h3 class="panel__title">Cuentas por Cobrar y Liquidación de Clientes</h3>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <select id="filtro-lugar-cobranza" class="form-input" style="width:200px;" onchange="Store.getState(); App.renderizarTodo(Store.getState())">
-              <option value="">Todos los Lugares / Sedes</option>
-            </select>
+    <section class="modulo-seccion" id="seccion-resumen">
+      <!-- Tarjetas KPIs Financieros -->
+      <div class="kpis-grid">
+        <div class="kpi-card kpi-primary">
+          <div class="kpi-info">
+            <h3>Total Ingresos (Ventas)</h3>
+            <div class="kpi-valor" id="res-kpi-total-ventas">S/ 0.00</div>
+            <div class="kpi-subtexto">Monto facturado del periodo</div>
+          </div>
+          <div class="kpi-icono">💵</div>
+        </div>
+
+        <div class="kpi-card kpi-success">
+          <div class="kpi-info">
+            <h3>Ganancia Neta</h3>
+            <div class="kpi-valor" id="res-kpi-ganancia">S/ 0.00</div>
+            <div class="kpi-subtexto">Ingresos menos Costo de compra</div>
+          </div>
+          <div class="kpi-icono">📈</div>
+        </div>
+
+        <div class="kpi-card kpi-info">
+          <div class="kpi-info">
+            <h3>Ventas Realizadas</h3>
+            <div class="kpi-valor" id="res-kpi-cant-ventas">0</div>
+            <div class="kpi-subtexto">Transacciones registradas</div>
+          </div>
+          <div class="kpi-icono">🧾</div>
+        </div>
+
+        <div class="kpi-card kpi-warning">
+          <div class="kpi-info">
+            <h3>Unidades Vendidas</h3>
+            <div class="kpi-valor" id="res-kpi-unidades">0</div>
+            <div class="kpi-subtexto">Artículos despachados</div>
+          </div>
+          <div class="kpi-icono">🏷️</div>
+        </div>
+
+        <div class="kpi-card kpi-primary">
+          <div class="kpi-info">
+            <h3>Ticket Promedio</h3>
+            <div class="kpi-valor" id="res-kpi-ticket-prom">S/ 0.00</div>
+            <div class="kpi-subtexto">Promedio por cliente</div>
+          </div>
+          <div class="kpi-icono">🎯</div>
+        </div>
+      </div>
+
+      <!-- Filtro de Periodo y Gráficos -->
+      <div class="panel-modulo" style="margin-bottom:1.5rem;">
+        <div class="panel-head-flex">
+          <div class="panel-titulos">
+            <h2>Rendimiento Comercial y Reportes</h2>
+            <p>Selecciona un rango para visualizar las ventas, márgenes y artículos más solicitados.</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+            <div style="display:flex; gap:0.35rem;">
+              <button class="chip-cat pastilla-periodo activa" data-periodo="hoy">Hoy</button>
+              <button class="chip-cat pastilla-periodo" data-periodo="ayer">Ayer</button>
+              <button class="chip-cat pastilla-periodo" data-periodo="semana">Esta Semana</button>
+              <button class="chip-cat pastilla-periodo" data-periodo="mes">Este Mes</button>
+              <button class="chip-cat pastilla-periodo" data-periodo="todos">Todo el Historial</button>
+            </div>
+            <button class="btn btn-outline" id="btn-exportar-ventas-excel">📊 Exportar Reporte a Excel</button>
           </div>
         </div>
-        <div class="table-responsive">
-          <table class="data-table">
+
+        <!-- 2 Columnas de Estadísticas Visuales -->
+        <div class="reportes-dos-columnas">
+          <div class="reporte-card">
+            <h3>💳 Ventas por Método de Pago</h3>
+            <div class="ranking-lista" id="res-barras-metodos-pago"></div>
+          </div>
+
+          <div class="reporte-card">
+            <h3>🏆 Productos Más Vendidos</h3>
+            <div class="ranking-lista" id="res-top-productos-lista"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historial de Ventas Detallado -->
+      <div class="panel-modulo">
+        <div class="panel-head-flex">
+          <div class="panel-titulos">
+            <h2>Historial de Ventas Registradas</h2>
+            <p>Auditoría de ventas. Si anulas una venta, el stock de cada producto regresa de inmediato al almacén.</p>
+          </div>
+          <div style="min-width:280px;">
+            <input type="search" class="input" id="res-buscar-ventas-input" placeholder="Buscar por comprobante, cliente o método...">
+          </div>
+        </div>
+
+        <div class="tabla-container">
+          <table class="tabla-general">
             <thead>
               <tr>
-                <th style="width:40px;">#</th>
-                <th>Cliente / Razón Social</th>
-                <th>Teléfono WhatsApp</th>
-                <th class="num-cell">Vales Pendientes / Totales</th>
-                <th class="num-cell">Galones Totales</th>
-                <th class="num-cell">Deuda por Cobrar (S/)</th>
-                <th style="text-align:center;">Gestión de Cobranza</th>
+                <th style="width:130px;">Comprobante</th>
+                <th style="width:140px;">Fecha y Hora</th>
+                <th>Cliente</th>
+                <th>Detalle de Productos</th>
+                <th>Método</th>
+                <th class="text-right">Total Venta</th>
+                <th class="text-right">Ganancia</th>
+                <th class="text-right" style="width:170px;">Acciones</th>
               </tr>
             </thead>
-            <tbody id="tbody-clientes-cobranza">
-              <!-- Dinámico -->
-            </tbody>
+            <tbody id="res-tabla-ventas-tbody"></tbody>
           </table>
         </div>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         4. VISTA TANQUES Y MEDIDORES
-         ==================================================================== -->
-    <section class="view-pane" id="view-tanques" style="display:none;">
-      <div class="panel">
-        <div class="panel__header">
-          <h3 class="panel__title">Capacidad y Nivel de Tanques</h3>
-        </div>
-        <div class="panel__body">
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;" id="tanques-container">
-            <!-- Dinámico -->
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         5. VISTA CONFIGURACIÓN Y TARIFAS
-         ==================================================================== -->
-    <section class="view-pane" id="view-configuracion" style="display:none;">
-      <div class="panel">
-        <div class="panel__header">
-          <h3 class="panel__title">Configuración Institucional de la Estación</h3>
-        </div>
-        <form class="panel__body" onsubmit="App.guardarConfiguracionEmpresa(event)">
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
-            <div class="form-item">
-              <label>Razón Social / Estación:</label>
-              <input type="text" id="cfg-empresa" class="form-input" required>
-            </div>
-            <div class="form-item">
-              <label>RUC:</label>
-              <input type="text" id="cfg-ruc" class="form-input">
-            </div>
-            <div class="form-item">
-              <label>Dirección:</label>
-              <input type="text" id="cfg-direccion" class="form-input">
-            </div>
-            <div class="form-item">
-              <label>Teléfono:</label>
-              <input type="text" id="cfg-telefono" class="form-input">
-            </div>
-          </div>
-
-          <hr style="border:none; border-top:1px solid var(--slate-200); margin:20px 0;">
-          <h4 style="font-size:0.88rem; font-weight:700; color:var(--slate-800); margin-bottom:12px;">Tarifas Oficiales de Venta por Galón (S/):</h4>
-
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px;">
-            <div class="form-item">
-              <label style="color:var(--fuel-diesel);">Diesel DB5 (S/):</label>
-              <input type="number" step="0.01" min="0" id="cfg-p-diesel" class="form-input" required>
-            </div>
-            <div class="form-item">
-              <label style="color:var(--fuel-premium);">Gasohol Premium (S/):</label>
-              <input type="number" step="0.01" min="0" id="cfg-p-premium" class="form-input" required>
-            </div>
-            <div class="form-item">
-              <label style="color:var(--fuel-regular);">Gasohol Regular (S/):</label>
-              <input type="number" step="0.01" min="0" id="cfg-p-regular" class="form-input" required>
-            </div>
-            <div class="form-item">
-              <label style="color:var(--fuel-glp);">GLP Automotriz (S/):</label>
-              <input type="number" step="0.01" min="0" id="cfg-p-glp" class="form-input" required>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding-top:14px; border-top:1px solid var(--slate-200); flex-wrap:wrap; gap:10px;">
-            <button type="button" class="btn btn--outline" onclick="Exporter.descargarBackupJSON()">
-              Descargar Respaldo JSON
-            </button>
-            <button type="submit" class="btn btn--primary">
-              Guardar Configuración
-            </button>
-          </div>
-        </form>
       </div>
     </section>
 
   </main>
 
-  <!-- ====================================================================
-       MODAL 1: SUBIR / IMPORTAR EXCEL
-       ==================================================================== -->
-  <div class="modal-backdrop" id="modal-importar-excel">
-    <div class="modal-window">
+  <!-- ======================================================================
+       MODALES DEL SISTEMA
+       ====================================================================== -->
+
+  <!-- Modal: Crear / Editar Producto -->
+  <div class="modal-overlay" id="modal-producto">
+    <div class="modal-caja">
       <div class="modal-head">
-        <h3>Importar Vales desde Archivo Excel</h3>
-        <button type="button" class="btn btn--outline btn--sm" onclick="App.cerrarModalImportarExcel()">✕</button>
+        <h3 id="modal-producto-titulo">Nuevo Producto de Ferretería</h3>
+        <button class="modal-close-btn" type="button">✕</button>
       </div>
-      <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <span style="font-size:0.84rem; color:var(--slate-600);">Seleccione un archivo <strong>.xlsx</strong> o <strong>.csv</strong></span>
-          <button type="button" class="btn btn--outline btn--sm" onclick="Exporter.descargarPlantillaExcel()" title="Descargar plantilla de Excel vacía con el formato de columnas">
-            Descargar Plantilla Excel
-          </button>
+      <form id="form-producto">
+        <div class="modal-cuerpo">
+          <div class="grid-2">
+            <div class="campo-grupo">
+              <label for="prod-input-codigo">Código / Código de Barras</label>
+              <input type="text" class="input" id="prod-input-codigo" placeholder="Ej: FER-001 o lector de barras">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-select-categoria">Categoría</label>
+              <select class="select" id="prod-select-categoria"></select>
+            </div>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="prod-input-nombre">Descripción / Nombre del Producto *</label>
+            <input type="text" class="input" id="prod-input-nombre" placeholder="Ej: Cemento Sol Tipo I 42.5kg o Martillo 16oz" required>
+          </div>
+
+          <div class="grid-3">
+            <div class="campo-grupo">
+              <label for="prod-select-unidad">Unidad</label>
+              <select class="select" id="prod-select-unidad"></select>
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-input-compra">P. Compra (Costo)</label>
+              <input type="number" step="0.10" min="0" class="input" id="prod-input-compra" placeholder="0.00" value="0.00">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-input-venta">P. Venta *</label>
+              <input type="number" step="0.10" min="0" class="input" id="prod-input-venta" placeholder="0.00" required>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="campo-grupo">
+              <label for="prod-input-stock">Stock Inicial</label>
+              <input type="number" step="1" min="0" class="input" id="prod-input-stock" placeholder="0" value="0">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-input-stock-min">Stock Mínimo (Alerta)</label>
+              <input type="number" step="1" min="0" class="input" id="prod-input-stock-min" placeholder="5" value="5">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-input-ubicacion">Ubicación / Estante</label>
+              <input type="text" class="input" id="prod-input-ubicacion" placeholder="Ej: Pasillo 2 - Nivel A">
+            </div>
+          </div>
         </div>
-
-        <input type="file" id="input-archivo-excel" accept=".xlsx, .xls, .csv" style="display:none;">
-
-        <div class="dropzone" id="dropzone-excel">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-          </svg>
-          <div style="font-weight:700; color:var(--slate-800); font-size:0.92rem;">Arrastra tu archivo Excel aquí</div>
-          <div style="font-size:0.78rem; color:var(--slate-500); margin-top:2px;">o haz clic para buscarlo en tu computadora</div>
+        <div class="modal-pie">
+          <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Producto</button>
         </div>
+      </form>
+    </div>
+  </div>
 
-        <div id="import-status-box" style="margin-top:14px; display:none;"></div>
-
-        <div style="margin-top:16px; display:flex; align-items:center; gap:8px;">
-          <input type="checkbox" id="check-reemplazar-import" style="width:16px; height:16px; cursor:pointer;">
-          <label for="check-reemplazar-import" style="font-size:0.83rem; color:var(--slate-700); cursor:pointer;">
-            Reemplazar registros existentes (si no se marca, se anexarán sin duplicar N° de Vale).
-          </label>
-        </div>
+  <!-- Modal: Agregar / Reabastecer Stock -->
+  <div class="modal-overlay" id="modal-stock">
+    <div class="modal-caja" style="max-width:480px;">
+      <div class="modal-head">
+        <h3>📦 Reabastecer Stock de Producto</h3>
+        <button class="modal-close-btn" type="button">✕</button>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn--outline" onclick="App.cerrarModalImportarExcel()">Cancelar</button>
-        <button type="button" class="btn btn--accent" id="btn-confirmar-importar" disabled onclick="App.ejecutarImportacion()">
-          Confirmar e Importar Vales
-        </button>
+      <form id="form-stock">
+        <div class="modal-cuerpo">
+          <div style="background:var(--slate-50); padding:0.85rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+            <div style="font-weight:800; font-size:1.05rem;" id="stock-modal-prod-nombre">-</div>
+            <div style="font-size:0.85rem; color:var(--slate-500); margin-top:0.25rem;">
+              Stock Actual en Almacén: <b id="stock-modal-actual" style="color:var(--slate-900);">-</b>
+            </div>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="stock-input-cantidad">Cantidad a Ingresar (+ Stock) *</label>
+            <input type="number" step="1" min="1" class="input" id="stock-input-cantidad" placeholder="Ej: 25" required style="font-size:1.25rem; font-weight:800;">
+          </div>
+
+          <div class="campo-grupo">
+            <label for="stock-input-compra">Nuevo Precio de Compra unitario (Opcional)</label>
+            <input type="number" step="0.10" min="0" class="input" id="stock-input-compra" placeholder="Dejar igual si no varió el costo">
+          </div>
+
+          <div class="campo-grupo">
+            <label for="stock-input-motivo">Proveedor / Motivo de Entrada</label>
+            <input type="text" class="input" id="stock-input-motivo" placeholder="Ej: Compra a Distribuidor S.A.C.">
+          </div>
+
+          <div class="caja-vuelto-alert" style="background:var(--success-light); color:var(--success-dark); border-color:rgba(16,185,129,0.3); font-size:0.95rem;">
+            <span>Nuevo Stock Resultante:</span>
+            <span id="stock-preview-nuevo">-</span>
+          </div>
+        </div>
+        <div class="modal-pie">
+          <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">+ Aumentar Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Ticket de Venta / Impresión Térmica -->
+  <div class="modal-overlay" id="modal-ticket">
+    <div class="modal-caja" style="max-width:440px;">
+      <div class="modal-head">
+        <h3>🧾 Comprobante de Venta</h3>
+        <button class="modal-close-btn" type="button">✕</button>
+      </div>
+      <div class="modal-cuerpo" style="padding:1rem;">
+        <div id="ticket-contenido-imprimible"></div>
+      </div>
+      <div class="modal-pie" style="justify-content:space-between;">
+        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" id="btn-ticket-imprimir">🖨️ Imprimir Ticket</button>
       </div>
     </div>
   </div>
 
-  <!-- ====================================================================
-       MODAL 2: NOTIFICACIÓN POR WHATSAPP
-       ==================================================================== -->
-  <div class="modal-backdrop" id="modal-wa">
-    <div class="modal-window">
+  <!-- Modal: Configuración de la Ferretería y Respaldos -->
+  <div class="modal-overlay" id="modal-configuracion">
+    <div class="modal-caja" style="max-width:560px;">
       <div class="modal-head">
-        <h3>Notificación Oficial por WhatsApp</h3>
-        <button type="button" class="btn btn--outline btn--sm" onclick="App.cerrarModalWA()">✕</button>
+        <h3>⚙️ Configuración y Copias de Seguridad</h3>
+        <button class="modal-close-btn" type="button">✕</button>
       </div>
-      <div class="modal-content">
-        <div class="form-item" style="margin-bottom:12px;">
-          <label>Destinatario:</label>
-          <input type="text" id="modal-wa-dest" class="form-input" readonly>
+      <div class="modal-cuerpo">
+        <form id="form-configuracion" style="display:flex; flex-direction:column; gap:0.85rem;">
+          <div class="campo-grupo">
+            <label for="cfg-empresa">Nombre Comercial de la Ferretería</label>
+            <input type="text" class="input" id="cfg-empresa" placeholder="Ej: Ferretería Sullcairi">
+          </div>
+
+          <div class="grid-2">
+            <div class="campo-grupo">
+              <label for="cfg-ruc">RUC / Identificación Fiscal</label>
+              <input type="text" class="input" id="cfg-ruc" placeholder="Ej: 20601234567">
+            </div>
+            <div class="campo-grupo">
+              <label for="cfg-telefono">Teléfono / WhatsApp</label>
+              <input type="text" class="input" id="cfg-telefono" placeholder="Ej: 987654321">
+            </div>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="cfg-direccion">Dirección Comercial</label>
+            <input type="text" class="input" id="cfg-direccion" placeholder="Ej: Av. Principal 123">
+          </div>
+
+          <div class="grid-2">
+            <div class="campo-grupo">
+              <label for="cfg-moneda">Símbolo de Moneda</label>
+              <input type="text" class="input" id="cfg-moneda" value="S/">
+            </div>
+            <div class="campo-grupo">
+              <label for="cfg-pie">Pie de Ticket</label>
+              <input type="text" class="input" id="cfg-pie" placeholder="Ej: ¡Gracias por su preferencia!">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Guardar Datos del Negocio</button>
+        </form>
+
+        <hr style="border:none; border-top:1px solid var(--border-color); margin:0.5rem 0;">
+
+        <!-- Respaldos -->
+        <div>
+          <h4 style="font-size:0.95rem; font-weight:800; margin-bottom:0.4rem;">Copias de Seguridad (Backup)</h4>
+          <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:0.75rem;">Guarda una copia en tu PC o restaura tus datos cuando lo necesites.</p>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="btn-descargar-respaldo-json">💾 Descargar Respaldo JSON</button>
+            <button class="btn btn-outline" id="btn-subir-respaldo-json">📂 Restaurar Respaldo JSON</button>
+            <input type="file" id="input-archivo-subir-json" accept=".json" style="display:none;">
+          </div>
         </div>
-        <div class="form-item" style="margin-bottom:12px;">
-          <label>Tipo de Mensaje:</label>
-          <select id="modal-wa-tipo" class="form-input" onchange="App.actualizarPreviewWA()">
-            <option value="despacho">Constancia de Despacho (Vale Emitido)</option>
-            <option value="cobro">Recordatorio de Cobro / Facturación Pendiente</option>
-          </select>
+
+        <div style="background:#fee2e2; border:1px solid #fca5a5; padding:0.85rem; border-radius:var(--radius-sm); margin-top:0.5rem;">
+          <h5 style="color:#b91c1c; font-weight:800; margin-bottom:0.25rem;">Zona de Peligro</h5>
+          <p style="font-size:0.775rem; color:#991b1b; margin-bottom:0.5rem;">Borra todos los productos y ventas si deseas reiniciar todo el sistema a cero.</p>
+          <button class="btn btn-danger btn-sm" id="btn-reiniciar-sistema">⚠️ Reiniciar Todo a Cero</button>
         </div>
-        <label style="font-size:0.72rem; font-weight:700; color:var(--slate-600); text-transform:uppercase;">Vista Previa:</label>
-        <div id="modal-wa-preview" style="background:var(--slate-50); border:1px solid var(--slate-300); border-radius:6px; padding:12px; font-size:0.82rem; white-space:pre-wrap; margin-top:5px; max-height:200px; overflow-y:auto; line-height:1.45;"></div>
       </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn--outline" onclick="App.cerrarModalWA()">Cancelar</button>
-        <button type="button" class="btn btn--whatsapp" onclick="App.enviarWhatsAppDesdeModal()">
-          Abrir WhatsApp
-        </button>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
       </div>
     </div>
   </div>
 
-  <!-- TOAST DE NOTIFICACIÓN -->
-  <div class="toast-notice" id="toast">
-    <span id="toast-msg">Operación completada</span>
-  </div>
+  <!-- Sección invisible en pantalla, visible al imprimir con window.print() -->
+  <div class="seccion-impresion" id="seccion-impresion"></div>
 
-  <!-- SCRIPTS -->
+  <!-- Bibliotecas y scripts -->
+  <script src="js/lib/xlsx.full.min.js"></script>
   <script src="js/store.js"></script>
   <script src="js/export.js"></script>
   <script src="js/app.js"></script>
