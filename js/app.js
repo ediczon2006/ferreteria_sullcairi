@@ -2,11 +2,14 @@
  * ============================================================================
  * CONTROLADOR PRINCIPAL DE LA APLICACIÓN (js/app.js)
  * Sistema de Gestión y Punto de Venta para Ferretería - Edición PRO
+ * Arquitectura modular, manejo defensivo de eventos y tipado seguro
  * ============================================================================
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Estado local del Punto de Venta
+  'use strict';
+
+  // Estado local del Punto de Venta (en memoria del cliente)
   let carrito = [];
   let categoriaSeleccionadaPOS = "";
   let busquedaPOS = "";
@@ -16,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let productoParaStock = null;
   let ventaActivaParaTicket = null;
 
-  // Iconos amigables por categoría de ferretería
+  // Mapa de iconos temáticos por categoría ferretera
   const ICONOS_CATEGORIAS = {
     "Materiales de Construcción": "🧱",
     "Herramientas Manuales": "🔧",
@@ -30,13 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     "Otros": "📦"
   };
 
-  // Elementos principales de la interfaz
+  // Elementos principales de la cabecera
   const navBotones = document.querySelectorAll('.nav-btn');
   const secciones = document.querySelectorAll('.modulo-seccion');
   const badgeEstado = document.getElementById('badge-estado-guardado');
   const textoEstado = document.getElementById('texto-estado-guardado');
 
-  // Iniciar reloj digital en tiempo real
+  // Reloj digital en tiempo real
   iniciarReloj();
 
   function iniciarReloj() {
@@ -51,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // INICIALIZACIÓN Y SUSCRIPCIÓN AL STORE
+  // INICIALIZACIÓN Y SUSCRIPCIÓN AL STORE CENTRALIZADO
   // ==========================================================================
 
   Store.setSaveCallback((estado) => {
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     actualizarAlertasNavegacion(state);
   });
 
+  // Inicializar carga de datos desde API o almacenamiento local
   Store.init();
 
   function actualizarNombreEmpresaCabecera(state) {
@@ -90,17 +94,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('nav-badge-stock-alerta');
     if (!badge) return;
     const prods = state.productos || [];
-    const criticos = prods.filter(p => p.stock <= (p.stockMinimo || 5)).length;
+    const criticos = prods.filter(p => Number(p.stock) <= (Number(p.stockMinimo) || 5)).length;
     if (criticos > 0) {
       badge.style.display = 'inline-block';
-      badge.textContent = criticos;
+      badge.textContent = String(criticos);
     } else {
       badge.style.display = 'none';
     }
   }
 
   // ==========================================================================
-  // NAVEGACIÓN ENTRE MÓDULOS (3 WORKSPACES CLAVE)
+  // NAVEGACIÓN ENTRE WORKSPACES (PESTAÑAS)
   // ==========================================================================
 
   navBotones.forEach(btn => {
@@ -124,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Atajos de teclado profesionales (F2: Buscar, F4: Cobrar, Alt+1/2/3: Módulos)
+  // Atajos de Teclado Profesionales
   document.addEventListener('keydown', (e) => {
     if (e.key === 'F2') {
       e.preventDefault();
@@ -167,13 +171,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const contenedorChips = document.getElementById('pos-categorias-chips');
     if (contenedorChips) {
       contenedorChips.innerHTML = `
-        <button class="chip-cat ${categoriaSeleccionadaPOS === "" ? 'activo' : ''}" data-cat="">
+        <button type="button" class="chip-cat ${categoriaSeleccionadaPOS === "" ? 'activo' : ''}" data-cat="">
           <span>🏷️</span> Todas
         </button>
         ${categorias.map(cat => {
           const icono = ICONOS_CATEGORIAS[cat] || "📦";
           return `
-            <button class="chip-cat ${categoriaSeleccionadaPOS === cat ? 'activo' : ''}" data-cat="${escapeHtml(cat)}">
+            <button type="button" class="chip-cat ${categoriaSeleccionadaPOS === cat ? 'activo' : ''}" data-cat="${escapeHtml(cat)}">
               <span>${icono}</span> ${escapeHtml(cat)}
             </button>
           `;
@@ -214,8 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="grid-column: 1 / -1; text-align:center; padding: 3.5rem 1.5rem; color: #64748b;">
             <div style="font-size:3rem; margin-bottom:0.75rem;">📦</div>
             <h3 style="font-size:1.2rem; color:#0f172a; margin-bottom:0.4rem; font-weight:800;">Catálogo Vacío (Sin datos demo)</h3>
-            <p style="font-size:0.9rem; margin-bottom:1.25rem;">Registra los productos de tu ferretería en Inventario para comenzar a despachar.</p>
-            <button class="btn btn-primary" id="btn-ir-inventario-desde-pos">+ Registrar Primer Producto</button>
+            <p style="font-size:0.9rem; margin-bottom:1.25rem;">Registra los productos de tu ferretería en el módulo de Inventario para empezar a despachar.</p>
+            <button type="button" class="btn btn-primary" id="btn-ir-inventario-desde-pos">+ Registrar Primer Producto</button>
           </div>
         `;
         const btnIr = document.getElementById('btn-ir-inventario-desde-pos');
@@ -233,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.innerHTML = filtrados.map(p => {
       const stock = Number(p.stock) || 0;
       const sinStock = stock <= 0;
-      const stockBajo = stock > 0 && stock <= (p.stockMinimo || 5);
+      const stockBajo = stock > 0 && stock <= (Number(p.stockMinimo) || 5);
 
       let tagClase = "ok";
       let tagTexto = `Stock: ${stock} ${p.unidad}`;
@@ -257,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="card-pos-precio">${moneda} ${(Number(p.precioVenta) || 0).toFixed(2)}</div>
               <small style="font-size:0.75rem; color:#64748b;">por ${escapeHtml(p.unidad)}</small>
             </div>
-            <button class="btn btn-primary btn-sm" style="padding:0.25rem 0.55rem; font-size:0.75rem;" ${sinStock ? 'disabled' : ''}>
+            <button type="button" class="btn btn-primary btn-sm btn-card-anadir" style="padding:0.25rem 0.55rem; font-size:0.75rem;" ${sinStock ? 'disabled' : ''}>
               + Añadir
             </button>
           </div>
@@ -268,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.querySelectorAll('.card-pos-producto:not(.agotado)').forEach(card => {
       card.addEventListener('click', () => {
         const id = card.getAttribute('data-id');
-        agregarAlCarrito(id);
+        if (id) agregarAlCarrito(id);
       });
     });
   }
@@ -287,8 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const state = Store.getState();
         const productos = state.productos || [];
         const query = busquedaPOS.toLowerCase().trim();
-        const exacto = productos.find(p => (p.codigo && p.codigo.toLowerCase() === query) || (p.nombre && p.nombre.toLowerCase() === query));
-        if (exacto && exacto.stock > 0) {
+        const exacto = productos.find(p =>
+          (p.codigo && p.codigo.toLowerCase() === query) ||
+          (p.nombre && p.nombre.toLowerCase() === query)
+        );
+        if (exacto && Number(exacto.stock) > 0) {
           agregarAlCarrito(exacto.id);
           inputBusqPOS.value = "";
           busquedaPOS = "";
@@ -303,18 +310,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const prod = (state.productos || []).find(p => p.id === productoId);
     if (!prod) return;
 
-    if (prod.stock <= 0) {
+    const stockActual = Number(prod.stock) || 0;
+    if (stockActual <= 0) {
       alert(`El producto "${prod.nombre}" no cuenta con stock.`);
       return;
     }
 
     const itemExistente = carrito.find(it => it.productoId === productoId);
     if (itemExistente) {
-      if (itemExistente.cantidad + 1 > prod.stock) {
-        alert(`Stock máximo disponible alcanzado (${prod.stock} ${prod.unidad}).`);
+      if (itemExistente.cantidad + 1 > stockActual) {
+        alert(`Stock máximo disponible alcanzado (${stockActual} ${prod.unidad}).`);
         return;
       }
-      itemExistente.cantidad += 1;
+      itemExistente.cantidad = Math.round((itemExistente.cantidad + 1) * 1000) / 1000;
     } else {
       carrito.push({
         productoId: prod.id,
@@ -325,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         precioVenta: Number(prod.precioVenta) || 0,
         precioCompra: Number(prod.precioCompra) || 0,
         cantidad: 1,
-        stockDisponible: Number(prod.stock) || 0
+        stockDisponible: stockActual
       });
     }
 
@@ -345,14 +353,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!contenedorItems) return;
 
-    const totalUnidades = carrito.reduce((sum, it) => sum + it.cantidad, 0);
-    const totalVenta = carrito.reduce((sum, it) => sum + (it.cantidad * it.precioVenta), 0);
+    const totalUnidades = Math.round(carrito.reduce((sum, it) => sum + it.cantidad, 0) * 1000) / 1000;
+    const totalVenta = Math.round(carrito.reduce((sum, it) => sum + (it.cantidad * it.precioVenta), 0) * 100) / 100;
 
     if (badgeCantidadItems) badgeCantidadItems.textContent = `${totalUnidades} items`;
     if (elSubtotal) elSubtotal.textContent = `${moneda} ${totalVenta.toFixed(2)}`;
     if (elTotal) elTotal.textContent = `${moneda} ${totalVenta.toFixed(2)}`;
 
-    // Vuelto automático
+    // Cálculo y visualización de vuelto
     if (inputRecibido && cajaVuelto && textoVuelto) {
       const recibido = parseFloat(inputRecibido.value) || 0;
       if (recibido >= totalVenta && totalVenta > 0) {
@@ -379,81 +387,94 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     contenedorItems.innerHTML = carrito.map((item, index) => {
-      const subtotalItem = item.cantidad * item.precioVenta;
+      const subtotalItem = Math.round(item.cantidad * item.precioVenta * 100) / 100;
       return `
         <div class="carrito-item-row" data-index="${index}">
           <div class="item-desc">
             <h4 title="${escapeHtml(item.nombre)}">${escapeHtml(item.nombre)}</h4>
-            <span>${moneda} ${item.precioVenta.toFixed(2)} / ${item.unidad} (Disp: ${item.stockDisponible})</span>
+            <span>${moneda} ${item.precioVenta.toFixed(2)} / ${escapeHtml(item.unidad)} (Disp: ${item.stockDisponible})</span>
           </div>
           <div class="qty-control">
-            <button class="qty-btn btn-restar-qty" data-index="${index}">-</button>
-            <input type="number" class="qty-input input-modificar-qty" data-index="${index}" value="${item.cantidad}" min="1" max="${item.stockDisponible}">
-            <button class="qty-btn btn-sumar-qty" data-index="${index}">+</button>
+            <button type="button" class="qty-btn btn-restar-qty" data-index="${index}" title="Restar">-</button>
+            <input type="number" step="any" min="0.001" max="${item.stockDisponible}" class="qty-input input-modificar-qty" data-index="${index}" value="${item.cantidad}">
+            <button type="button" class="qty-btn btn-sumar-qty" data-index="${index}" title="Sumar">+</button>
           </div>
           <div style="display:flex; align-items:center; gap:0.4rem;">
             <div class="item-precio-col">
               <div class="item-subtotal-val">${moneda} ${subtotalItem.toFixed(2)}</div>
             </div>
-            <button class="btn-quitar-item" data-index="${index}" title="Quitar ítem">×</button>
+            <button type="button" class="btn-quitar-item" data-index="${index}" title="Quitar ítem">×</button>
           </div>
         </div>
       `;
     }).join('');
 
-    // Eventos de cantidad
+    // Eventos de botones y modificación de cantidades en carrito
     contenedorItems.querySelectorAll('.btn-restar-qty').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.getAttribute('data-index'));
-        if (carrito[idx].cantidad > 1) {
-          carrito[idx].cantidad -= 1;
-        } else {
-          carrito.splice(idx, 1);
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute('data-index'), 10);
+        if (carrito[idx]) {
+          if (carrito[idx].cantidad > 1) {
+            carrito[idx].cantidad = Math.round((carrito[idx].cantidad - 1) * 1000) / 1000;
+          } else {
+            carrito.splice(idx, 1);
+          }
+          renderCarritoPOS(Store.getState());
         }
-        renderCarritoPOS(Store.getState());
       });
     });
 
     contenedorItems.querySelectorAll('.btn-sumar-qty').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.getAttribute('data-index'));
-        if (carrito[idx].cantidad + 1 <= carrito[idx].stockDisponible) {
-          carrito[idx].cantidad += 1;
-        } else {
-          alert(`Stock insuficiente. Solo quedan ${carrito[idx].stockDisponible} ${carrito[idx].unidad}.`);
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute('data-index'), 10);
+        if (carrito[idx]) {
+          const nueva = Math.round((carrito[idx].cantidad + 1) * 1000) / 1000;
+          if (nueva <= carrito[idx].stockDisponible) {
+            carrito[idx].cantidad = nueva;
+            renderCarritoPOS(Store.getState());
+          } else {
+            alert(`Stock insuficiente. Solo quedan ${carrito[idx].stockDisponible} ${carrito[idx].unidad}.`);
+          }
         }
-        renderCarritoPOS(Store.getState());
       });
     });
 
     contenedorItems.querySelectorAll('.input-modificar-qty').forEach(input => {
       input.addEventListener('change', () => {
-        const idx = parseInt(input.getAttribute('data-index'));
-        let val = parseInt(input.value) || 1;
-        if (val < 1) val = 1;
-        if (val > carrito[idx].stockDisponible) {
-          alert(`Cantidad ajustada a la disponibilidad máxima (${carrito[idx].stockDisponible}).`);
-          val = carrito[idx].stockDisponible;
+        const idx = parseInt(input.getAttribute('data-index'), 10);
+        if (carrito[idx]) {
+          let val = parseFloat(input.value);
+          if (isNaN(val) || val <= 0) val = 1;
+          val = Math.round(val * 1000) / 1000;
+          if (val > carrito[idx].stockDisponible) {
+            alert(`Cantidad ajustada a la disponibilidad máxima (${carrito[idx].stockDisponible} ${carrito[idx].unidad}).`);
+            val = carrito[idx].stockDisponible;
+          }
+          carrito[idx].cantidad = val;
+          renderCarritoPOS(Store.getState());
         }
-        carrito[idx].cantidad = val;
-        renderCarritoPOS(Store.getState());
       });
     });
 
     contenedorItems.querySelectorAll('.btn-quitar-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.getAttribute('data-index'));
-        carrito.splice(idx, 1);
-        renderCarritoPOS(Store.getState());
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute('data-index'), 10);
+        if (carrito[idx]) {
+          carrito.splice(idx, 1);
+          renderCarritoPOS(Store.getState());
+        }
       });
     });
   }
 
-  // Billetes rápidos para cálculo veloz de vuelto
+  // Botones Rápidos de Billetes en Caja
   const btnBilleteExacto = document.getElementById('btn-billete-exacto');
   if (btnBilleteExacto) {
     btnBilleteExacto.addEventListener('click', () => {
-      const totalVenta = carrito.reduce((sum, it) => sum + (it.cantidad * it.precioVenta), 0);
+      const totalVenta = Math.round(carrito.reduce((sum, it) => sum + (it.cantidad * it.precioVenta), 0) * 100) / 100;
       const input = document.getElementById('pos-pago-recibido');
       if (input) {
         input.value = totalVenta.toFixed(2);
@@ -467,8 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const val = parseFloat(btn.getAttribute('data-monto')) || 0;
       const input = document.getElementById('pos-pago-recibido');
       if (input) {
-        const actual = parseFloat(input.value) || 0;
-        input.value = (actual + val).toFixed(2);
+        input.value = val.toFixed(2);
         renderCarritoPOS(Store.getState());
       }
     });
@@ -484,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnVaciarCarrito = document.getElementById('btn-vaciar-carrito');
   if (btnVaciarCarrito) {
     btnVaciarCarrito.addEventListener('click', () => {
-      if (carrito.length > 0 && confirm("¿Limpiar todos los artículos del carrito?")) {
+      if (carrito.length > 0 && confirm("¿Deseas vaciar todos los artículos de la venta actual?")) {
         carrito = [];
         renderCarritoPOS(Store.getState());
       }
@@ -499,18 +519,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==========================================================================
   // FINALIZAR VENTA (COBRO INMEDIATO Y DESCUENTO DE STOCK)
+  // ==========================================================================
   const btnCobrar = document.getElementById('btn-carrito-cobrar');
   if (btnCobrar) {
     btnCobrar.addEventListener('click', () => {
       if (carrito.length === 0) return;
 
-      const totalVenta = carrito.reduce((sum, it) => sum + (it.cantidad * it.precioVenta), 0);
+      const totalVenta = Math.round(carrito.reduce((sum, it) => sum + (it.cantidad * it.precioVenta), 0) * 100) / 100;
       const clienteNombre = (document.getElementById('pos-cliente-nombre')?.value || "").trim();
       const clienteDoc = (document.getElementById('pos-cliente-doc')?.value || "").trim();
       const tipoComprobante = document.getElementById('pos-tipo-comprobante')?.value || "Nota de Venta";
       const metodoPago = document.getElementById('pos-metodo-pago')?.value || "Efectivo";
-      const montoRecibido = parseFloat(document.getElementById('pos-pago-recibido')?.value) || totalVenta;
+
+      const valRecibido = parseFloat(document.getElementById('pos-pago-recibido')?.value);
+      const montoRecibido = !isNaN(valRecibido) && valRecibido > 0 ? valRecibido : totalVenta;
 
       if (metodoPago === 'Efectivo' && montoRecibido < totalVenta) {
         alert(`El monto recibido (S/ ${montoRecibido.toFixed(2)}) no puede ser menor al total (S/ ${totalVenta.toFixed(2)}).`);
@@ -532,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Venta exitosa: limpiar carrito y abrir comprobante
+      // Venta completada con éxito: limpiar campos y abrir comprobante
       carrito = [];
       if (document.getElementById('pos-cliente-nombre')) document.getElementById('pos-cliente-nombre').value = "";
       if (document.getElementById('pos-cliente-doc')) document.getElementById('pos-cliente-doc').value = "";
@@ -557,13 +581,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const totalProdCount = productos.length;
     const valorTotalInv = productos.reduce((sum, p) => sum + ((Number(p.stock) || 0) * (Number(p.precioVenta) || 0)), 0);
-    const bajoStockCount = productos.filter(p => p.stock > 0 && p.stock <= (p.stockMinimo || 5)).length;
+    const bajoStockCount = productos.filter(p => Number(p.stock) > 0 && Number(p.stock) <= (Number(p.stockMinimo) || 5)).length;
     const agotadosCount = productos.filter(p => (Number(p.stock) || 0) <= 0).length;
 
-    if (kpiTotalProd) kpiTotalProd.textContent = totalProdCount;
+    if (kpiTotalProd) kpiTotalProd.textContent = String(totalProdCount);
     if (kpiValorInv) kpiValorInv.textContent = `${moneda} ${valorTotalInv.toFixed(2)}`;
-    if (kpiBajoStock) kpiBajoStock.textContent = bajoStockCount;
-    if (kpiAgotados) kpiAgotados.textContent = agotadosCount;
+    if (kpiBajoStock) kpiBajoStock.textContent = String(bajoStockCount);
+    if (kpiAgotados) kpiAgotados.textContent = String(agotadosCount);
 
     const selectFiltroCat = document.getElementById('inv-filtro-categoria');
     if (selectFiltroCat) {
@@ -607,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td colspan="9" style="text-align:center; padding: 3rem 1.5rem; color: #64748b;">
             <div style="font-size:2.5rem; margin-bottom:0.5rem;">📦</div>
-            <p style="font-weight:700; font-size:1rem; color:#1e293b;">No hay productos que coincidan</p>
+            <p style="font-weight:700; font-size:1rem; color:#1e293b;">No hay productos para el criterio seleccionado</p>
             <p style="font-size:0.85rem; margin-top:0.25rem;">Haz clic en <b>"+ Nuevo Producto"</b> para agregar artículos a tu inventario.</p>
           </td>
         </tr>
@@ -624,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let tagClase = "ok";
       let tagTexto = `${stock} ${p.unidad}`;
-      let estadoBadge = `<span class="stock-tag ok">Óptimo</span>`;
+      let estadoBadge = `<span class="stock-tag ok">En Stock</span>`;
       if (stock <= 0) {
         tagClase = "cero";
         tagTexto = `0 ${p.unidad}`;
@@ -649,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>
             <div style="display:flex; align-items:center; gap:0.45rem;">
               <span class="stock-tag ${tagClase}">${tagTexto}</span>
-              <button class="btn btn-outline-primary btn-sm btn-agregar-stock" data-id="${p.id}" title="Reabastecer / Agregar Stock">
+              <button type="button" class="btn btn-outline-primary btn-sm btn-agregar-stock" data-id="${p.id}" title="Reabastecer / Agregar Stock">
                 <b>+ Stock</b>
               </button>
             </div>
@@ -657,23 +681,26 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${estadoBadge}</td>
           <td class="text-right">
             <div style="display:inline-flex; gap:0.35rem;">
-              <button class="btn btn-outline btn-sm btn-editar-prod" data-id="${p.id}" title="Editar producto">✏️</button>
-              <button class="btn btn-outline btn-sm btn-eliminar-prod" data-id="${p.id}" title="Eliminar producto" style="color:var(--danger);">🗑️</button>
+              <button type="button" class="btn btn-outline btn-sm btn-editar-prod" data-id="${p.id}" title="Editar producto">✏️</button>
+              <button type="button" class="btn btn-outline btn-sm btn-eliminar-prod" data-id="${p.id}" title="Eliminar producto" style="color:var(--danger);">🗑️</button>
             </div>
           </td>
         </tr>
       `;
     }).join('');
 
+    // Asignación defensiva de eventos a filas generadas dinámicamente
     tbody.querySelectorAll('.btn-agregar-stock').forEach(btn => {
       btn.addEventListener('click', () => {
-        abrirModalAgregarStock(btn.getAttribute('data-id'));
+        const id = btn.getAttribute('data-id');
+        if (id) abrirModalAgregarStock(id);
       });
     });
 
     tbody.querySelectorAll('.btn-editar-prod').forEach(btn => {
       btn.addEventListener('click', () => {
-        abrirModalEditarProducto(btn.getAttribute('data-id'));
+        const id = btn.getAttribute('data-id');
+        if (id) abrirModalEditarProducto(id);
       });
     });
 
@@ -681,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         const prod = (Store.getState().productos || []).find(p => p.id === id);
-        if (prod && confirm(`¿Eliminar definitivamente "${prod.nombre}" del inventario?`)) {
+        if (prod && confirm(`¿Deseas eliminar definitivamente "${prod.nombre}" del catálogo?`)) {
           Store.deleteProduct(id);
         }
       });
@@ -701,7 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Modal: Nuevo Producto
+  // Modal: Crear / Editar Producto
   document.getElementById('btn-inv-nuevo-producto')?.addEventListener('click', () => {
     abrirModalNuevoProducto();
   });
@@ -732,15 +759,20 @@ document.addEventListener('DOMContentLoaded', () => {
     titulo.textContent = "Editar Producto: " + prod.nombre;
     poblarSelectsProducto();
 
-    document.getElementById('prod-input-codigo').value = prod.codigo || "";
-    document.getElementById('prod-input-nombre').value = prod.nombre || "";
-    document.getElementById('prod-select-categoria').value = prod.categoria || "Otros";
-    document.getElementById('prod-select-unidad').value = prod.unidad || "Unidad";
-    document.getElementById('prod-input-compra').value = prod.precioCompra || 0;
-    document.getElementById('prod-input-venta').value = prod.precioVenta || 0;
-    document.getElementById('prod-input-stock').value = prod.stock || 0;
-    document.getElementById('prod-input-stock-min').value = prod.stockMinimo || 5;
-    document.getElementById('prod-input-ubicacion').value = prod.ubicacion || "";
+    const setVal = (elemId, val) => {
+      const el = document.getElementById(elemId);
+      if (el) el.value = val !== undefined && val !== null ? val : "";
+    };
+
+    setVal('prod-input-codigo', prod.codigo);
+    setVal('prod-input-nombre', prod.nombre);
+    setVal('prod-select-categoria', prod.categoria || "Otros");
+    setVal('prod-select-unidad', prod.unidad || "Unidad");
+    setVal('prod-input-compra', prod.precioCompra);
+    setVal('prod-input-venta', prod.precioVenta);
+    setVal('prod-input-stock', prod.stock);
+    setVal('prod-input-stock-min', prod.stockMinimo);
+    setVal('prod-input-ubicacion', prod.ubicacion);
 
     modal.classList.add('activo');
   }
@@ -810,7 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
       inputCant.focus();
       inputCant.oninput = () => {
         const val = parseFloat(inputCant.value) || 0;
-        const total = (Number(prod.stock) || 0) + val;
+        const total = Math.round(((Number(prod.stock) || 0) + val) * 1000) / 1000;
         document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (+${val})`;
       };
     }
@@ -882,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Top Productos más vendidos
+    // Top Productos Más Vendidos
     const contTopProductos = document.getElementById('res-top-productos-lista');
     if (contTopProductos) {
       const top = resumen.topProductos || [];
@@ -895,7 +927,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return `
             <div class="ranking-item">
               <div class="ranking-meta">
-                <span><b>#${idx + 1} ${escapeHtml(t.nombre)}</b> (${t.cantidad} ${t.unidad})</span>
+                <span><b>#${idx + 1} ${escapeHtml(t.nombre)}</b> (${t.cantidad} ${escapeHtml(t.unidad)})</span>
                 <span style="font-weight:800; color:var(--brand-primary);">${moneda} ${t.totalRecaudado.toFixed(2)}</span>
               </div>
               <div class="ranking-track">
@@ -945,9 +977,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr class="${esAnulada ? 'fila-anulada' : ''}">
           <td>
             <b style="color:var(--slate-900); font-family:var(--font-mono);">${escapeHtml(v.numero)}</b>
-            <div style="font-size:0.75rem; color:#64748b;">${v.tipoComprobante}</div>
+            <div style="font-size:0.75rem; color:#64748b;">${escapeHtml(v.tipoComprobante)}</div>
           </td>
-          <td>${fecha}</td>
+          <td>${escapeHtml(fecha)}</td>
           <td>
             <div style="font-weight:700;">${escapeHtml(v.cliente)}</div>
             ${v.docCliente && v.docCliente !== '-' ? `<small style="color:#64748b;">Doc: ${escapeHtml(v.docCliente)}</small>` : ''}
@@ -960,9 +992,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="text-right" style="font-weight:700; color:#10b981;">+${moneda} ${(Number(v.gananciaTotal) || 0).toFixed(2)}</td>
           <td class="text-right">
             <div style="display:inline-flex; gap:0.35rem;">
-              <button class="btn btn-outline btn-sm btn-ver-ticket" data-id="${v.id}" title="Ver e Imprimir Ticket">🧾 Ticket</button>
+              <button type="button" class="btn btn-outline btn-sm btn-ver-ticket" data-id="${v.id}" title="Ver e Imprimir Ticket">🧾 Ticket</button>
               ${!esAnulada ? `
-                <button class="btn btn-outline btn-sm btn-anular-venta" data-id="${v.id}" title="Anular venta y reponer stock" style="color:var(--danger);">✕ Anular</button>
+                <button type="button" class="btn btn-outline btn-sm btn-anular-venta" data-id="${v.id}" title="Anular venta y reponer stock" style="color:var(--danger);">✕ Anular</button>
               ` : `
                 <span class="stock-tag cero" style="font-size:0.7rem;">ANULADA</span>
               `}
@@ -991,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Filtros de periodo en Resumen
+  // Filtros de Periodo en Resumen
   document.querySelectorAll('.pastilla-periodo').forEach(pst => {
     pst.addEventListener('click', () => {
       document.querySelectorAll('.pastilla-periodo').forEach(p => p.classList.remove('activa'));
@@ -1003,7 +1035,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('res-buscar-ventas-input')?.addEventListener('input', () => renderResumenVentas(Store.getState()));
 
-  // Excel handlers
+  // Exportar Excel de Ventas e Inventario
   document.getElementById('btn-exportar-ventas-excel')?.addEventListener('click', () => {
     ExportManager.exportarReporteVentasExcel(periodoVentasSeleccionado);
   });
@@ -1067,12 +1099,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderConfiguracion(state) {
     const cfg = state.configuracion || {};
-    if (document.getElementById('cfg-empresa')) document.getElementById('cfg-empresa').value = cfg.empresa || "";
-    if (document.getElementById('cfg-ruc')) document.getElementById('cfg-ruc').value = cfg.ruc || "";
-    if (document.getElementById('cfg-direccion')) document.getElementById('cfg-direccion').value = cfg.direccion || "";
-    if (document.getElementById('cfg-telefono')) document.getElementById('cfg-telefono').value = cfg.telefono || "";
-    if (document.getElementById('cfg-moneda')) document.getElementById('cfg-moneda').value = cfg.moneda || "S/";
-    if (document.getElementById('cfg-pie')) document.getElementById('cfg-pie').value = cfg.pieTicket || "";
+    const campos = [
+      ['cfg-empresa', cfg.empresa || ""],
+      ['cfg-ruc', cfg.ruc || ""],
+      ['cfg-direccion', cfg.direccion || ""],
+      ['cfg-telefono', cfg.telefono || ""],
+      ['cfg-moneda', cfg.moneda || "S/"],
+      ['cfg-pie', cfg.pieTicket || ""]
+    ];
+    campos.forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el && document.activeElement !== el) {
+        el.value = val;
+      }
+    });
   }
 
   document.getElementById('form-configuracion')?.addEventListener('submit', (e) => {

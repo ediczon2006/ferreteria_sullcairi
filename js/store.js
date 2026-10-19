@@ -1,12 +1,14 @@
 /**
  * ============================================================================
- * STORE CENTRALIZADO - FERRETERÍA (js/store.js)
- * Manejo de estado, inventario, stock automático, ventas y reportes
+ * STORE CENTRALIZADO - FERRETERÍA PROFESIONAL (js/store.js)
+ * Arquitectura reactiva, validación defensiva, operaciones atómicas de stock
  * ============================================================================
  */
 
 const Store = (() => {
-  // Estado base limpio - SIN DATOS DEMO
+  'use strict';
+
+  // Esquema inicial limpio - SIN DATOS DEMO
   const ESTADO_INICIAL = {
     configuracion: {
       empresa: "Ferretería Sullcairi",
@@ -19,9 +21,9 @@ const Store = (() => {
       pieTicket: "¡Gracias por su compra! Vuelva pronto."
     },
     categorias: [
+      "Materiales de Construcción",
       "Herramientas Manuales",
       "Herramientas Eléctricas",
-      "Materiales de Construcción",
       "Gasfitería y Tuberías",
       "Electricidad e Iluminación",
       "Pinturas y Adhesivos",
@@ -43,7 +45,17 @@ const Store = (() => {
   let saveTimer = null;
   let saveStateCallback = null;
 
+  // Redondeo seguro para evitar anomalías de coma flotante (IEEE 754)
+  function round3(num) {
+    return Math.round((Number(num) || 0) * 1000) / 1000;
+  }
+
+  function round2(num) {
+    return Math.round((Number(num) || 0) * 100) / 100;
+  }
+
   function subscribe(fn) {
+    if (typeof fn !== 'function') return () => {};
     listeners.push(fn);
     return () => {
       const idx = listeners.indexOf(fn);
@@ -53,9 +65,13 @@ const Store = (() => {
 
   function notify() {
     const currentState = getState();
-    listeners.forEach(fn => {
-      try { fn(currentState); } catch (e) { console.error("Error en listener:", e); }
-    });
+    for (let i = 0; i < listeners.length; i++) {
+      try {
+        listeners[i](currentState);
+      } catch (e) {
+        console.error("[Store] Error en listener:", e);
+      }
+    }
   }
 
   function getState() {
@@ -68,22 +84,25 @@ const Store = (() => {
 
   function updateSaveIndicator(status) {
     if (typeof saveStateCallback === 'function') {
-      saveStateCallback(status);
+      try {
+        saveStateCallback(status);
+      } catch (err) {
+        console.error("[Store] Error en callback de estado:", err);
+      }
     }
   }
 
-  // Carga inicial
+  // Inicialización con fallback tolerante a fallos
   async function init() {
     updateSaveIndicator("guardando");
-    let cargado = false;
+    let cargadoRemoto = false;
 
-    // 1. Intentar cargar desde el backend python
+    // 1. Intentar backend local Python
     try {
       const res = await fetch('/api/datos', { cache: 'no-store' });
       if (res.ok) {
         const datos = await res.json();
         if (datos && typeof datos === 'object') {
-          // Fusionar con defaults
           state = {
             ...ESTADO_INICIAL,
             ...datos,
@@ -94,7 +113,7 @@ const Store = (() => {
             ventas: Array.isArray(datos.ventas) ? datos.ventas : [],
             clientes: Array.isArray(datos.clientes) ? datos.clientes : []
           };
-          cargado = true;
+          cargadoRemoto = true;
           guardarEnLocalStorage();
           updateSaveIndicator("guardado");
           notify();
@@ -102,10 +121,10 @@ const Store = (() => {
         }
       }
     } catch (e) {
-      console.warn("Modo local/offline (servidor no detectado):", e.message);
+      // Servidor no disponible: modo offline
     }
 
-    // 2. Si falló el servidor, leer de localStorage
+    // 2. Si no hay backend, leer de localStorage
     const local = localStorage.getItem('ferreteria_datos_v1');
     if (local) {
       try {
@@ -119,19 +138,16 @@ const Store = (() => {
             ventas: Array.isArray(parsed.ventas) ? parsed.ventas : [],
             clientes: Array.isArray(parsed.clientes) ? parsed.clientes : []
           };
-          cargado = true;
         }
       } catch (err) {
-        console.error("Error al parsear localStorage:", err);
+        console.error("[Store] Error al leer localStorage:", err);
       }
-    }
-
-    if (!cargado) {
+    } else if (!cargadoRemoto) {
       state = JSON.parse(JSON.stringify(ESTADO_INICIAL));
       guardarEnLocalStorage();
     }
 
-    updateSaveIndicator("guardado");
+    updateSaveIndicator(cargadoRemoto ? "guardado" : "guardado-local");
     notify();
   }
 
@@ -139,11 +155,11 @@ const Store = (() => {
     try {
       localStorage.setItem('ferreteria_datos_v1', JSON.stringify(state));
     } catch (e) {
-      console.error("Error guardando en localStorage:", e);
+      console.error("[Store] Error guardando en localStorage:", e);
     }
   }
 
-  // Guardar datos (localmente y en backend si está activo)
+  // Persistencia dual (localStorage inmediato + API remota)
   function persistir(inmediato = false) {
     guardarEnLocalStorage();
     updateSaveIndicator("guardando");
@@ -166,7 +182,7 @@ const Store = (() => {
           updateSaveIndicator("sin-guardar");
         }
       } catch (err) {
-        // En modo cliente estático sin python, localstorage es el soporte
+        // Modo cliente estático / offline
         updateSaveIndicator("guardado-local");
       }
     };
@@ -174,7 +190,7 @@ const Store = (() => {
     if (inmediato) {
       ejecutarGuardadoRemoto();
     } else {
-      saveTimer = setTimeout(ejecutarGuardadoRemoto, 400);
+      saveTimer = setTimeout(ejecutarGuardadoRemoto, 300);
     }
   }
 
@@ -183,22 +199,26 @@ const Store = (() => {
   // ==========================================================================
 
   function addProduct(prod) {
-    const nuevoId = "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
-    const nuevoCodigo = (prod.codigo && prod.codigo.trim()) 
-      ? prod.codigo.trim() 
+    if (!prod || !prod.nombre || !String(prod.nombre).trim()) {
+      return null;
+    }
+
+    const nuevoId = "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
+    const nuevoCodigo = (prod.codigo && String(prod.codigo).trim())
+      ? String(prod.codigo).trim()
       : "FER-" + String(state.productos.length + 1).padStart(4, "0");
 
     const producto = {
       id: nuevoId,
       codigo: nuevoCodigo,
-      nombre: prod.nombre.trim(),
+      nombre: String(prod.nombre).trim(),
       categoria: prod.categoria || "Otros",
       unidad: prod.unidad || "Unidad",
-      precioCompra: Number(prod.precioCompra) || 0,
-      precioVenta: Number(prod.precioVenta) || 0,
-      stock: Number(prod.stock) || 0,
-      stockMinimo: Number(prod.stockMinimo) >= 0 ? Number(prod.stockMinimo) : 5,
-      ubicacion: (prod.ubicacion || "").trim(),
+      precioCompra: Math.max(0, round2(prod.precioCompra)),
+      precioVenta: Math.max(0, round2(prod.precioVenta)),
+      stock: Math.max(0, round3(prod.stock)),
+      stockMinimo: Math.max(0, round3(prod.stockMinimo >= 0 ? prod.stockMinimo : 5)),
+      ubicacion: String(prod.ubicacion || "").trim(),
       fechaCreacion: new Date().toISOString()
     };
 
@@ -208,17 +228,62 @@ const Store = (() => {
     return producto;
   }
 
+  // Importación masiva atómica (O(1) persistencia y re-renderizado)
+  function addProductsBatch(prodsArray) {
+    if (!Array.isArray(prodsArray) || prodsArray.length === 0) return 0;
+
+    let agregados = 0;
+    const now = new Date().toISOString();
+
+    for (let i = 0; i < prodsArray.length; i++) {
+      const p = prodsArray[i];
+      if (!p || !p.nombre || !String(p.nombre).trim()) continue;
+
+      const nuevoId = "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 100000) + "-" + agregados;
+      const nuevoCodigo = (p.codigo && String(p.codigo).trim())
+        ? String(p.codigo).trim()
+        : "FER-" + String(state.productos.length + 1).padStart(4, "0");
+
+      state.productos.push({
+        id: nuevoId,
+        codigo: nuevoCodigo,
+        nombre: String(p.nombre).trim(),
+        categoria: p.categoria || "Otros",
+        unidad: p.unidad || "Unidad",
+        precioCompra: Math.max(0, round2(p.precioCompra)),
+        precioVenta: Math.max(0, round2(p.precioVenta)),
+        stock: Math.max(0, round3(p.stock)),
+        stockMinimo: Math.max(0, round3(p.stockMinimo >= 0 ? p.stockMinimo : 5)),
+        ubicacion: String(p.ubicacion || "").trim(),
+        fechaCreacion: now
+      });
+      agregados++;
+    }
+
+    if (agregados > 0) {
+      persistir(true);
+      notify();
+    }
+    return agregados;
+  }
+
   function updateProduct(id, datosActualizados) {
     const idx = state.productos.findIndex(p => p.id === id);
     if (idx === -1) return false;
 
+    const actual = state.productos[idx];
     state.productos[idx] = {
-      ...state.productos[idx],
+      ...actual,
       ...datosActualizados,
-      precioCompra: Number(datosActualizados.precioCompra ?? state.productos[idx].precioCompra),
-      precioVenta: Number(datosActualizados.precioVenta ?? state.productos[idx].precioVenta),
-      stock: Number(datosActualizados.stock ?? state.productos[idx].stock),
-      stockMinimo: Number(datosActualizados.stockMinimo ?? state.productos[idx].stockMinimo),
+      codigo: datosActualizados.codigo !== undefined ? String(datosActualizados.codigo).trim() : actual.codigo,
+      nombre: datosActualizados.nombre !== undefined ? String(datosActualizados.nombre).trim() : actual.nombre,
+      categoria: datosActualizados.categoria || actual.categoria,
+      unidad: datosActualizados.unidad || actual.unidad,
+      precioCompra: datosActualizados.precioCompra !== undefined ? Math.max(0, round2(datosActualizados.precioCompra)) : actual.precioCompra,
+      precioVenta: datosActualizados.precioVenta !== undefined ? Math.max(0, round2(datosActualizados.precioVenta)) : actual.precioVenta,
+      stock: datosActualizados.stock !== undefined ? Math.max(0, round3(datosActualizados.stock)) : actual.stock,
+      stockMinimo: datosActualizados.stockMinimo !== undefined ? Math.max(0, round3(datosActualizados.stockMinimo)) : actual.stockMinimo,
+      ubicacion: datosActualizados.ubicacion !== undefined ? String(datosActualizados.ubicacion).trim() : actual.ubicacion,
       fechaModificacion: new Date().toISOString()
     };
 
@@ -237,23 +302,25 @@ const Store = (() => {
   }
 
   /**
-   * REQUISITO DEL USUARIO: "que el mismo pueda agregar el stock de sus productos"
-   * Aumenta el stock del producto de manera ágil (Entrada de mercadería / Ajuste).
+   * REQUISITO: "que el mismo pueda agregar el stock de sus productos"
+   * Aumenta el stock del producto de forma atómica y precisa.
    */
   function addStock(id, cantidad, motivo = "", nuevoPrecioCompra = null) {
     const prod = state.productos.find(p => p.id === id);
-    if (!prod) return { ok: false, error: "Producto no encontrado" };
+    if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
 
-    const cantNum = Number(cantidad);
+    const cantNum = round3(cantidad);
     if (isNaN(cantNum) || cantNum <= 0) {
-      return { ok: false, error: "La cantidad debe ser un número mayor a cero" };
+      return { ok: false, error: "La cantidad a ingresar debe ser un número positivo" };
     }
 
-    prod.stock = Number(prod.stock) + cantNum;
+    prod.stock = round3(prod.stock + cantNum);
+
     if (nuevoPrecioCompra !== null && !isNaN(Number(nuevoPrecioCompra)) && Number(nuevoPrecioCompra) > 0) {
-      prod.precioCompra = Number(nuevoPrecioCompra);
+      prod.precioCompra = round2(nuevoPrecioCompra);
     }
     prod.fechaUltimoIngreso = new Date().toISOString();
+    prod.ultimoMotivoIngreso = motivo ? String(motivo).trim() : "Reabastecimiento";
 
     persistir(true);
     notify();
@@ -261,54 +328,56 @@ const Store = (() => {
   }
 
   // ==========================================================================
-  // GESTIÓN DE VENTAS Y DESCUENTO AUTOMÁTICO DE STOCK
+  // GESTIÓN DE VENTAS Y DESCUENTO ATÓMICO DE STOCK
   // ==========================================================================
 
   /**
-   * REQUISITO DEL USUARIO: "y que al vender baje"
-   * Registra una venta, descuenta inmediatamente el stock de cada producto vendido,
-   * y guarda el registro para el resumen de ventas.
+   * REQUISITO: "y que al vender baje"
+   * Valida stock en tiempo real y descuenta atómicamente cada ítem vendido.
    */
   function recordSale(datosVenta) {
     const { items, cliente, docCliente, tipoComprobante, metodoPago, montoRecibido } = datosVenta;
 
-    if (!items || !items.length) {
-      return { ok: false, error: "No hay productos en la venta" };
+    if (!Array.isArray(items) || items.length === 0) {
+      return { ok: false, error: "El carrito de ventas está vacío" };
     }
 
-    // 1. Validar existencias de stock antes de procesar
-    for (const item of items) {
-      const prod = state.productos.find(p => p.id === item.productoId);
+    // 1. Verificación previa de existencias
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const prod = state.productos.find(p => p.id === it.productoId);
       if (!prod) {
-        return { ok: false, error: `El producto "${item.nombre}" ya no existe en el catálogo.` };
+        return { ok: false, error: `El producto "${it.nombre}" no existe en el catálogo.` };
       }
-      if (prod.stock < item.cantidad) {
-        return { 
-          ok: false, 
-          error: `Stock insuficiente para "${prod.nombre}". Disponible: ${prod.stock} ${prod.unidad}, solicitó: ${item.cantidad}.` 
+      const cantReq = round3(it.cantidad);
+      if (prod.stock < cantReq) {
+        return {
+          ok: false,
+          error: `Stock insuficiente para "${prod.nombre}". Disponible: ${prod.stock} ${prod.unidad}, solicitado: ${cantReq}.`
         };
       }
     }
 
-    // 2. Descontar el stock de cada producto
+    // 2. Descuento de stock y cálculo financiero preciso
     const itemsProcesados = [];
     let totalCosto = 0;
     let totalVenta = 0;
 
-    for (const item of items) {
-      const prod = state.productos.find(p => p.id === item.productoId);
-      const cantidad = Number(item.cantidad);
-      const precioVenta = Number(item.precioVenta);
-      const precioCompra = Number(prod.precioCompra) || 0;
-      const subtotal = cantidad * precioVenta;
-      const costo = cantidad * precioCompra;
-      const ganancia = subtotal - costo;
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const prod = state.productos.find(p => p.id === it.productoId);
+      const cantidad = round3(it.cantidad);
+      const precioVenta = round2(it.precioVenta);
+      const precioCompra = round2(prod.precioCompra);
+      const subtotal = round2(cantidad * precioVenta);
+      const costo = round2(cantidad * precioCompra);
+      const ganancia = round2(subtotal - costo);
 
-      // ¡AQUÍ SE DESCUENTA EL STOCK DIRECTAMENTE!
-      prod.stock = Math.max(0, Number(prod.stock) - cantidad);
+      // DESCUENTO REAL DEL STOCK
+      prod.stock = Math.max(0, round3(prod.stock - cantidad));
 
-      totalVenta += subtotal;
-      totalCosto += costo;
+      totalVenta = round2(totalVenta + subtotal);
+      totalCosto = round2(totalCosto + costo);
 
       itemsProcesados.push({
         productoId: prod.id,
@@ -324,38 +393,36 @@ const Store = (() => {
       });
     }
 
-    // 3. Generar número de comprobante correlativo
-    const anio = new Date().getFullYear();
+    // Generar correlativo de comprobante
     const prefijo = tipoComprobante === "Factura" ? "F001" : tipoComprobante === "Boleta" ? "B001" : "NV01";
     const correlativo = String(state.ventas.length + 1).padStart(6, "0");
     const numeroComprobante = `${prefijo}-${correlativo}`;
 
-    const totalRecibido = Number(montoRecibido) || totalVenta;
-    const vuelto = Math.max(0, totalRecibido - totalVenta);
+    const totalRecibido = montoRecibido !== undefined && !isNaN(Number(montoRecibido)) ? round2(montoRecibido) : totalVenta;
+    const vuelto = Math.max(0, round2(totalRecibido - totalVenta));
 
     const venta = {
-      id: "VTA-" + Date.now(),
+      id: "VTA-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
       numero: numeroComprobante,
       fecha: new Date().toISOString(),
-      cliente: (cliente && cliente.trim()) ? cliente.trim() : "Cliente General",
-      docCliente: (docCliente && docCliente.trim()) ? docCliente.trim() : "-",
+      cliente: (cliente && String(cliente).trim()) ? String(cliente).trim() : "Cliente General",
+      docCliente: (docCliente && String(docCliente).trim()) ? String(docCliente).trim() : "-",
       tipoComprobante: tipoComprobante || "Nota de Venta",
       metodoPago: metodoPago || "Efectivo",
       items: itemsProcesados,
-      totalItems: itemsProcesados.reduce((sum, it) => sum + it.cantidad, 0),
+      totalItems: round3(itemsProcesados.reduce((sum, it) => sum + it.cantidad, 0)),
       subtotal: totalVenta,
       total: totalVenta,
       totalCosto: totalCosto,
-      gananciaTotal: totalVenta - totalCosto,
+      gananciaTotal: round2(totalVenta - totalCosto),
       montoRecibido: totalRecibido,
       vuelto: vuelto,
       estado: "COMPLETADA"
     };
 
-    // Agregar al inicio del historial de ventas
     state.ventas.unshift(venta);
 
-    // Si se especificó un cliente con nombre o documento, registrar/actualizar en clientes
+    // Actualizar historial de cliente si aplica
     if (venta.cliente !== "Cliente General" || venta.docCliente !== "-") {
       actualizarOAgregarCliente(venta.cliente, venta.docCliente, venta.total);
     }
@@ -366,19 +433,24 @@ const Store = (() => {
   }
 
   function actualizarOAgregarCliente(nombre, doc, montoVenta) {
-    let cliente = state.clientes.find(c => (doc !== "-" && c.documento === doc) || c.nombre.toLowerCase() === nombre.toLowerCase());
+    const docClean = doc && doc !== "-" ? String(doc).trim() : "";
+    const nombreClean = String(nombre).trim();
+
+    let cliente = state.clientes.find(c =>
+      (docClean && c.documento === docClean) ||
+      (c.nombre && c.nombre.toLowerCase() === nombreClean.toLowerCase())
+    );
+
     if (cliente) {
-      cliente.comprasTotal = (cliente.comprasTotal || 0) + montoVenta;
+      cliente.comprasTotal = round2((cliente.comprasTotal || 0) + montoVenta);
       cliente.numeroCompras = (cliente.numeroCompras || 0) + 1;
       cliente.ultimaCompra = new Date().toISOString();
     } else {
       state.clientes.push({
         id: "CLI-" + Date.now(),
-        nombre: nombre,
-        documento: doc,
-        telefono: "",
-        direccion: "",
-        comprasTotal: montoVenta,
+        nombre: nombreClean,
+        documento: docClean || "-",
+        comprasTotal: round2(montoVenta),
         numeroCompras: 1,
         ultimaCompra: new Date().toISOString()
       });
@@ -386,18 +458,19 @@ const Store = (() => {
   }
 
   /**
-   * Anular venta: REVIERTE y REGRESA EL STOCK a los productos
+   * REVERTIR VENTA: Reintegra de inmediato todo el stock de los productos.
    */
   function annulSale(ventaId, motivo = "Anulación de venta") {
     const venta = state.ventas.find(v => v.id === ventaId);
     if (!venta) return { ok: false, error: "Venta no encontrada" };
     if (venta.estado === "ANULADA") return { ok: false, error: "Esta venta ya fue anulada previamente" };
 
-    // Reponer stock
-    for (const item of venta.items) {
-      const prod = state.productos.find(p => p.id === item.productoId);
+    // Reposición atómica de stock
+    for (let i = 0; i < venta.items.length; i++) {
+      const it = venta.items[i];
+      const prod = state.productos.find(p => p.id === it.productoId);
       if (prod) {
-        prod.stock = Number(prod.stock) + Number(item.cantidad);
+        prod.stock = round3(prod.stock + it.cantidad);
       }
     }
 
@@ -411,7 +484,7 @@ const Store = (() => {
   }
 
   // ==========================================================================
-  // REQUISITO DEL USUARIO: "y de un resumen de las ventas"
+  // REQUISITO: "y de un resumen de las ventas"
   // ==========================================================================
 
   function getSalesSummary(filtroPeriodo = "hoy", fechaInicio = null, fechaFin = null) {
@@ -420,10 +493,8 @@ const Store = (() => {
 
     const ventasValidas = state.ventas.filter(v => v.estado !== "ANULADA");
 
-    // Filtrar por fechas
     const ventasFiltradas = ventasValidas.filter(v => {
-      const fechaVenta = new Date(v.fecha);
-      const fechaVentaStr = v.fecha.slice(0, 10);
+      const fechaVentaStr = v.fecha ? v.fecha.slice(0, 10) : "";
 
       if (filtroPeriodo === "hoy") {
         return fechaVentaStr === hoyStr;
@@ -436,17 +507,16 @@ const Store = (() => {
       if (filtroPeriodo === "semana") {
         const hace7Dias = new Date(ahora);
         hace7Dias.setDate(hace7Dias.getDate() - 7);
-        return fechaVenta >= hace7Dias;
+        return new Date(v.fecha) >= hace7Dias;
       }
       if (filtroPeriodo === "mes") {
         const mesActual = ahora.toISOString().slice(0, 7);
-        return v.fecha.startsWith(mesActual);
+        return fechaVentaStr.startsWith(mesActual);
       }
       if (filtroPeriodo === "rango" && fechaInicio && fechaFin) {
         return fechaVentaStr >= fechaInicio && fechaVentaStr <= fechaFin;
       }
-      // "todos"
-      return true;
+      return true; // "todos"
     });
 
     let totalVentas = 0;
@@ -456,40 +526,39 @@ const Store = (() => {
     const metodosPago = {};
     const conteoProductos = {};
 
-    for (const v of ventasFiltradas) {
-      totalVentas += Number(v.total) || 0;
-      totalCosto += Number(v.totalCosto) || 0;
-      totalGanancia += Number(v.gananciaTotal) || 0;
+    for (let i = 0; i < ventasFiltradas.length; i++) {
+      const v = ventasFiltradas[i];
+      totalVentas = round2(totalVentas + (Number(v.total) || 0));
+      totalCosto = round2(totalCosto + (Number(v.totalCosto) || 0));
+      totalGanancia = round2(totalGanancia + (Number(v.gananciaTotal) || 0));
 
-      // Métodos de pago
       const mp = v.metodoPago || "Efectivo";
-      metodosPago[mp] = (metodosPago[mp] || 0) + (Number(v.total) || 0);
+      metodosPago[mp] = round2((metodosPago[mp] || 0) + (Number(v.total) || 0));
 
-      // Conteo por producto
-      for (const it of v.items || []) {
-        totalUnidades += Number(it.cantidad) || 0;
+      for (let j = 0; j < (v.items || []).length; j++) {
+        const it = v.items[j];
+        totalUnidades = round3(totalUnidades + (Number(it.cantidad) || 0));
         const clave = it.nombre;
         if (!conteoProductos[clave]) {
           conteoProductos[clave] = {
             nombre: it.nombre,
-            unidad: it.unidad,
+            unidad: it.unidad || "Unidad",
             cantidad: 0,
             totalRecaudado: 0
           };
         }
-        conteoProductos[clave].cantidad += Number(it.cantidad) || 0;
-        conteoProductos[clave].totalRecaudado += Number(it.subtotal) || 0;
+        conteoProductos[clave].cantidad = round3(conteoProductos[clave].cantidad + (Number(it.cantidad) || 0));
+        conteoProductos[clave].totalRecaudado = round2(conteoProductos[clave].totalRecaudado + (Number(it.subtotal) || 0));
       }
     }
 
-    // Top productos vendidos
     const topProductos = Object.values(conteoProductos)
       .sort((a, b) => b.cantidad - a.cantidad)
       .slice(0, 8);
 
     const cantidadTransacciones = ventasFiltradas.length;
-    const ticketPromedio = cantidadTransacciones > 0 ? (totalVentas / cantidadTransacciones) : 0;
-    const margenPorcentaje = totalVentas > 0 ? ((totalGanancia / totalVentas) * 100) : 0;
+    const ticketPromedio = cantidadTransacciones > 0 ? round2(totalVentas / cantidadTransacciones) : 0;
+    const margenPorcentaje = totalVentas > 0 ? round2((totalGanancia / totalVentas) * 100) : 0;
 
     return {
       filtroPeriodo,
@@ -507,7 +576,7 @@ const Store = (() => {
   }
 
   // ==========================================================================
-  // CONFIGURACIÓN Y UTILIDADES
+  // CONFIGURACIÓN Y RESPALDOS
   // ==========================================================================
 
   function updateConfig(nuevaConfig) {
@@ -520,7 +589,7 @@ const Store = (() => {
   }
 
   function addCategory(categoria) {
-    const c = categoria.trim();
+    const c = String(categoria || "").trim();
     if (c && !state.categorias.includes(c)) {
       state.categorias.push(c);
       persistir();
@@ -530,14 +599,20 @@ const Store = (() => {
     return false;
   }
 
+  // Descarga eficiente de respaldo usando Blob (previene límite de Data URI)
   function exportBackupJSON() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+    const raw = JSON.stringify(state, null, 2);
+    const blob = new Blob([raw], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.setAttribute("href", dataStr);
-    a.setAttribute("download", `respaldo_ferreteria_${new Date().toISOString().slice(0,10)}.json`);
+    a.href = url;
+    a.download = `respaldo_ferreteria_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
-    a.remove();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 150);
   }
 
   function importBackupJSON(jsonData) {
@@ -550,6 +625,8 @@ const Store = (() => {
           ...ESTADO_INICIAL,
           ...jsonData,
           configuracion: { ...ESTADO_INICIAL.configuracion, ...(jsonData.configuracion || {}) },
+          categorias: Array.isArray(jsonData.categorias) && jsonData.categorias.length ? jsonData.categorias : ESTADO_INICIAL.categorias,
+          unidades: Array.isArray(jsonData.unidades) && jsonData.unidades.length ? jsonData.unidades : ESTADO_INICIAL.unidades,
           productos: Array.isArray(jsonData.productos) ? jsonData.productos : [],
           ventas: Array.isArray(jsonData.ventas) ? jsonData.ventas : [],
           clientes: Array.isArray(jsonData.clientes) ? jsonData.clientes : []
@@ -558,7 +635,7 @@ const Store = (() => {
         notify();
         return { ok: true, productos: state.productos.length, ventas: state.ventas.length };
       }
-      return { ok: false, error: "Formato no válido" };
+      return { ok: false, error: "Estructura JSON no reconocida" };
     } catch (e) {
       return { ok: false, error: e.message };
     }
@@ -576,6 +653,7 @@ const Store = (() => {
     getState,
     setSaveCallback,
     addProduct,
+    addProductsBatch,
     updateProduct,
     deleteProduct,
     addStock,

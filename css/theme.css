@@ -1239,13 +1239,23 @@ body {
    REGLAS DE IMPRESIÓN (WINDOW.PRINT)
    ========================================================================== */
 @media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
   body * {
     visibility: hidden;
   }
+  .no-print, .modal-overlay, header, main {
+    display: none !important;
+  }
   .seccion-impresion, .seccion-impresion * {
-    visibility: visible;
+    visibility: visible !important;
   }
   .seccion-impresion {
+    display: block !important;
     position: absolute;
     left: 0;
     top: 0;
@@ -1254,13 +1264,11 @@ body {
     padding: 0;
   }
   .ticket-wrapper {
-    border: none;
-    max-width: 100%;
-    width: 100%;
-    padding: 0;
-  }
-  .no-print {
-    display: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 }
 
