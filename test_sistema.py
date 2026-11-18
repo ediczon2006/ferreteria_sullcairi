@@ -144,11 +144,21 @@ class TestFerreteriaSistema(unittest.TestCase):
         # Encontrar botones con ID
         botones_html = re.findall(r'<button[^>]*id=["\']([a-zA-Z0-9_-]+)["\']', html)
 
-        # Mapeo de botones controlados mediante selectores de clase agrupados
+        # Mapeo de botones controlados mediante selectores de clase agrupados (.nav-btn)
         selectores_agrupados = {
             "nav-btn-pos": ".nav-btn",
             "nav-btn-inventario": ".nav-btn",
-            "nav-btn-resumen": ".nav-btn"
+            "nav-btn-producto": ".nav-btn",
+            "nav-btn-kardex": ".nav-btn",
+            "nav-btn-etiquetas": ".nav-btn",
+            "nav-btn-resumen": ".nav-btn",
+            "mob-nav-pos": ".nav-btn",
+            "mob-nav-inventario": ".nav-btn",
+            "mob-nav-producto": ".nav-btn",
+            "mob-nav-kardex": ".nav-btn",
+            "mob-nav-etiquetas": ".nav-btn",
+            "mob-nav-resumen": ".nav-btn",
+            "mob-nav-ajustes": ".nav-btn"
         }
 
         for btn_id in botones_html:
@@ -174,7 +184,11 @@ class TestFerreteriaSistema(unittest.TestCase):
             "adjustPricesBatch",
             "changeStatusBatch",
             "getStockMovements",
-            "getKpiInventario"
+            "getKpiInventario",
+            "addCategory",
+            "removeCategory",
+            "addUnit",
+            "removeUnit"
         ]
         for metodo in metodos_store:
             self.assertIn(metodo, store_js, f"Store debe exportar el método de administración '{metodo}'")
@@ -187,6 +201,33 @@ class TestFerreteriaSistema(unittest.TestCase):
         ]
         for metodo in metodos_export:
             self.assertIn(metodo, export_js, f"ExportManager debe contener el método '{metodo}'")
+
+    def test_08_paginas_individuales_y_responsividad(self):
+        """Verifica que cada botón principal tenga su propia página dedicada y diseño adaptable multidispositivo."""
+        with open(self.index_path, "r", encoding="utf-8") as f:
+            html = f.read()
+
+        with open(os.path.join(self.base_dir, "css", "theme.css"), "r", encoding="utf-8") as f:
+            css = f.read()
+
+        paginas_individuales = [
+            "seccion-pos",
+            "seccion-inventario",
+            "seccion-producto",
+            "seccion-kardex",
+            "seccion-etiquetas",
+            "seccion-resumen",
+            "seccion-ajustes"
+        ]
+        for pag in paginas_individuales:
+            self.assertIn(f'id="{pag}"', html, f"Debe existir la página individual dedicada '{pag}'")
+
+        # Verificar breakpoints responsivos para laptops, tablets y smartphones
+        self.assertIn("@media (max-width: 1360px)", css)
+        self.assertIn("@media (max-width: 1150px)", css)
+        self.assertIn("@media (max-width: 768px)", css)
+        self.assertIn("@media (max-width: 480px)", css)
+        self.assertIn(".mobile-bottom-nav", css)
 
 
 if __name__ == "__main__":

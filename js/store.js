@@ -949,6 +949,39 @@ const Store = (() => {
     return false;
   }
 
+  function removeCategory(categoria) {
+    const idx = state.categorias.indexOf(categoria);
+    if (idx !== -1 && state.categorias.length > 1) {
+      state.categorias.splice(idx, 1);
+      persistir();
+      notify();
+      return true;
+    }
+    return false;
+  }
+
+  function addUnit(unidad) {
+    const u = String(unidad || "").trim();
+    if (u && !state.unidades.includes(u)) {
+      state.unidades.push(u);
+      persistir();
+      notify();
+      return true;
+    }
+    return false;
+  }
+
+  function removeUnit(unidad) {
+    const idx = state.unidades.indexOf(unidad);
+    if (idx !== -1 && state.unidades.length > 1) {
+      state.unidades.splice(idx, 1);
+      persistir();
+      notify();
+      return true;
+    }
+    return false;
+  }
+
   // Descarga eficiente de respaldo usando Blob (previene límite de Data URI)
   function exportBackupJSON() {
     const raw = JSON.stringify(state, null, 2);
@@ -1022,6 +1055,9 @@ const Store = (() => {
     getSalesSummary,
     updateConfig,
     addCategory,
+    removeCategory,
+    addUnit,
+    removeUnit,
     exportBackupJSON,
     importBackupJSON,
     limpiarTodo

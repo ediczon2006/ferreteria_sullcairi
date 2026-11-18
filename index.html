@@ -28,21 +28,30 @@
         </div>
       </div>
 
-      <!-- Navegación central con las 3 secciones clave -->
-      <nav class="nav-principal" aria-label="Navegación del sistema">
-        <button class="nav-btn activo" data-seccion="pos" id="nav-btn-pos" title="Atajo: Alt+1">
+      <!-- Navegación central con páginas individuales dedicadas -->
+      <nav class="nav-principal" aria-label="Navegación principal del sistema">
+        <button class="nav-btn activo" data-seccion="pos" id="nav-btn-pos" title="Página: Punto de Venta (Alt+1)">
           <span>⚡</span> Punto de Venta
         </button>
-        <button class="nav-btn" data-seccion="inventario" id="nav-btn-inventario" title="Atajo: Alt+2">
+        <button class="nav-btn" data-seccion="inventario" id="nav-btn-inventario" title="Página: Inventario y Stock (Alt+2)">
           <span>📦</span> Inventario y Stock
           <span class="nav-badge-pill" id="nav-badge-stock-alerta" style="display:none; background:#ef4444; color:#fff;">0</span>
         </button>
-        <button class="nav-btn" data-seccion="resumen" id="nav-btn-resumen" title="Atajo: Alt+3">
+        <button class="nav-btn" data-seccion="producto" id="nav-btn-producto" title="Página: Crear o Editar Producto (Alt+3)">
+          <span>➕</span> Nuevo Producto
+        </button>
+        <button class="nav-btn" data-seccion="kardex" id="nav-btn-kardex" title="Página: Kardex y Movimientos de Stock (Alt+4)">
+          <span>📜</span> Kardex
+        </button>
+        <button class="nav-btn" data-seccion="etiquetas" id="nav-btn-etiquetas" title="Página: Estudio de Etiquetas y Códigos de Barras (Alt+5)">
+          <span>🏷️</span> Etiquetas
+        </button>
+        <button class="nav-btn" data-seccion="resumen" id="nav-btn-resumen" title="Página: Resumen y Reportes de Ventas (Alt+6)">
           <span>📊</span> Resumen de Ventas
         </button>
       </nav>
 
-      <!-- Estado, Reloj y Configuración -->
+      <!-- Estado, Reloj y Página de Ajustes -->
       <div class="header-acciones">
         <div class="reloj-sistema" id="reloj-sistema">
           <span>🕒</span> <span id="reloj-texto">00:00:00</span>
@@ -53,12 +62,44 @@
           <span id="texto-estado-guardado">En Línea</span>
         </div>
 
-        <button class="btn btn-outline btn-sm" id="btn-abrir-configuracion" style="color:#ffffff; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.15);" title="Ajustes de la Ferretería y Copias de Seguridad">
+        <button class="nav-btn btn btn-outline btn-sm" data-seccion="ajustes" id="btn-abrir-configuracion" style="color:#ffffff; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.18);" title="Página: Ajustes de la Ferretería y Copias de Seguridad">
           ⚙️ Ajustes
         </button>
       </div>
     </div>
   </header>
+
+  <!-- Barra de Navegación Inferior Fija para Móviles y Smartphones -->
+  <nav class="mobile-bottom-nav no-print" aria-label="Navegación móvil">
+    <button type="button" class="mobile-nav-item nav-btn activo" data-seccion="pos" id="mob-nav-pos">
+      <span class="mob-icon">⚡</span>
+      <span>Caja POS</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="inventario" id="mob-nav-inventario">
+      <span class="mob-icon">📦</span>
+      <span>Stock</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="producto" id="mob-nav-producto">
+      <span class="mob-icon">➕</span>
+      <span>Nuevo</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="kardex" id="mob-nav-kardex">
+      <span class="mob-icon">📜</span>
+      <span>Kardex</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="etiquetas" id="mob-nav-etiquetas">
+      <span class="mob-icon">🏷️</span>
+      <span>Etiquetas</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="resumen" id="mob-nav-resumen">
+      <span class="mob-icon">📊</span>
+      <span>Ventas</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="ajustes" id="mob-nav-ajustes">
+      <span class="mob-icon">⚙️</span>
+      <span>Ajustes</span>
+    </button>
+  </nav>
 
   <!-- ======================================================================
        CONTENIDO PRINCIPAL DEL SISTEMA (3 SECCIONES PRINCIPALES)
@@ -477,157 +518,464 @@
       </div>
     </section>
 
-  </main>
-
-  <!-- ======================================================================
-       MODALES DEL SISTEMA
-       ====================================================================== -->
-
-  <!-- Modal: Crear / Editar Producto (Con Calculadora de Rentabilidad Inteligente) -->
-  <div class="modal-overlay" id="modal-producto">
-    <div class="modal-caja" style="max-width:760px;">
-      <div class="modal-head">
-        <h3 id="modal-producto-titulo">Nuevo Producto de Ferretería</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <form id="form-producto">
-        <div class="modal-cuerpo" style="max-height:calc(85vh - 120px); overflow-y:auto; padding:1.25rem;">
-          
-          <!-- Bloque 1: Identificación y Clasificación -->
-          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
-            1. Información General y Clasificación
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 4: CREAR / EDITAR PRODUCTO (FICHA COMPLETA)
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-producto">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-producto">
+            ← Volver al Inventario
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2 id="modal-producto-titulo">➕ Nuevo Producto de Ferretería</h2>
+            <p>Completa la ficha técnica, calcula el margen de ganancia en tiempo real y visualiza su código de barras.</p>
           </div>
-          <div class="grid-3" style="margin-bottom:0.85rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-codigo">Código SKU *</label>
-              <div style="display:flex; gap:0.35rem;">
-                <input type="text" class="input" id="prod-input-codigo" placeholder="Ej: FER-0001" required>
-                <button type="button" class="btn btn-outline btn-sm" id="btn-autogenerar-codigo" title="Generar código correlativo">🎲</button>
+        </div>
+        <div class="pagina-header-acciones">
+          <button type="button" class="btn btn-outline" id="btn-cancelar-producto-pag">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-guardar-producto-modal">💾 Guardar Producto</button>
+        </div>
+      </div>
+
+      <form id="form-producto">
+        <div class="pagina-grid-2col">
+          <!-- Columna Izquierda: Datos Generales y Precios -->
+          <div>
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>1. Información General y Clasificación</span>
+                <span style="font-size:0.75rem; color:var(--slate-400); font-weight:600;">* Campos obligatorios</span>
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.9rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-codigo">Código SKU *</label>
+                  <div style="display:flex; gap:0.35rem;">
+                    <input type="text" class="input" id="prod-input-codigo" placeholder="Ej: FER-0001" required>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-autogenerar-codigo" title="Generar código correlativo">🎲</button>
+                  </div>
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-barcode">Código de Barras (EAN / UPC)</label>
+                  <input type="text" class="input" id="prod-input-barcode" placeholder="Escáner o igual al SKU">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-select-estado">Estado en Catálogo</label>
+                  <select class="select" id="prod-select-estado">
+                    <option value="activo">🟢 Activo en Punto de Venta</option>
+                    <option value="inactivo">⚪ Inactivo / Oculto</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="campo-grupo" style="margin-bottom:0.9rem;">
+                <label for="prod-input-nombre">Descripción / Nombre Completo del Producto *</label>
+                <input type="text" class="input" id="prod-input-nombre" placeholder="Ej: Cemento Sol Tipo I 42.5kg o Tubo PVC 1/2 pulgada x 3m Pavco" required style="font-weight:700; font-size:1.05rem;">
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.9rem;">
+                <div class="campo-grupo">
+                  <label for="prod-select-categoria">Categoría Ferretera</label>
+                  <select class="select" id="prod-select-categoria"></select>
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-marca">Marca / Fabricante</label>
+                  <input type="text" class="input" id="prod-input-marca" placeholder="Ej: Stanley, Pavco, Sika, Bosch...">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-select-unidad">Unidad de Medida</label>
+                  <select class="select" id="prod-select-unidad"></select>
+                </div>
+              </div>
+
+              <div class="campo-grupo">
+                <label for="prod-input-descripcion">Especificaciones Técnicas / Medidas / Notas</label>
+                <input type="text" class="input" id="prod-input-descripcion" placeholder="Ej: Rosca 1/4 pulgada, acero galvanizado, alta resistencia...">
               </div>
             </div>
+
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>2. Costos, Precios y Calculadora Bidireccional de Margen</span>
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.85rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-compra">P. Compra / Costo (S/)</label>
+                  <input type="number" step="0.01" min="0" class="input" id="prod-input-compra" placeholder="0.00" value="0.00">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-margen">Margen de Ganancia (%)</label>
+                  <input type="number" step="0.5" min="0" class="input" id="prod-input-margen" placeholder="30.0" value="30.0">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-venta">Precio Venta Público (S/) *</label>
+                  <input type="number" step="0.01" min="0" class="input" id="prod-input-venta" placeholder="0.00" required style="font-weight:800; font-size:1.15rem; color:var(--brand-primary);">
+                </div>
+              </div>
+
+              <div class="grid-2" style="margin-bottom:1rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-mayor">Precio por Mayor / Especial (Opcional)</label>
+                  <input type="number" step="0.01" min="0" class="input" id="prod-input-mayor" placeholder="0.00">
+                </div>
+                <div class="campo-grupo" style="display:flex; align-items:center; gap:0.5rem; margin-top:1.4rem;">
+                  <input type="checkbox" id="prod-chk-fraccionada" checked style="width:18px; height:18px; accent-color:var(--brand-primary); cursor:pointer;">
+                  <label for="prod-chk-fraccionada" style="margin:0; cursor:pointer; font-weight:600;">Permite venta fraccionada (ej: 1.5 metros, 0.25 kg)</label>
+                </div>
+              </div>
+
+              <!-- Tarjeta de Diagnóstico Financiero en Tiempo Real -->
+              <div class="tarjeta-margen-calculadora">
+                <div class="margen-stat-item">
+                  <span class="margen-stat-label">Costo Unitario</span>
+                  <span class="margen-stat-val" id="calc-preview-costo">S/ 0.00</span>
+                </div>
+                <div class="margen-stat-item">
+                  <span class="margen-stat-label">Ganancia Neta Unitaria</span>
+                  <span class="margen-stat-val ganancia-positiva" id="calc-preview-ganancia">+ S/ 0.00</span>
+                </div>
+                <div class="margen-stat-item">
+                  <span class="margen-stat-label">Margen sobre Costo</span>
+                  <span class="margen-stat-val ganancia-positiva" id="calc-preview-margen">+0.0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Inventario, Almacén y Vista Previa de Etiqueta Barcode -->
+          <div>
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>3. Control de Existencias y Ubicación</span>
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.9rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-stock">Stock Actual</label>
+                  <input type="number" step="any" min="0" class="input" id="prod-input-stock" placeholder="0" value="0" style="font-weight:800;">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-stock-min">Stock Mínimo (Alerta)</label>
+                  <input type="number" step="any" min="0" class="input" id="prod-input-stock-min" placeholder="5" value="5">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-stock-max">Stock Máximo / Óptimo</label>
+                  <input type="number" step="any" min="0" class="input" id="prod-input-stock-max" placeholder="Opcional">
+                </div>
+              </div>
+
+              <div class="campo-grupo">
+                <label for="prod-input-ubicacion">Ubicación Física en Almacén (Pasillo / Estante)</label>
+                <input type="text" class="input" id="prod-input-ubicacion" placeholder="Ej: Pasillo 2 - Estante C - Nivel 1">
+              </div>
+            </div>
+
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>4. Vista Previa de Etiqueta con Código de Barras</span>
+                <span class="marca-badge">CODE-128 SVG</span>
+              </div>
+              <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:0.85rem;">
+                Así se verá la etiqueta adhesiva del producto al imprimirla para tus estantes o empaques:
+              </p>
+              <div id="prod-live-barcode-preview" style="background:var(--slate-50); padding:1rem; border-radius:var(--radius-sm); border:1px dashed var(--slate-300); display:flex; justify-content:center;">
+                <!-- Se actualiza en vivo al escribir nombre, código o precio -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 5: KARDEX Y AUDITORÍA DE MOVIMIENTOS DE STOCK
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-kardex">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-kardex">
+            ← Volver al Inventario
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2>📜 Kardex y Auditoría de Movimientos de Stock</h2>
+            <p id="kardex-subtitulo-filtro">Trazabilidad completa de entradas por compra, salidas por venta, devoluciones y ajustes físicos.</p>
+          </div>
+        </div>
+        <div class="pagina-header-acciones">
+          <button type="button" class="btn btn-outline" id="btn-kardex-ver-todos" style="display:none;">🔄 Ver Todos los Productos</button>
+          <button type="button" class="btn btn-primary" id="btn-kardex-exportar-excel">📊 Exportar Kardex a Excel</button>
+        </div>
+      </div>
+
+      <!-- KPIs de Movimientos Kardex -->
+      <div class="kpis-grid">
+        <div class="kpi-card kpi-primary">
+          <div class="kpi-info">
+            <h3>Total Movimientos</h3>
+            <div class="kpi-valor" id="kardex-kpi-total">0</div>
+            <div class="kpi-subtexto">Operaciones registradas</div>
+          </div>
+          <div class="kpi-icono">📜</div>
+        </div>
+        <div class="kpi-card kpi-success">
+          <div class="kpi-info">
+            <h3>Entradas y Compras</h3>
+            <div class="kpi-valor" id="kardex-kpi-entradas">0</div>
+            <div class="kpi-subtexto">Ingresos de mercadería</div>
+          </div>
+          <div class="kpi-icono">📥</div>
+        </div>
+        <div class="kpi-card kpi-info">
+          <div class="kpi-info">
+            <h3>Salidas por Ventas</h3>
+            <div class="kpi-valor" id="kardex-kpi-salidas">0</div>
+            <div class="kpi-subtexto">Despachos en Punto de Venta</div>
+          </div>
+          <div class="kpi-icono">🛒</div>
+        </div>
+        <div class="kpi-card kpi-warning">
+          <div class="kpi-info">
+            <h3>Ajustes y Devoluciones</h3>
+            <div class="kpi-valor" id="kardex-kpi-ajustes">0</div>
+            <div class="kpi-subtexto">Conteos físicos y anulaciones</div>
+          </div>
+          <div class="kpi-icono">⚖️</div>
+        </div>
+      </div>
+
+      <div class="panel-modulo">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div style="display:flex; gap:0.65rem; flex-wrap:wrap; flex:1;">
+            <input type="search" class="input" id="kardex-buscar-input" placeholder="Buscar en Kardex por producto, código SKU, comprobante o motivo..." style="min-width:250px; flex:1;">
+            <select class="select" id="kardex-filtro-tipo" style="width:auto; min-width:210px;">
+              <option value="">Todos los Tipos de Movimiento</option>
+              <option value="Ingreso">📥 Entradas / Compras</option>
+              <option value="Salida">🛒 Salidas por Venta</option>
+              <option value="Ajuste">⚖️ Ajustes de Inventario</option>
+              <option value="Devolución">↩️ Devoluciones por Anulación</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tabla-container">
+          <table class="tabla-general">
+            <thead>
+              <tr>
+                <th style="width:155px;">Fecha y Hora</th>
+                <th style="width:115px;">Código SKU</th>
+                <th>Producto</th>
+                <th>Tipo de Movimiento</th>
+                <th class="text-right" style="width:105px;">Variación</th>
+                <th class="text-right" style="width:105px;">Stock Ant.</th>
+                <th class="text-right" style="width:110px;">Nuevo Stock</th>
+                <th>Motivo / Referencia</th>
+              </tr>
+            </thead>
+            <tbody id="kardex-tabla-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 6: ESTUDIO E IMPRESIÓN DE ETIQUETAS DE CÓDIGO DE BARRAS
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-etiquetas">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-etiquetas">
+            ← Volver al Inventario
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2>🏷️ Estudio e Impresión de Etiquetas de Código de Barras</h2>
+            <p>Genera etiquetas térmicas adhesivas (Code-128 vectorial) con precio y SKU para estanterías y productos sin código de fábrica.</p>
+          </div>
+        </div>
+        <div class="pagina-header-acciones">
+          <button type="button" class="btn btn-primary" id="btn-imprimir-etiquetas-barcode">🖨️ Mandar a Imprimir Etiquetas</button>
+        </div>
+      </div>
+
+      <div class="pagina-etiquetas-layout">
+        <!-- Panel Izquierdo: Configuración y Selección de Productos -->
+        <div class="card-seccion-pagina">
+          <div class="card-seccion-titulo">
+            <span>⚙️ Configuración de Etiquetas</span>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:0.9rem;">
             <div class="campo-grupo">
-              <label for="prod-input-barcode">Código de Barras</label>
-              <input type="text" class="input" id="prod-input-barcode" placeholder="Escáner o dejar vacío">
+              <label for="etiquetas-input-copias">Copias por Producto</label>
+              <input type="number" id="etiquetas-input-copias" min="1" max="100" value="2" class="input" style="font-weight:800; text-align:center;">
             </div>
             <div class="campo-grupo">
-              <label for="prod-select-estado">Estado del Producto</label>
-              <select class="select" id="prod-select-estado">
-                <option value="activo">🟢 Activo en Ventas</option>
-                <option value="inactivo">⚪ Inactivo / Oculto</option>
+              <label for="etiquetas-select-formato">Tamaño / Formato</label>
+              <select class="select" id="etiquetas-select-formato">
+                <option value="50x30">Sticker 50x30 mm (Estándar)</option>
+                <option value="40x25">Sticker 40x25 mm (Compacto)</option>
+                <option value="a4">Pliego Hoja A4 / Carta</option>
               </select>
             </div>
           </div>
 
-          <div class="campo-grupo" style="margin-bottom:0.85rem;">
-            <label for="prod-input-nombre">Descripción / Nombre Completo del Producto *</label>
-            <input type="text" class="input" id="prod-input-nombre" placeholder="Ej: Cemento Sol Tipo I 42.5kg o Tubo PVC 1/2 pulgada x 3m Pavco" required style="font-weight:700; font-size:1.02rem;">
-          </div>
-
-          <div class="grid-3" style="margin-bottom:1.25rem;">
-            <div class="campo-grupo">
-              <label for="prod-select-categoria">Categoría Ferretera</label>
-              <select class="select" id="prod-select-categoria"></select>
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-marca">Marca / Fabricante</label>
-              <input type="text" class="input" id="prod-input-marca" placeholder="Ej: Stanley, Pavco, Sika...">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-select-unidad">Unidad de Medida</label>
-              <select class="select" id="prod-select-unidad"></select>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+            <label style="font-size:0.8rem; font-weight:700; color:var(--slate-700);">Productos a Imprimir:</label>
+            <div style="display:flex; gap:0.35rem;">
+              <button type="button" class="btn btn-outline btn-sm" id="btn-etiquetas-sel-todos" style="padding:0.2rem 0.5rem; font-size:0.75rem;">Todos</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btn-etiquetas-limpiar" style="padding:0.2rem 0.5rem; font-size:0.75rem;">Ninguno</button>
             </div>
           </div>
 
-          <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:1rem;">
-
-          <!-- Bloque 2: Precios, Costos y Calculadora Bidireccional -->
-          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
-            2. Costos, Precios y Margen de Utilidad
+          <div class="lista-seleccion-etiquetas" id="etiquetas-lista-productos">
+            <!-- Lista dinámica con checkboxes de productos -->
           </div>
-          <div class="grid-3" style="margin-bottom:0.5rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-compra">P. Compra / Costo (S/)</label>
-              <input type="number" step="0.01" min="0" class="input" id="prod-input-compra" placeholder="0.00" value="0.00">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-margen">Margen Deseado (%)</label>
-              <input type="number" step="0.5" min="0" class="input" id="prod-input-margen" placeholder="30.0" value="30.0">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-venta">Precio Venta Público (S/) *</label>
-              <input type="number" step="0.01" min="0" class="input" id="prod-input-venta" placeholder="0.00" required style="font-weight:800; font-size:1.1rem; color:var(--brand-primary);">
-            </div>
-          </div>
-
-          <div class="grid-2" style="margin-bottom:0.75rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-mayor">Precio por Mayor / Especial (Opcional)</label>
-              <input type="number" step="0.01" min="0" class="input" id="prod-input-mayor" placeholder="0.00">
-            </div>
-            <div class="campo-grupo" style="display:flex; align-items:center; gap:0.5rem; margin-top:1.5rem;">
-              <input type="checkbox" id="prod-chk-fraccionada" checked style="width:18px; height:18px; accent-color:var(--brand-primary); cursor:pointer;">
-              <label for="prod-chk-fraccionada" style="margin:0; cursor:pointer; font-weight:600;">Permite venta fraccionada (ej: 1.5 metros, 0.25 kg)</label>
-            </div>
-          </div>
-
-          <!-- Tarjeta de Diagnóstico Financiero en Tiempo Real -->
-          <div class="tarjeta-margen-calculadora" style="margin-bottom:1.25rem;">
-            <div class="margen-stat-item">
-              <span class="margen-stat-label">Costo Unitario</span>
-              <span class="margen-stat-val" id="calc-preview-costo">S/ 0.00</span>
-            </div>
-            <div class="margen-stat-item">
-              <span class="margen-stat-label">Ganancia Neta</span>
-              <span class="margen-stat-val ganancia-positiva" id="calc-preview-ganancia">+ S/ 0.00</span>
-            </div>
-            <div class="margen-stat-item">
-              <span class="margen-stat-label">Margen sobre Costo</span>
-              <span class="margen-stat-val ganancia-positiva" id="calc-preview-margen">+0.0%</span>
-            </div>
-          </div>
-
-          <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:1rem;">
-
-          <!-- Bloque 3: Stock y Almacén -->
-          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
-            3. Control de Existencias y Ubicación
-          </div>
-          <div class="grid-3" style="margin-bottom:0.85rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-stock">Stock Actual</label>
-              <input type="number" step="any" min="0" class="input" id="prod-input-stock" placeholder="0" value="0">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-stock-min">Stock Mínimo (Alerta)</label>
-              <input type="number" step="any" min="0" class="input" id="prod-input-stock-min" placeholder="5" value="5">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-stock-max">Stock Máximo / Capacidad</label>
-              <input type="number" step="any" min="0" class="input" id="prod-input-stock-max" placeholder="Opcional">
-            </div>
-          </div>
-
-          <div class="grid-2">
-            <div class="campo-grupo">
-              <label for="prod-input-ubicacion">Ubicación Física en Almacén</label>
-              <input type="text" class="input" id="prod-input-ubicacion" placeholder="Ej: Pasillo 2 - Estante C - Nivel 1">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-descripcion">Especificaciones Técnicas / Notas</label>
-              <input type="text" class="input" id="prod-input-descripcion" placeholder="Ej: Rosca 1/4, acabado galvanizado...">
-            </div>
-          </div>
-
         </div>
-        <div class="modal-pie">
-          <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="btn-guardar-producto-modal">💾 Guardar Producto</button>
+
+        <!-- Panel Derecho: Previsualización en Vivo de la Hoja de Etiquetas -->
+        <div class="card-seccion-pagina">
+          <div class="card-seccion-titulo">
+            <span>👁️ Vista Previa de Impresión en Tiempo Real</span>
+            <span id="etiquetas-resumen-total" style="font-size:0.78rem; color:var(--brand-primary); font-weight:800;">0 etiquetas listas</span>
+          </div>
+          <div id="etiquetas-preview-contenedor" style="min-height:380px; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:1rem; background:#f8fafc;">
+            <!-- Previsualización dinámica de etiquetas -->
+          </div>
         </div>
-      </form>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 7: CONFIGURACIÓN, CATEGORÍAS Y COPIAS DE SEGURIDAD
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-ajustes">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-ajustes">
+            ← Volver al Punto de Venta
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2>⚙️ Configuración General, Categorías y Copias de Seguridad</h2>
+            <p>Personaliza los datos fiscales de tu ferretería, administra categorías/unidades de medida y gestiona respaldos de base de datos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pagina-grid-simetrico">
+        <!-- Columna 1: Datos del Negocio y Ticket -->
+        <div class="card-seccion-pagina">
+          <div class="card-seccion-titulo">
+            <span>🏢 Datos Comerciales y Encabezado de Comprobantes</span>
+          </div>
+          <form id="form-configuracion" style="display:flex; flex-direction:column; gap:0.9rem;">
+            <div class="campo-grupo">
+              <label for="cfg-empresa">Nombre Comercial de la Ferretería</label>
+              <input type="text" class="input" id="cfg-empresa" placeholder="Ej: Ferretería Sullcairi">
+            </div>
+
+            <div class="grid-2">
+              <div class="campo-grupo">
+                <label for="cfg-ruc">RUC / Identificación Fiscal</label>
+                <input type="text" class="input" id="cfg-ruc" placeholder="Ej: 20601234567">
+              </div>
+              <div class="campo-grupo">
+                <label for="cfg-telefono">Teléfono / WhatsApp</label>
+                <input type="text" class="input" id="cfg-telefono" placeholder="Ej: 987654321">
+              </div>
+            </div>
+
+            <div class="campo-grupo">
+              <label for="cfg-direccion">Dirección Comercial del Local</label>
+              <input type="text" class="input" id="cfg-direccion" placeholder="Ej: Av. Principal N° 123">
+            </div>
+
+            <div class="grid-2">
+              <div class="campo-grupo">
+                <label for="cfg-moneda">Símbolo de Moneda</label>
+                <input type="text" class="input" id="cfg-moneda" value="S/">
+              </div>
+              <div class="campo-grupo">
+                <label for="cfg-pie">Mensaje al Pie del Ticket</label>
+                <input type="text" class="input" id="cfg-pie" placeholder="Ej: ¡Gracias por su compra! Vuelva pronto.">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="btn-guardar-config-negocio" style="align-self:flex-start;">
+              💾 Guardar Datos del Negocio
+            </button>
+          </form>
+        </div>
+
+        <!-- Columna 2: Categorías, Unidades y Respaldos -->
+        <div>
+          <div class="card-seccion-pagina">
+            <div class="card-seccion-titulo">
+              <span>🏷️ Gestión de Categorías y Unidades de Medida</span>
+            </div>
+
+            <div class="campo-grupo" style="margin-bottom:1.1rem;">
+              <label for="input-nueva-categoria">Categorías Ferreteras Activas</label>
+              <div style="display:flex; gap:0.5rem;">
+                <input type="text" class="input" id="input-nueva-categoria" placeholder="Nueva categoría (ej: Soldadura y Equipos)">
+                <button type="button" class="btn btn-outline" id="btn-agregar-categoria">+ Agregar</button>
+              </div>
+              <div class="chips-gestion-lista" id="lista-chips-categorias"></div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid var(--border-color); margin:0.85rem 0;">
+
+            <div class="campo-grupo">
+              <label for="input-nueva-unidad">Unidades de Medida Activas</label>
+              <div style="display:flex; gap:0.5rem;">
+                <input type="text" class="input" id="input-nueva-unidad" placeholder="Nueva unidad (ej: Balde, Saco, Varilla)">
+                <button type="button" class="btn btn-outline" id="btn-agregar-unidad">+ Agregar</button>
+              </div>
+              <div class="chips-gestion-lista" id="lista-chips-unidades"></div>
+            </div>
+          </div>
+
+          <div class="card-seccion-pagina">
+            <div class="card-seccion-titulo">
+              <span>💾 Centro de Copias de Seguridad (Backup & Restore)</span>
+            </div>
+            <p style="font-size:0.84rem; color:var(--slate-600); margin-bottom:1rem;">
+              Descarga una copia completa de tu inventario, Kardex y ventas en archivo <code>.json</code> o restaura un respaldo previo en cualquier dispositivo.
+            </p>
+            <div style="display:flex; gap:0.65rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+              <button type="button" class="btn btn-primary" id="btn-descargar-respaldo-json">💾 Descargar Respaldo JSON</button>
+              <button type="button" class="btn btn-outline" id="btn-subir-respaldo-json">📂 Restaurar Respaldo JSON</button>
+              <input type="file" id="input-archivo-subir-json" accept=".json" style="display:none;">
+            </div>
+
+            <div style="background:#fee2e2; border:1px solid #fca5a5; padding:1rem; border-radius:var(--radius-sm);">
+              <h5 style="color:#b91c1c; font-weight:800; margin-bottom:0.25rem;">⚠️ Zona de Mantenimiento y Reinicio</h5>
+              <p style="font-size:0.8rem; color:#991b1b; margin-bottom:0.65rem;">
+                Elimina todos los productos, movimientos y ventas para iniciar la base de datos desde cero.
+              </p>
+              <button type="button" class="btn btn-danger btn-sm" id="btn-reiniciar-sistema">⚠️ Reiniciar Todo el Sistema a Cero</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Barra Flotante de Acceso Rápido al Carrito para Móviles/Tablets en POS -->
+  <div class="pos-mobile-cart-bar no-print" id="pos-mobile-cart-bar">
+    <div>
+      <div style="font-weight:800; font-size:0.92rem;" id="mob-cart-resumen">🛒 0 productos</div>
+      <div style="font-size:0.75rem; opacity:0.9;">Toca para ir a caja y cobrar</div>
     </div>
+    <div style="font-weight:900; font-size:1.1rem;" id="mob-cart-total">S/ 0.00 ↓</div>
   </div>
 
-  <!-- Modal: Reabastecimiento y Ajuste de Stock -->
+  <!-- ======================================================================
+       MODALES RÁPIDOS DE APOYO (+ STOCK, TICKET TÉRMICO Y ACCIONES EN LOTE)
+       ====================================================================== -->
+
+  <!-- Modal Rápido: Reabastecimiento y Ajuste de Stock en 1 Clic -->
   <div class="modal-overlay" id="modal-stock">
     <div class="modal-caja" style="max-width:500px;">
       <div class="modal-head">
@@ -681,80 +1029,7 @@
     </div>
   </div>
 
-  <!-- Modal: Auditoría y Kardex de Movimientos de Stock -->
-  <div class="modal-overlay" id="modal-kardex">
-    <div class="modal-caja" style="max-width:980px;">
-      <div class="modal-head">
-        <h3>📜 Kardex y Auditoría de Movimientos de Stock</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-cuerpo" style="padding:1.25rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; flex:1;">
-            <input type="search" class="input" id="kardex-buscar-input" placeholder="Buscar por producto, código o motivo..." style="min-width:240px; flex:1;">
-            <select class="select" id="kardex-filtro-tipo" style="width:auto; min-width:180px;">
-              <option value="">Todos los Movimientos</option>
-              <option value="Ingreso">📥 Entradas / Compras</option>
-              <option value="Salida">🛒 Salidas por Venta</option>
-              <option value="Ajuste">⚖️ Ajustes de Inventario</option>
-              <option value="Devolución">↩️ Devoluciones</option>
-            </select>
-          </div>
-          <button type="button" class="btn btn-outline" id="btn-kardex-exportar-excel">📊 Exportar Kardex a Excel</button>
-        </div>
-
-        <div class="tabla-container" style="max-height:480px; overflow-y:auto;">
-          <table class="tabla-general">
-            <thead>
-              <tr>
-                <th style="width:130px;">Fecha y Hora</th>
-                <th style="width:100px;">Código</th>
-                <th>Producto</th>
-                <th>Tipo</th>
-                <th class="text-right" style="width:90px;">Cantidad</th>
-                <th class="text-right" style="width:90px;">Stock Ant.</th>
-                <th class="text-right" style="width:90px;">Nuevo Stock</th>
-                <th>Motivo / Referencia</th>
-              </tr>
-            </thead>
-            <tbody id="kardex-tabla-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-pie">
-        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Generador e Impresión de Etiquetas con Códigos de Barras -->
-  <div class="modal-overlay" id="modal-etiquetas-barcode">
-    <div class="modal-caja" style="max-width:880px;">
-      <div class="modal-head">
-        <h3>🏷️ Impresión de Etiquetas de Código de Barras</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-cuerpo" style="padding:1.25rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem; background:var(--slate-50); padding:0.75rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <label for="etiquetas-input-copias" style="font-weight:700; font-size:0.85rem;">Copias por producto:</label>
-            <input type="number" id="etiquetas-input-copias" min="1" max="100" value="2" class="input" style="width:75px; text-align:center; font-weight:800;">
-          </div>
-          <span style="font-size:0.8rem; color:var(--slate-500);">Formato sticker térmico estándar (50x30mm) con código de barras Code-128</span>
-        </div>
-
-        <div id="etiquetas-preview-contenedor" style="max-height:450px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:1rem; background:#f8fafc;">
-          <!-- Previsualización dinámica de etiquetas -->
-        </div>
-      </div>
-      <div class="modal-pie" style="justify-content:space-between;">
-        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
-        <button type="button" class="btn btn-primary" id="btn-imprimir-etiquetas-barcode">🖨️ Mandar a Imprimir Etiquetas</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Ajuste Masivo de Precios (Bulk Price Adjustment) -->
+  <!-- Modal Rápido: Ajuste Masivo de Precios (Bulk Price Adjustment) -->
   <div class="modal-overlay" id="modal-bulk-precios">
     <div class="modal-caja" style="max-width:460px;">
       <div class="modal-head">
@@ -793,7 +1068,7 @@
     </div>
   </div>
 
-  <!-- Modal: Cambio Masivo de Categoría (Bulk Category Assignment) -->
+  <!-- Modal Rápido: Cambio Masivo de Categoría (Bulk Category Assignment) -->
   <div class="modal-overlay" id="modal-bulk-categoria">
     <div class="modal-caja" style="max-width:440px;">
       <div class="modal-head">
@@ -818,7 +1093,7 @@
     </div>
   </div>
 
-  <!-- Modal: Ticket de Venta / Impresión Térmica -->
+  <!-- Modal Rápido: Ticket de Venta / Impresión Térmica -->
   <div class="modal-overlay" id="modal-ticket">
     <div class="modal-caja" style="max-width:440px;">
       <div class="modal-head">
@@ -831,75 +1106,6 @@
       <div class="modal-pie" style="justify-content:space-between;">
         <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
         <button type="button" class="btn btn-primary" id="btn-ticket-imprimir">🖨️ Imprimir Ticket</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Configuración de la Ferretería y Respaldos -->
-  <div class="modal-overlay" id="modal-configuracion">
-    <div class="modal-caja" style="max-width:560px;">
-      <div class="modal-head">
-        <h3>⚙️ Configuración y Copias de Seguridad</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-cuerpo">
-        <form id="form-configuracion" style="display:flex; flex-direction:column; gap:0.85rem;">
-          <div class="campo-grupo">
-            <label for="cfg-empresa">Nombre Comercial de la Ferretería</label>
-            <input type="text" class="input" id="cfg-empresa" placeholder="Ej: Ferretería Sullcairi">
-          </div>
-
-          <div class="grid-2">
-            <div class="campo-grupo">
-              <label for="cfg-ruc">RUC / Identificación Fiscal</label>
-              <input type="text" class="input" id="cfg-ruc" placeholder="Ej: 20601234567">
-            </div>
-            <div class="campo-grupo">
-              <label for="cfg-telefono">Teléfono / WhatsApp</label>
-              <input type="text" class="input" id="cfg-telefono" placeholder="Ej: 987654321">
-            </div>
-          </div>
-
-          <div class="campo-grupo">
-            <label for="cfg-direccion">Dirección Comercial</label>
-            <input type="text" class="input" id="cfg-direccion" placeholder="Ej: Av. Principal 123">
-          </div>
-
-          <div class="grid-2">
-            <div class="campo-grupo">
-              <label for="cfg-moneda">Símbolo de Moneda</label>
-              <input type="text" class="input" id="cfg-moneda" value="S/">
-            </div>
-            <div class="campo-grupo">
-              <label for="cfg-pie">Pie de Ticket</label>
-              <input type="text" class="input" id="cfg-pie" placeholder="Ej: ¡Gracias por su preferencia!">
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Guardar Datos del Negocio</button>
-        </form>
-
-        <hr style="border:none; border-top:1px solid var(--border-color); margin:0.5rem 0;">
-
-        <!-- Respaldos -->
-        <div>
-          <h4 style="font-size:0.95rem; font-weight:800; margin-bottom:0.4rem;">Copias de Seguridad (Backup)</h4>
-          <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:0.75rem;">Guarda una copia en tu PC o restaura tus datos cuando lo necesites.</p>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button class="btn btn-outline" id="btn-descargar-respaldo-json">💾 Descargar Respaldo JSON</button>
-            <button class="btn btn-outline" id="btn-subir-respaldo-json">📂 Restaurar Respaldo JSON</button>
-            <input type="file" id="input-archivo-subir-json" accept=".json" style="display:none;">
-          </div>
-        </div>
-
-        <div style="background:#fee2e2; border:1px solid #fca5a5; padding:0.85rem; border-radius:var(--radius-sm); margin-top:0.5rem;">
-          <h5 style="color:#b91c1c; font-weight:800; margin-bottom:0.25rem;">Zona de Peligro</h5>
-          <p style="font-size:0.775rem; color:#991b1b; margin-bottom:0.5rem;">Borra todos los productos y ventas si deseas reiniciar todo el sistema a cero.</p>
-          <button class="btn btn-danger btn-sm" id="btn-reiniciar-sistema">⚠️ Reiniciar Todo a Cero</button>
-        </div>
-      </div>
-      <div class="modal-pie">
-        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
       </div>
     </div>
   </div>

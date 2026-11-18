@@ -83,6 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderInventario(state);
     renderResumenVentas(state);
     renderConfiguracion(state);
+    renderTablaKardex();
+    renderListaSeleccionEtiquetas();
     actualizarNombreEmpresaCabecera(state);
     actualizarAlertasNavegacion(state);
   });
@@ -111,17 +113,39 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // NAVEGACIÓN ENTRE WORKSPACES (PESTAÑAS)
+  // ENRUTADOR DE PÁGINAS INDIVIDUALES (MULTI-PAGE ROUTER + HASH NAVIGATION)
   // ==========================================================================
+
+  const TITULOS_PAGINAS = {
+    pos: "Punto de Venta (Caja) | Ferretería Sullcairi PRO",
+    inventario: "Inventario y Catálogo de Stock | Ferretería Sullcairi PRO",
+    producto: "Ficha de Producto | Ferretería Sullcairi PRO",
+    kardex: "Kardex y Movimientos de Stock | Ferretería Sullcairi PRO",
+    etiquetas: "Estudio de Etiquetas y Códigos de Barras | Ferretería Sullcairi PRO",
+    resumen: "Resumen y Reportes de Ventas | Ferretería Sullcairi PRO",
+    ajustes: "Configuración y Copias de Seguridad | Ferretería Sullcairi PRO"
+  };
 
   navBotones.forEach(btn => {
     btn.addEventListener('click', () => {
       const seccionDestino = btn.getAttribute('data-seccion');
-      if (seccionDestino) cambiarSeccion(seccionDestino);
+      if (!seccionDestino) return;
+      if (seccionDestino === 'producto' && !productoEnEdicion) {
+        abrirModalNuevoProducto();
+      } else if (seccionDestino === 'kardex') {
+        abrirModalKardex(null);
+      } else if (seccionDestino === 'etiquetas') {
+        const activos = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
+        abrirModalEtiquetasBarcode(activos);
+      } else {
+        cambiarSeccion(seccionDestino);
+      }
     });
   });
 
   function cambiarSeccion(seccionId) {
+    if (!TITULOS_PAGINAS[seccionId]) seccionId = 'pos';
+
     navBotones.forEach(b => {
       b.classList.toggle('activo', b.getAttribute('data-seccion') === seccionId);
     });
@@ -129,13 +153,64 @@ document.addEventListener('DOMContentLoaded', () => {
       sec.classList.toggle('activo', sec.id === `seccion-${seccionId}`);
     });
 
+    document.title = TITULOS_PAGINAS[seccionId] || "Sistema Ferretero PRO";
+    if (window.location.hash !== `#${seccionId}`) {
+      try {
+        history.pushState(null, "", `#${seccionId}`);
+      } catch (e) {
+        window.location.hash = seccionId;
+      }
+    }
+
+    // Mostrar/ocultar barra flotante de carrito en móvil solo en POS
+    const mobCartBar = document.getElementById('pos-mobile-cart-bar');
+    if (mobCartBar) {
+      mobCartBar.classList.toggle('visible-en-pos', seccionId === 'pos');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     if (seccionId === 'pos') {
       const inputBusq = document.getElementById('pos-buscar-input');
       if (inputBusq) inputBusq.focus();
+    } else if (seccionId === 'kardex') {
+      renderTablaKardex();
+    } else if (seccionId === 'etiquetas') {
+      renderListaSeleccionEtiquetas();
+      renderPrevisualizacionEtiquetas();
+    } else if (seccionId === 'ajustes') {
+      renderConfiguracion(Store.getState());
     }
   }
 
-  // Atajos de Teclado Profesionales
+  // Soporte para botón Atrás/Adelante del navegador
+  window.addEventListener('popstate', () => {
+    const hash = (window.location.hash || "").replace("#", "").trim();
+    if (hash && TITULOS_PAGINAS[hash]) {
+      cambiarSeccion(hash);
+    }
+  });
+
+  // Botones "← Volver" de cada página individual
+  document.getElementById('btn-volver-desde-producto')?.addEventListener('click', () => {
+    productoEnEdicion = null;
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-cancelar-producto-pag')?.addEventListener('click', () => {
+    productoEnEdicion = null;
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-volver-desde-kardex')?.addEventListener('click', () => {
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-volver-desde-etiquetas')?.addEventListener('click', () => {
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-volver-desde-ajustes')?.addEventListener('click', () => {
+    cambiarSeccion('pos');
+  });
+
+  // Atajos de Teclado Profesionales para todas las páginas
   document.addEventListener('keydown', (e) => {
     if (e.key === 'F2') {
       e.preventDefault();
@@ -153,15 +228,24 @@ document.addEventListener('DOMContentLoaded', () => {
       cambiarSeccion('inventario');
     } else if (e.altKey && e.key === '3') {
       e.preventDefault();
+      abrirModalNuevoProducto();
+    } else if (e.altKey && e.key === '4') {
+      e.preventDefault();
+      abrirModalKardex(null);
+    } else if (e.altKey && e.key === '5') {
+      e.preventDefault();
+      abrirModalEtiquetasBarcode((Store.getState().productos || []).filter(p => p.estado !== "inactivo"));
+    } else if (e.altKey && e.key === '6') {
+      e.preventDefault();
       cambiarSeccion('resumen');
     }
   });
 
-  // Botón Ajustes / Configuración en cabecera
+  // Botón Ajustes / Configuración en cabecera navega a su página individual
   const btnAbrirConfiguracion = document.getElementById('btn-abrir-configuracion');
   if (btnAbrirConfiguracion) {
     btnAbrirConfiguracion.addEventListener('click', () => {
-      document.getElementById('modal-configuracion')?.classList.add('activo');
+      cambiarSeccion('ajustes');
     });
   }
 
@@ -366,6 +450,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (badgeCantidadItems) badgeCantidadItems.textContent = `${totalUnidades} items`;
     if (elSubtotal) elSubtotal.textContent = `${moneda} ${totalVenta.toFixed(2)}`;
     if (elTotal) elTotal.textContent = `${moneda} ${totalVenta.toFixed(2)}`;
+
+    // Actualizar barra flotante móvil de POS
+    const mobResumen = document.getElementById('mob-cart-resumen');
+    const mobTotal = document.getElementById('mob-cart-total');
+    if (mobResumen) mobResumen.textContent = `🛒 ${totalUnidades} producto${totalUnidades === 1 ? '' : 's'} en caja`;
+    if (mobTotal) mobTotal.textContent = `${moneda} ${totalVenta.toFixed(2)} ↓`;
 
     // Cálculo y visualización de vuelto
     if (inputRecibido && cajaVuelto && textoVuelto) {
@@ -1142,12 +1232,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // MODAL PRODUCTO CON CALCULADORA DE RENTABILIDAD EN VIVO
+  // PÁGINA INDIVIDUAL: FICHA DE PRODUCTO CON CALCULADORA Y BARCODE EN VIVO
   // ==========================================================================
 
   const inputCompraProd = document.getElementById('prod-input-compra');
   const inputMargenProd = document.getElementById('prod-input-margen');
   const inputVentaProd = document.getElementById('prod-input-venta');
+
+  function actualizarVistaPreviaEtiquetaProducto() {
+    const previewCont = document.getElementById('prod-live-barcode-preview');
+    if (!previewCont) return;
+
+    const codigo = document.getElementById('prod-input-codigo')?.value.trim() || "FER-0001";
+    const codigoBarras = document.getElementById('prod-input-barcode')?.value.trim() || codigo;
+    const nombre = document.getElementById('prod-input-nombre')?.value.trim() || "Nombre del Producto";
+    const categoria = document.getElementById('prod-select-categoria')?.value || "General";
+    const marca = document.getElementById('prod-input-marca')?.value.trim() || "";
+    const unidad = document.getElementById('prod-select-unidad')?.value || "Unidad";
+    const precioVenta = parseFloat(document.getElementById('prod-input-venta')?.value) || 0;
+
+    const htmlSticker = ExportManager.generarEtiquetasHTML([{
+      producto: {
+        codigo,
+        codigoBarras,
+        nombre,
+        categoria,
+        marca,
+        unidad,
+        precioVenta
+      },
+      copias: 1
+    }]);
+    previewCont.innerHTML = htmlSticker;
+  }
 
   function actualizarCalculadoraMargen(origen = 'costo') {
     const costo = parseFloat(inputCompraProd?.value) || 0;
@@ -1182,17 +1299,28 @@ document.addEventListener('DOMContentLoaded', () => {
       prevMargen.textContent = `${Number(margenCalc) >= 0 ? '+' : ''}${margenCalc}%`;
       prevMargen.className = `margen-stat-val ${Number(margenCalc) >= 0 ? 'ganancia-positiva' : 'ganancia-negativa'}`;
     }
+
+    actualizarVistaPreviaEtiquetaProducto();
   }
 
   inputCompraProd?.addEventListener('input', () => actualizarCalculadoraMargen('costo'));
   inputMargenProd?.addEventListener('input', () => actualizarCalculadoraMargen('margen'));
   inputVentaProd?.addEventListener('input', () => actualizarCalculadoraMargen('venta'));
 
+  ['prod-input-codigo', 'prod-input-barcode', 'prod-input-nombre', 'prod-input-marca', 'prod-select-categoria', 'prod-select-unidad'].forEach(idCampo => {
+    const el = document.getElementById(idCampo);
+    if (el) {
+      el.addEventListener('input', actualizarVistaPreviaEtiquetaProducto);
+      el.addEventListener('change', actualizarVistaPreviaEtiquetaProducto);
+    }
+  });
+
   document.getElementById('btn-autogenerar-codigo')?.addEventListener('click', () => {
     const inputCod = document.getElementById('prod-input-codigo');
     if (inputCod) {
       const correlativo = String((Store.getState().productos || []).length + 1).padStart(4, "0");
       inputCod.value = "FER-" + correlativo;
+      actualizarVistaPreviaEtiquetaProducto();
     }
   });
 
@@ -1202,16 +1330,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function abrirModalNuevoProducto() {
     productoEnEdicion = null;
-    const modal = document.getElementById('modal-producto');
     const titulo = document.getElementById('modal-producto-titulo');
     const form = document.getElementById('form-producto');
-    if (!modal || !form) return;
+    if (!form) return;
 
-    titulo.textContent = "Nuevo Producto de Ferretería";
+    if (titulo) titulo.textContent = "➕ Nuevo Producto de Ferretería";
     form.reset();
     poblarSelectsProducto();
 
-    // Generar código sugerido por defecto
     const correlativo = String((Store.getState().productos || []).length + 1).padStart(4, "0");
     const codInput = document.getElementById('prod-input-codigo');
     if (codInput) codInput.value = "FER-" + correlativo;
@@ -1221,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputVentaProd) inputVentaProd.value = "0.00";
     actualizarCalculadoraMargen('costo');
 
-    modal.classList.add('activo');
+    cambiarSeccion('producto');
     document.getElementById('prod-input-nombre')?.focus();
   }
 
@@ -1230,11 +1356,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!prod) return;
 
     productoEnEdicion = prod;
-    const modal = document.getElementById('modal-producto');
     const titulo = document.getElementById('modal-producto-titulo');
-    if (!modal) return;
-
-    titulo.textContent = "Editar Producto: " + prod.nombre;
+    if (titulo) titulo.textContent = "✏️ Editar Producto: " + prod.nombre;
     poblarSelectsProducto();
 
     const setVal = (elemId, val) => {
@@ -1262,7 +1385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chkFrac) chkFrac.checked = prod.permiteDecimales !== false;
 
     actualizarCalculadoraMargen('venta');
-    modal.classList.add('activo');
+    cambiarSeccion('producto');
   }
 
   function poblarSelectsProducto() {
@@ -1314,11 +1437,12 @@ document.addEventListener('DOMContentLoaded', () => {
       Store.addProduct(payload);
     }
 
-    cerrarModales();
+    productoEnEdicion = null;
+    cambiarSeccion('inventario');
   });
 
   // ==========================================================================
-  // MODAL REABASTECIMIENTO Y AJUSTE DE STOCK (+ STOCK)
+  // MODAL RÁPIDO: REABASTECIMIENTO Y AJUSTE DE STOCK (+ STOCK)
   // ==========================================================================
 
   function abrirModalAgregarStock(id) {
@@ -1396,29 +1520,59 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // MODAL KARDEX / AUDITORÍA DE MOVIMIENTOS DE STOCK
+  // PÁGINA INDIVIDUAL: KARDEX / AUDITORÍA DE MOVIMIENTOS DE STOCK
   // ==========================================================================
 
   document.getElementById('btn-inv-abrir-kardex')?.addEventListener('click', () => {
     abrirModalKardex(null);
   });
 
+  document.getElementById('btn-kardex-ver-todos')?.addEventListener('click', () => {
+    abrirModalKardex(null);
+  });
+
   function abrirModalKardex(productoId = null) {
     productoFiltroKardex = productoId;
-    const modal = document.getElementById('modal-kardex');
-    if (!modal) return;
-
     renderTablaKardex();
-    modal.classList.add('activo');
+    cambiarSeccion('kardex');
   }
 
   function renderTablaKardex() {
     const tbody = document.getElementById('kardex-tabla-tbody');
     if (!tbody) return;
 
+    const subtitulo = document.getElementById('kardex-subtitulo-filtro');
+    const btnVerTodos = document.getElementById('btn-kardex-ver-todos');
+
+    if (productoFiltroKardex) {
+      const prod = (Store.getState().productos || []).find(p => p.id === productoFiltroKardex);
+      if (subtitulo) subtitulo.innerHTML = `Filtrando historial del producto: <b>${escapeHtml(prod ? prod.nombre : productoFiltroKardex)}</b>`;
+      if (btnVerTodos) btnVerTodos.style.display = 'inline-flex';
+    } else {
+      if (subtitulo) subtitulo.textContent = "Trazabilidad completa de entradas por compra, salidas por venta, devoluciones y ajustes físicos.";
+      if (btnVerTodos) btnVerTodos.style.display = 'none';
+    }
+
+    const todosMovs = Store.getStockMovements(productoFiltroKardex, 1000);
+
+    // Actualizar KPIs de la página Kardex
+    const kpiTotal = document.getElementById('kardex-kpi-total');
+    const kpiEntradas = document.getElementById('kardex-kpi-entradas');
+    const kpiSalidas = document.getElementById('kardex-kpi-salidas');
+    const kpiAjustes = document.getElementById('kardex-kpi-ajustes');
+
+    const cntEntradas = todosMovs.filter(m => m.tipo && m.tipo.includes("Ingreso")).length;
+    const cntSalidas = todosMovs.filter(m => m.tipo && m.tipo.includes("Salida")).length;
+    const cntAjustes = todosMovs.length - cntEntradas - cntSalidas;
+
+    if (kpiTotal) kpiTotal.textContent = String(todosMovs.length);
+    if (kpiEntradas) kpiEntradas.textContent = String(cntEntradas);
+    if (kpiSalidas) kpiSalidas.textContent = String(cntSalidas);
+    if (kpiAjustes) kpiAjustes.textContent = String(cntAjustes);
+
     const busqueda = (document.getElementById('kardex-buscar-input')?.value || "").toLowerCase().trim();
     const filtroTipo = document.getElementById('kardex-filtro-tipo')?.value || "";
-    let movs = Store.getStockMovements(productoFiltroKardex, 500);
+    let movs = todosMovs;
 
     if (filtroTipo) {
       movs = movs.filter(m => m.tipo && m.tipo.includes(filtroTipo));
@@ -1435,8 +1589,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (movs.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" style="text-align:center; padding:2rem; color:#64748b;">
-            No hay registros de movimientos en el Kardex para este criterio.
+          <td colspan="8" style="text-align:center; padding:3rem 1.5rem; color:#64748b;">
+            <div style="font-size:2.4rem; margin-bottom:0.4rem;">📜</div>
+            <p style="font-weight:700; color:#1e293b;">No hay movimientos registrados en el Kardex para este criterio</p>
+            <p style="font-size:0.82rem; margin-top:0.2rem;">Cada ingreso de stock, venta o ajuste quedará auditado automáticamente aquí.</p>
           </td>
         </tr>
       `;
@@ -1455,7 +1611,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td style="font-size:0.75rem; color:#475569;">${m.fecha ? m.fecha.replace("T", " ").slice(0, 19) : "-"}</td>
+          <td style="font-size:0.78rem; color:#475569; white-space:nowrap;">${m.fecha ? m.fecha.replace("T", " ").slice(0, 19) : "-"}</td>
           <td><code style="font-family:var(--font-mono); font-weight:700;">${escapeHtml(m.codigo)}</code></td>
           <td style="font-weight:700; color:#0f172a;">${escapeHtml(m.nombre)}</td>
           <td><span class="kardex-badge ${claseBadge}">${escapeHtml(m.tipo)}</span></td>
@@ -1463,8 +1619,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="text-right" style="font-family:var(--font-mono); color:#64748b;">${m.stockAnterior}</td>
           <td class="text-right" style="font-family:var(--font-mono); font-weight:800; color:#0f172a;">${m.stockNuevo}</td>
           <td>
-            <div style="font-size:0.8rem; color:#334155;">${escapeHtml(m.motivo || '-')}</div>
-            ${m.referencia ? `<div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(m.referencia)}</div>` : ''}
+            <div style="font-size:0.82rem; color:#334155;">${escapeHtml(m.motivo || '-')}</div>
+            ${m.referencia ? `<div style="font-size:0.72rem; color:#94a3b8;">${escapeHtml(m.referencia)}</div>` : ''}
           </td>
         </tr>
       `;
@@ -1478,44 +1634,109 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // MODAL ETIQUETAS CON CÓDIGO DE BARRAS
+  // PÁGINA INDIVIDUAL: ESTUDIO E IMPRESIÓN DE ETIQUETAS CON CÓDIGO DE BARRAS
   // ==========================================================================
 
   document.getElementById('btn-inv-abrir-etiquetas')?.addEventListener('click', () => {
     const todosActivos = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
-    if (todosActivos.length === 0) {
-      alert("No hay productos registrados en el inventario para imprimir etiquetas.");
-      return;
-    }
-    abrirModalEtiquetasBarcode(todosActivos.slice(0, 20)); // Sugerir los primeros 20
+    abrirModalEtiquetasBarcode(todosActivos.slice(0, 20));
   });
 
   function abrirModalEtiquetasBarcode(productos) {
-    productosParaEtiquetas = productos;
-    const modal = document.getElementById('modal-etiquetas-barcode');
-    if (!modal) return;
-
+    productosParaEtiquetas = Array.isArray(productos) ? productos : [];
+    renderListaSeleccionEtiquetas();
     renderPrevisualizacionEtiquetas();
-    modal.classList.add('activo');
+    cambiarSeccion('etiquetas');
   }
+
+  function renderListaSeleccionEtiquetas() {
+    const listaCont = document.getElementById('etiquetas-lista-productos');
+    if (!listaCont) return;
+
+    const todosProds = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
+    if (todosProds.length === 0) {
+      listaCont.innerHTML = `<div style="padding:1.5rem; text-align:center; color:#64748b; font-size:0.85rem;">No hay productos activos en el catálogo.</div>`;
+      return;
+    }
+
+    const idsActivos = new Set(productosParaEtiquetas.map(p => p.id));
+    listaCont.innerHTML = todosProds.map(p => {
+      const marcado = idsActivos.has(p.id);
+      return `
+        <label class="item-seleccion-etiqueta">
+          <div style="display:flex; align-items:center; gap:0.55rem;">
+            <input type="checkbox" class="chk-etiqueta-item" data-id="${p.id}" ${marcado ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--brand-primary);">
+            <div>
+              <div style="font-weight:700; color:#0f172a;">${escapeHtml(p.nombre)}</div>
+              <div style="font-size:0.72rem; color:#64748b; font-family:var(--font-mono);">${escapeHtml(p.codigo)}</div>
+            </div>
+          </div>
+          <span style="font-weight:800; font-size:0.82rem; color:var(--brand-primary);">S/ ${Number(p.precioVenta || 0).toFixed(2)}</span>
+        </label>
+      `;
+    }).join('');
+
+    listaCont.querySelectorAll('.chk-etiqueta-item').forEach(chk => {
+      chk.addEventListener('change', () => {
+        const marcadosIds = new Set(
+          Array.from(listaCont.querySelectorAll('.chk-etiqueta-item:checked')).map(c => c.getAttribute('data-id'))
+        );
+        productosParaEtiquetas = todosProds.filter(p => marcadosIds.has(p.id));
+        renderPrevisualizacionEtiquetas();
+      });
+    });
+  }
+
+  document.getElementById('btn-etiquetas-sel-todos')?.addEventListener('click', () => {
+    productosParaEtiquetas = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
+    renderListaSeleccionEtiquetas();
+    renderPrevisualizacionEtiquetas();
+  });
+
+  document.getElementById('btn-etiquetas-limpiar')?.addEventListener('click', () => {
+    productosParaEtiquetas = [];
+    renderListaSeleccionEtiquetas();
+    renderPrevisualizacionEtiquetas();
+  });
 
   function renderPrevisualizacionEtiquetas() {
     const contenedor = document.getElementById('etiquetas-preview-contenedor');
     const inputCopias = document.getElementById('etiquetas-input-copias');
+    const resumenTotal = document.getElementById('etiquetas-resumen-total');
     if (!contenedor) return;
 
-    const copias = parseInt(inputCopias?.value, 10) || 2;
+    const copias = Math.max(1, parseInt(inputCopias?.value, 10) || 1);
+    const totalStickers = productosParaEtiquetas.length * copias;
+    if (resumenTotal) {
+      resumenTotal.textContent = `${totalStickers} etiqueta${totalStickers === 1 ? '' : 's'} lista${totalStickers === 1 ? '' : 's'}`;
+    }
+
+    if (productosParaEtiquetas.length === 0) {
+      contenedor.innerHTML = `
+        <div style="text-align:center; padding:3.5rem 1rem; color:#64748b;">
+          <div style="font-size:2.5rem; margin-bottom:0.5rem;">🏷️</div>
+          <p style="font-weight:700; color:#1e293b;">Selecciona uno o más productos en la lista izquierda</p>
+          <p style="font-size:0.82rem; margin-top:0.25rem;">Las etiquetas con códigos de barras Code-128 se generarán aquí al instante.</p>
+        </div>
+      `;
+      return;
+    }
+
     const items = productosParaEtiquetas.map(p => ({ producto: p, copias: copias }));
     const htmlEtiquetas = ExportManager.generarEtiquetasHTML(items);
     contenedor.innerHTML = htmlEtiquetas;
   }
 
   document.getElementById('etiquetas-input-copias')?.addEventListener('input', renderPrevisualizacionEtiquetas);
+  document.getElementById('etiquetas-select-formato')?.addEventListener('change', renderPrevisualizacionEtiquetas);
 
   document.getElementById('btn-imprimir-etiquetas-barcode')?.addEventListener('click', () => {
     const contenedor = document.getElementById('etiquetas-preview-contenedor');
     const seccionImpresion = document.getElementById('seccion-impresion');
-    if (!contenedor || !seccionImpresion) return;
+    if (!contenedor || !seccionImpresion || productosParaEtiquetas.length === 0) {
+      alert("Selecciona al menos un producto para imprimir sus etiquetas.");
+      return;
+    }
 
     seccionImpresion.innerHTML = contenedor.innerHTML;
     window.print();
@@ -1746,7 +1967,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // CONFIGURACIÓN Y RESPALDOS
+  // PÁGINA INDIVIDUAL: CONFIGURACIÓN, CATEGORÍAS Y RESPALDOS
   // ==========================================================================
 
   function renderConfiguracion(state) {
@@ -1765,7 +1986,71 @@ document.addEventListener('DOMContentLoaded', () => {
         el.value = val;
       }
     });
+
+    // Renderizar chips de categorías editables
+    const contCat = document.getElementById('lista-chips-categorias');
+    if (contCat) {
+      contCat.innerHTML = (state.categorias || []).map(cat => `
+        <span class="chip-editable">
+          <span>${escapeHtml(cat)}</span>
+          <button type="button" class="btn-quitar-cat" data-cat="${escapeHtml(cat)}" title="Eliminar categoría">✕</button>
+        </span>
+      `).join('');
+
+      contCat.querySelectorAll('.btn-quitar-cat').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cat = btn.getAttribute('data-cat');
+          if (cat && confirm(`¿Eliminar la categoría "${cat}"?`)) {
+            Store.removeCategory(cat);
+          }
+        });
+      });
+    }
+
+    // Renderizar chips de unidades editables
+    const contUni = document.getElementById('lista-chips-unidades');
+    if (contUni) {
+      contUni.innerHTML = (state.unidades || []).map(uni => `
+        <span class="chip-editable">
+          <span>${escapeHtml(uni)}</span>
+          <button type="button" class="btn-quitar-uni" data-uni="${escapeHtml(uni)}" title="Eliminar unidad">✕</button>
+        </span>
+      `).join('');
+
+      contUni.querySelectorAll('.btn-quitar-uni').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const uni = btn.getAttribute('data-uni');
+          if (uni && confirm(`¿Eliminar la unidad de medida "${uni}"?`)) {
+            Store.removeUnit(uni);
+          }
+        });
+      });
+    }
   }
+
+  document.getElementById('btn-agregar-categoria')?.addEventListener('click', () => {
+    const input = document.getElementById('input-nueva-categoria');
+    const val = input?.value.trim();
+    if (val) {
+      if (Store.addCategory(val)) {
+        input.value = "";
+      } else {
+        alert("La categoría ya existe en la lista.");
+      }
+    }
+  });
+
+  document.getElementById('btn-agregar-unidad')?.addEventListener('click', () => {
+    const input = document.getElementById('input-nueva-unidad');
+    const val = input?.value.trim();
+    if (val) {
+      if (Store.addUnit(val)) {
+        input.value = "";
+      } else {
+        alert("La unidad de medida ya existe en la lista.");
+      }
+    }
+  });
 
   document.getElementById('form-configuracion')?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -1777,9 +2062,25 @@ document.addEventListener('DOMContentLoaded', () => {
       moneda: document.getElementById('cfg-moneda')?.value.trim() || "S/",
       pieTicket: document.getElementById('cfg-pie')?.value.trim()
     });
-    alert("Datos de la ferretería guardados correctamente.");
-    cerrarModales();
+    alert("Datos comerciales de la ferretería guardados correctamente.");
   });
+
+  document.getElementById('btn-guardar-config-negocio')?.addEventListener('click', () => {
+    document.getElementById('form-configuracion')?.requestSubmit?.();
+  });
+
+  // Barra flotante móvil de POS desplaza hacia la caja registradora
+  document.getElementById('pos-mobile-cart-bar')?.addEventListener('click', () => {
+    document.querySelector('.pos-carrito-caja')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // Inicializar página según el hash actual de la URL
+  const hashInicial = (window.location.hash || "").replace("#", "").trim();
+  if (hashInicial && TITULOS_PAGINAS[hashInicial]) {
+    cambiarSeccion(hashInicial);
+  } else {
+    cambiarSeccion('pos');
+  }
 
   document.getElementById('btn-descargar-respaldo-json')?.addEventListener('click', () => Store.exportBackupJSON());
 

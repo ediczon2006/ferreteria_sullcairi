@@ -82,7 +82,7 @@ body {
 }
 
 /* ==========================================================================
-   HEADER PRINCIPAL (DARK CORPORATE NAVIGATION)
+   HEADER PRINCIPAL (DARK CORPORATE NAVIGATION - 100% RESPONSIVE)
    ========================================================================== */
 .header-principal {
   background: linear-gradient(180deg, var(--slate-950) 0%, var(--slate-900) 100%);
@@ -95,84 +95,101 @@ body {
 }
 
 .header-contenedor {
-  max-width: 1720px;
+  max-width: 1760px;
   margin: 0 auto;
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.25rem;
+  gap: 0.85rem;
+  flex-wrap: nowrap;
 }
 
 .marca {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
   text-decoration: none;
   color: #ffffff;
+  flex-shrink: 0;
 }
 
 .marca-icono {
   background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px var(--brand-primary-glow);
-  font-size: 1.4rem;
+  font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .marca-info h1 {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  white-space: nowrap;
 }
 
 .marca-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.15rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.12rem 0.5rem;
   border-radius: var(--radius-full);
   background: rgba(234, 88, 12, 0.25);
   color: #fb923c;
-  border: 1px solid rgba(251, 146, 60, 0.3);
+  border: 1px solid rgba(251, 146, 60, 0.35);
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .marca-info p {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--slate-400);
+  white-space: nowrap;
 }
 
-/* Navegación Principal */
+/* Navegación Principal Multi-Página */
 .nav-principal {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  background: rgba(15, 23, 42, 0.6);
-  padding: 0.3rem 0.4rem;
+  gap: 0.3rem;
+  background: rgba(15, 23, 42, 0.75);
+  padding: 0.28rem 0.35rem;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 100%;
+}
+
+.nav-principal::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-btn {
   background: transparent;
   color: var(--slate-300);
   border: none;
-  padding: 0.6rem 1.1rem;
+  padding: 0.5rem 0.85rem;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -188,48 +205,61 @@ body {
 }
 
 .nav-badge-pill {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 800;
   background: rgba(0, 0, 0, 0.25);
-  padding: 0.1rem 0.4rem;
+  padding: 0.08rem 0.42rem;
   border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 /* Acciones en la cabecera */
 .header-acciones {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.6rem;
+  flex-shrink: 0;
 }
 
 .reloj-sistema {
   font-family: var(--font-mono);
-  font-size: 0.825rem;
-  color: var(--slate-400);
+  font-size: 0.78rem;
+  color: var(--slate-300);
   background: rgba(255, 255, 255, 0.05);
-  padding: 0.4rem 0.75rem;
+  padding: 0.38rem 0.65rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.38rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-estado {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.4rem 0.8rem;
+  gap: 0.4rem;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.38rem 0.7rem;
   border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.07);
-  color: var(--slate-400);
+  color: var(--slate-300);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-estado.guardado {
   background: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-estado.guardado-local {
+  background: rgba(56, 189, 248, 0.14);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
 .badge-estado.guardando {
@@ -239,11 +269,12 @@ body {
 }
 
 .badge-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: currentColor;
   box-shadow: 0 0 8px currentColor;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -251,10 +282,10 @@ body {
    ========================================================================== */
 .app-main {
   flex: 1;
-  max-width: 1720px;
+  max-width: 1760px;
   width: 100%;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem 2.5rem 1.5rem;
 }
 
 .modulo-seccion {
@@ -263,7 +294,7 @@ body {
 
 .modulo-seccion.activo {
   display: block;
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
@@ -278,14 +309,15 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  padding: 0.6rem 1.15rem;
+  padding: 0.55rem 1.05rem;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.18s ease;
   line-height: 1.25;
   text-decoration: none;
@@ -1674,10 +1706,355 @@ th.sort-active .th-sort-indicator {
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; }
 
-@media (max-width: 650px) {
-  .grid-2, .grid-3 { grid-template-columns: 1fr; }
-  .header-contenedor { flex-wrap: wrap; }
-  .nav-principal { order: 3; width: 100%; overflow-x: auto; }
+/* ==========================================================================
+   SISTEMA DE PÁGINAS INDIVIDUALES Y NAVEGACIÓN BREADCRUMB
+   ========================================================================== */
+.pagina-individual-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1.5rem;
+  margin-bottom: 1.35rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.pagina-header-izquierda {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-volver-pagina {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--slate-100);
+  color: var(--slate-700);
+  border: 1px solid var(--slate-300);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-volver-pagina:hover {
+  background: var(--slate-200);
+  color: var(--slate-900);
+  transform: translateX(-2px);
+}
+
+.pagina-titulo-bloque h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--slate-900);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagina-titulo-bloque p {
+  font-size: 0.84rem;
+  color: var(--slate-500);
+  margin-top: 0.15rem;
+}
+
+.pagina-header-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Grids de Páginas Dedicadas (Ficha de Producto, Etiquetas, Ajustes) */
+.pagina-grid-2col {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 1.35rem;
+  align-items: start;
+}
+
+.pagina-grid-simetrico {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.35rem;
+  align-items: start;
+}
+
+.pagina-etiquetas-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 1.35rem;
+  align-items: start;
+}
+
+.card-seccion-pagina {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.35rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.35rem;
+}
+
+.card-seccion-pagina:last-child {
+  margin-bottom: 0;
+}
+
+.card-seccion-titulo {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--slate-900);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Lista seleccionable de productos en Estudio de Etiquetas */
+.lista-seleccion-etiquetas {
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  divide-y: 1px solid var(--border-color);
+}
+
+.item-seleccion-etiqueta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--slate-100);
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.item-seleccion-etiqueta:hover {
+  background: var(--slate-50);
+}
+
+/* Chips de gestión de categorías y unidades en página Ajustes */
+.chips-gestion-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.chip-editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--slate-100);
+  border: 1px solid var(--slate-300);
+  color: var(--slate-800);
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.chip-editable button {
+  background: none;
+  border: none;
+  color: var(--slate-500);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.chip-editable button:hover {
+  color: var(--danger);
+}
+
+/* Barra Flotante de Carrito en Móvil/Tablet para POS */
+.pos-mobile-cart-bar {
+  display: none;
+  position: fixed;
+  bottom: 66px;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 50;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+  color: #ffffff;
+  padding: 0.75rem 1.15rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 25px rgba(234, 88, 12, 0.4);
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+/* Barra de Navegación Inferior Tipo App Nativa (Móviles) */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 65;
+  background: var(--slate-950);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.35rem 0.4rem;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mobile-nav-item {
+  background: transparent;
+  border: none;
+  color: var(--slate-400);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.3rem 0.45rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.mobile-nav-item .mob-icon {
+  font-size: 1.15rem;
+  line-height: 1.1;
+}
+
+.mobile-nav-item.activo {
+  color: #fb923c;
+  background: rgba(234, 88, 12, 0.15);
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   ADAPTABILIDAD RESPONSIVA MULTIDISPOSITIVO (4K, LAPTOP, TABLET, MÓVIL)
+   ========================================================================== */
+
+/* Laptops medianas (hasta 1360px): Cabecera en 2 niveles limpios sin cortar palabras */
+@media (max-width: 1360px) {
+  .header-contenedor {
+    flex-wrap: wrap;
+    padding: 0.65rem 1.15rem;
+    gap: 0.65rem;
+  }
+  .nav-principal {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Tablets y Laptops compactas (hasta 1150px) */
+@media (max-width: 1150px) {
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+  .pos-carrito-caja {
+    position: static;
+    max-height: none;
+  }
+  .carrito-items-scroll {
+    max-height: 360px;
+  }
+  .pagina-grid-2col,
+  .pagina-grid-simetrico,
+  .pagina-etiquetas-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablets verticales y Móviles grandes (hasta 768px) */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 68px;
+  }
+  .app-main {
+    padding: 0.85rem 0.75rem 2.5rem 0.75rem;
+  }
+  .marca-info p {
+    display: none;
+  }
+  .reloj-sistema {
+    display: none;
+  }
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  .pos-mobile-cart-bar.visible-en-pos {
+    display: flex;
+  }
+  .kpis-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .kpi-card {
+    padding: 0.9rem;
+  }
+  .kpi-valor {
+    font-size: 1.35rem;
+  }
+  .panel-modulo,
+  .card-seccion-pagina,
+  .pagina-individual-header {
+    padding: 1rem;
+  }
+  .barra-acciones-masivas {
+    bottom: 4.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+  }
+  .bulk-acciones-grupo {
+    justify-content: center;
+  }
+  .tarjeta-margen-calculadora {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
+/* Smartphones compactos (hasta 480px) */
+@media (max-width: 480px) {
+  .grid-2,
+  .grid-3,
+  .kpis-grid,
+  .grid-opciones-pago {
+    grid-template-columns: 1fr;
+  }
+  .pos-productos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    gap: 0.6rem;
+  }
+  .marca-info h1 {
+    font-size: 0.95rem;
+  }
+  .pagina-header-acciones {
+    width: 100%;
+  }
+  .pagina-header-acciones .btn {
+    flex: 1;
+  }
 }
 
 </style>
@@ -1703,21 +2080,30 @@ th.sort-active .th-sort-indicator {
         </div>
       </div>
 
-      <!-- Navegación central con las 3 secciones clave -->
-      <nav class="nav-principal" aria-label="Navegación del sistema">
-        <button class="nav-btn activo" data-seccion="pos" id="nav-btn-pos" title="Atajo: Alt+1">
+      <!-- Navegación central con páginas individuales dedicadas -->
+      <nav class="nav-principal" aria-label="Navegación principal del sistema">
+        <button class="nav-btn activo" data-seccion="pos" id="nav-btn-pos" title="Página: Punto de Venta (Alt+1)">
           <span>⚡</span> Punto de Venta
         </button>
-        <button class="nav-btn" data-seccion="inventario" id="nav-btn-inventario" title="Atajo: Alt+2">
+        <button class="nav-btn" data-seccion="inventario" id="nav-btn-inventario" title="Página: Inventario y Stock (Alt+2)">
           <span>📦</span> Inventario y Stock
           <span class="nav-badge-pill" id="nav-badge-stock-alerta" style="display:none; background:#ef4444; color:#fff;">0</span>
         </button>
-        <button class="nav-btn" data-seccion="resumen" id="nav-btn-resumen" title="Atajo: Alt+3">
+        <button class="nav-btn" data-seccion="producto" id="nav-btn-producto" title="Página: Crear o Editar Producto (Alt+3)">
+          <span>➕</span> Nuevo Producto
+        </button>
+        <button class="nav-btn" data-seccion="kardex" id="nav-btn-kardex" title="Página: Kardex y Movimientos de Stock (Alt+4)">
+          <span>📜</span> Kardex
+        </button>
+        <button class="nav-btn" data-seccion="etiquetas" id="nav-btn-etiquetas" title="Página: Estudio de Etiquetas y Códigos de Barras (Alt+5)">
+          <span>🏷️</span> Etiquetas
+        </button>
+        <button class="nav-btn" data-seccion="resumen" id="nav-btn-resumen" title="Página: Resumen y Reportes de Ventas (Alt+6)">
           <span>📊</span> Resumen de Ventas
         </button>
       </nav>
 
-      <!-- Estado, Reloj y Configuración -->
+      <!-- Estado, Reloj y Página de Ajustes -->
       <div class="header-acciones">
         <div class="reloj-sistema" id="reloj-sistema">
           <span>🕒</span> <span id="reloj-texto">00:00:00</span>
@@ -1728,12 +2114,44 @@ th.sort-active .th-sort-indicator {
           <span id="texto-estado-guardado">En Línea</span>
         </div>
 
-        <button class="btn btn-outline btn-sm" id="btn-abrir-configuracion" style="color:#ffffff; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.15);" title="Ajustes de la Ferretería y Copias de Seguridad">
+        <button class="nav-btn btn btn-outline btn-sm" data-seccion="ajustes" id="btn-abrir-configuracion" style="color:#ffffff; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.18);" title="Página: Ajustes de la Ferretería y Copias de Seguridad">
           ⚙️ Ajustes
         </button>
       </div>
     </div>
   </header>
+
+  <!-- Barra de Navegación Inferior Fija para Móviles y Smartphones -->
+  <nav class="mobile-bottom-nav no-print" aria-label="Navegación móvil">
+    <button type="button" class="mobile-nav-item nav-btn activo" data-seccion="pos" id="mob-nav-pos">
+      <span class="mob-icon">⚡</span>
+      <span>Caja POS</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="inventario" id="mob-nav-inventario">
+      <span class="mob-icon">📦</span>
+      <span>Stock</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="producto" id="mob-nav-producto">
+      <span class="mob-icon">➕</span>
+      <span>Nuevo</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="kardex" id="mob-nav-kardex">
+      <span class="mob-icon">📜</span>
+      <span>Kardex</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="etiquetas" id="mob-nav-etiquetas">
+      <span class="mob-icon">🏷️</span>
+      <span>Etiquetas</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="resumen" id="mob-nav-resumen">
+      <span class="mob-icon">📊</span>
+      <span>Ventas</span>
+    </button>
+    <button type="button" class="mobile-nav-item nav-btn" data-seccion="ajustes" id="mob-nav-ajustes">
+      <span class="mob-icon">⚙️</span>
+      <span>Ajustes</span>
+    </button>
+  </nav>
 
   <!-- ======================================================================
        CONTENIDO PRINCIPAL DEL SISTEMA (3 SECCIONES PRINCIPALES)
@@ -2152,157 +2570,464 @@ th.sort-active .th-sort-indicator {
       </div>
     </section>
 
-  </main>
-
-  <!-- ======================================================================
-       MODALES DEL SISTEMA
-       ====================================================================== -->
-
-  <!-- Modal: Crear / Editar Producto (Con Calculadora de Rentabilidad Inteligente) -->
-  <div class="modal-overlay" id="modal-producto">
-    <div class="modal-caja" style="max-width:760px;">
-      <div class="modal-head">
-        <h3 id="modal-producto-titulo">Nuevo Producto de Ferretería</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <form id="form-producto">
-        <div class="modal-cuerpo" style="max-height:calc(85vh - 120px); overflow-y:auto; padding:1.25rem;">
-          
-          <!-- Bloque 1: Identificación y Clasificación -->
-          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
-            1. Información General y Clasificación
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 4: CREAR / EDITAR PRODUCTO (FICHA COMPLETA)
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-producto">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-producto">
+            ← Volver al Inventario
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2 id="modal-producto-titulo">➕ Nuevo Producto de Ferretería</h2>
+            <p>Completa la ficha técnica, calcula el margen de ganancia en tiempo real y visualiza su código de barras.</p>
           </div>
-          <div class="grid-3" style="margin-bottom:0.85rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-codigo">Código SKU *</label>
-              <div style="display:flex; gap:0.35rem;">
-                <input type="text" class="input" id="prod-input-codigo" placeholder="Ej: FER-0001" required>
-                <button type="button" class="btn btn-outline btn-sm" id="btn-autogenerar-codigo" title="Generar código correlativo">🎲</button>
+        </div>
+        <div class="pagina-header-acciones">
+          <button type="button" class="btn btn-outline" id="btn-cancelar-producto-pag">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btn-guardar-producto-modal">💾 Guardar Producto</button>
+        </div>
+      </div>
+
+      <form id="form-producto">
+        <div class="pagina-grid-2col">
+          <!-- Columna Izquierda: Datos Generales y Precios -->
+          <div>
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>1. Información General y Clasificación</span>
+                <span style="font-size:0.75rem; color:var(--slate-400); font-weight:600;">* Campos obligatorios</span>
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.9rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-codigo">Código SKU *</label>
+                  <div style="display:flex; gap:0.35rem;">
+                    <input type="text" class="input" id="prod-input-codigo" placeholder="Ej: FER-0001" required>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-autogenerar-codigo" title="Generar código correlativo">🎲</button>
+                  </div>
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-barcode">Código de Barras (EAN / UPC)</label>
+                  <input type="text" class="input" id="prod-input-barcode" placeholder="Escáner o igual al SKU">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-select-estado">Estado en Catálogo</label>
+                  <select class="select" id="prod-select-estado">
+                    <option value="activo">🟢 Activo en Punto de Venta</option>
+                    <option value="inactivo">⚪ Inactivo / Oculto</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="campo-grupo" style="margin-bottom:0.9rem;">
+                <label for="prod-input-nombre">Descripción / Nombre Completo del Producto *</label>
+                <input type="text" class="input" id="prod-input-nombre" placeholder="Ej: Cemento Sol Tipo I 42.5kg o Tubo PVC 1/2 pulgada x 3m Pavco" required style="font-weight:700; font-size:1.05rem;">
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.9rem;">
+                <div class="campo-grupo">
+                  <label for="prod-select-categoria">Categoría Ferretera</label>
+                  <select class="select" id="prod-select-categoria"></select>
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-marca">Marca / Fabricante</label>
+                  <input type="text" class="input" id="prod-input-marca" placeholder="Ej: Stanley, Pavco, Sika, Bosch...">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-select-unidad">Unidad de Medida</label>
+                  <select class="select" id="prod-select-unidad"></select>
+                </div>
+              </div>
+
+              <div class="campo-grupo">
+                <label for="prod-input-descripcion">Especificaciones Técnicas / Medidas / Notas</label>
+                <input type="text" class="input" id="prod-input-descripcion" placeholder="Ej: Rosca 1/4 pulgada, acero galvanizado, alta resistencia...">
               </div>
             </div>
+
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>2. Costos, Precios y Calculadora Bidireccional de Margen</span>
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.85rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-compra">P. Compra / Costo (S/)</label>
+                  <input type="number" step="0.01" min="0" class="input" id="prod-input-compra" placeholder="0.00" value="0.00">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-margen">Margen de Ganancia (%)</label>
+                  <input type="number" step="0.5" min="0" class="input" id="prod-input-margen" placeholder="30.0" value="30.0">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-venta">Precio Venta Público (S/) *</label>
+                  <input type="number" step="0.01" min="0" class="input" id="prod-input-venta" placeholder="0.00" required style="font-weight:800; font-size:1.15rem; color:var(--brand-primary);">
+                </div>
+              </div>
+
+              <div class="grid-2" style="margin-bottom:1rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-mayor">Precio por Mayor / Especial (Opcional)</label>
+                  <input type="number" step="0.01" min="0" class="input" id="prod-input-mayor" placeholder="0.00">
+                </div>
+                <div class="campo-grupo" style="display:flex; align-items:center; gap:0.5rem; margin-top:1.4rem;">
+                  <input type="checkbox" id="prod-chk-fraccionada" checked style="width:18px; height:18px; accent-color:var(--brand-primary); cursor:pointer;">
+                  <label for="prod-chk-fraccionada" style="margin:0; cursor:pointer; font-weight:600;">Permite venta fraccionada (ej: 1.5 metros, 0.25 kg)</label>
+                </div>
+              </div>
+
+              <!-- Tarjeta de Diagnóstico Financiero en Tiempo Real -->
+              <div class="tarjeta-margen-calculadora">
+                <div class="margen-stat-item">
+                  <span class="margen-stat-label">Costo Unitario</span>
+                  <span class="margen-stat-val" id="calc-preview-costo">S/ 0.00</span>
+                </div>
+                <div class="margen-stat-item">
+                  <span class="margen-stat-label">Ganancia Neta Unitaria</span>
+                  <span class="margen-stat-val ganancia-positiva" id="calc-preview-ganancia">+ S/ 0.00</span>
+                </div>
+                <div class="margen-stat-item">
+                  <span class="margen-stat-label">Margen sobre Costo</span>
+                  <span class="margen-stat-val ganancia-positiva" id="calc-preview-margen">+0.0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Inventario, Almacén y Vista Previa de Etiqueta Barcode -->
+          <div>
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>3. Control de Existencias y Ubicación</span>
+              </div>
+
+              <div class="grid-3" style="margin-bottom:0.9rem;">
+                <div class="campo-grupo">
+                  <label for="prod-input-stock">Stock Actual</label>
+                  <input type="number" step="any" min="0" class="input" id="prod-input-stock" placeholder="0" value="0" style="font-weight:800;">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-stock-min">Stock Mínimo (Alerta)</label>
+                  <input type="number" step="any" min="0" class="input" id="prod-input-stock-min" placeholder="5" value="5">
+                </div>
+                <div class="campo-grupo">
+                  <label for="prod-input-stock-max">Stock Máximo / Óptimo</label>
+                  <input type="number" step="any" min="0" class="input" id="prod-input-stock-max" placeholder="Opcional">
+                </div>
+              </div>
+
+              <div class="campo-grupo">
+                <label for="prod-input-ubicacion">Ubicación Física en Almacén (Pasillo / Estante)</label>
+                <input type="text" class="input" id="prod-input-ubicacion" placeholder="Ej: Pasillo 2 - Estante C - Nivel 1">
+              </div>
+            </div>
+
+            <div class="card-seccion-pagina">
+              <div class="card-seccion-titulo">
+                <span>4. Vista Previa de Etiqueta con Código de Barras</span>
+                <span class="marca-badge">CODE-128 SVG</span>
+              </div>
+              <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:0.85rem;">
+                Así se verá la etiqueta adhesiva del producto al imprimirla para tus estantes o empaques:
+              </p>
+              <div id="prod-live-barcode-preview" style="background:var(--slate-50); padding:1rem; border-radius:var(--radius-sm); border:1px dashed var(--slate-300); display:flex; justify-content:center;">
+                <!-- Se actualiza en vivo al escribir nombre, código o precio -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 5: KARDEX Y AUDITORÍA DE MOVIMIENTOS DE STOCK
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-kardex">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-kardex">
+            ← Volver al Inventario
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2>📜 Kardex y Auditoría de Movimientos de Stock</h2>
+            <p id="kardex-subtitulo-filtro">Trazabilidad completa de entradas por compra, salidas por venta, devoluciones y ajustes físicos.</p>
+          </div>
+        </div>
+        <div class="pagina-header-acciones">
+          <button type="button" class="btn btn-outline" id="btn-kardex-ver-todos" style="display:none;">🔄 Ver Todos los Productos</button>
+          <button type="button" class="btn btn-primary" id="btn-kardex-exportar-excel">📊 Exportar Kardex a Excel</button>
+        </div>
+      </div>
+
+      <!-- KPIs de Movimientos Kardex -->
+      <div class="kpis-grid">
+        <div class="kpi-card kpi-primary">
+          <div class="kpi-info">
+            <h3>Total Movimientos</h3>
+            <div class="kpi-valor" id="kardex-kpi-total">0</div>
+            <div class="kpi-subtexto">Operaciones registradas</div>
+          </div>
+          <div class="kpi-icono">📜</div>
+        </div>
+        <div class="kpi-card kpi-success">
+          <div class="kpi-info">
+            <h3>Entradas y Compras</h3>
+            <div class="kpi-valor" id="kardex-kpi-entradas">0</div>
+            <div class="kpi-subtexto">Ingresos de mercadería</div>
+          </div>
+          <div class="kpi-icono">📥</div>
+        </div>
+        <div class="kpi-card kpi-info">
+          <div class="kpi-info">
+            <h3>Salidas por Ventas</h3>
+            <div class="kpi-valor" id="kardex-kpi-salidas">0</div>
+            <div class="kpi-subtexto">Despachos en Punto de Venta</div>
+          </div>
+          <div class="kpi-icono">🛒</div>
+        </div>
+        <div class="kpi-card kpi-warning">
+          <div class="kpi-info">
+            <h3>Ajustes y Devoluciones</h3>
+            <div class="kpi-valor" id="kardex-kpi-ajustes">0</div>
+            <div class="kpi-subtexto">Conteos físicos y anulaciones</div>
+          </div>
+          <div class="kpi-icono">⚖️</div>
+        </div>
+      </div>
+
+      <div class="panel-modulo">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+          <div style="display:flex; gap:0.65rem; flex-wrap:wrap; flex:1;">
+            <input type="search" class="input" id="kardex-buscar-input" placeholder="Buscar en Kardex por producto, código SKU, comprobante o motivo..." style="min-width:250px; flex:1;">
+            <select class="select" id="kardex-filtro-tipo" style="width:auto; min-width:210px;">
+              <option value="">Todos los Tipos de Movimiento</option>
+              <option value="Ingreso">📥 Entradas / Compras</option>
+              <option value="Salida">🛒 Salidas por Venta</option>
+              <option value="Ajuste">⚖️ Ajustes de Inventario</option>
+              <option value="Devolución">↩️ Devoluciones por Anulación</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tabla-container">
+          <table class="tabla-general">
+            <thead>
+              <tr>
+                <th style="width:155px;">Fecha y Hora</th>
+                <th style="width:115px;">Código SKU</th>
+                <th>Producto</th>
+                <th>Tipo de Movimiento</th>
+                <th class="text-right" style="width:105px;">Variación</th>
+                <th class="text-right" style="width:105px;">Stock Ant.</th>
+                <th class="text-right" style="width:110px;">Nuevo Stock</th>
+                <th>Motivo / Referencia</th>
+              </tr>
+            </thead>
+            <tbody id="kardex-tabla-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 6: ESTUDIO E IMPRESIÓN DE ETIQUETAS DE CÓDIGO DE BARRAS
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-etiquetas">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-etiquetas">
+            ← Volver al Inventario
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2>🏷️ Estudio e Impresión de Etiquetas de Código de Barras</h2>
+            <p>Genera etiquetas térmicas adhesivas (Code-128 vectorial) con precio y SKU para estanterías y productos sin código de fábrica.</p>
+          </div>
+        </div>
+        <div class="pagina-header-acciones">
+          <button type="button" class="btn btn-primary" id="btn-imprimir-etiquetas-barcode">🖨️ Mandar a Imprimir Etiquetas</button>
+        </div>
+      </div>
+
+      <div class="pagina-etiquetas-layout">
+        <!-- Panel Izquierdo: Configuración y Selección de Productos -->
+        <div class="card-seccion-pagina">
+          <div class="card-seccion-titulo">
+            <span>⚙️ Configuración de Etiquetas</span>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:0.9rem;">
             <div class="campo-grupo">
-              <label for="prod-input-barcode">Código de Barras</label>
-              <input type="text" class="input" id="prod-input-barcode" placeholder="Escáner o dejar vacío">
+              <label for="etiquetas-input-copias">Copias por Producto</label>
+              <input type="number" id="etiquetas-input-copias" min="1" max="100" value="2" class="input" style="font-weight:800; text-align:center;">
             </div>
             <div class="campo-grupo">
-              <label for="prod-select-estado">Estado del Producto</label>
-              <select class="select" id="prod-select-estado">
-                <option value="activo">🟢 Activo en Ventas</option>
-                <option value="inactivo">⚪ Inactivo / Oculto</option>
+              <label for="etiquetas-select-formato">Tamaño / Formato</label>
+              <select class="select" id="etiquetas-select-formato">
+                <option value="50x30">Sticker 50x30 mm (Estándar)</option>
+                <option value="40x25">Sticker 40x25 mm (Compacto)</option>
+                <option value="a4">Pliego Hoja A4 / Carta</option>
               </select>
             </div>
           </div>
 
-          <div class="campo-grupo" style="margin-bottom:0.85rem;">
-            <label for="prod-input-nombre">Descripción / Nombre Completo del Producto *</label>
-            <input type="text" class="input" id="prod-input-nombre" placeholder="Ej: Cemento Sol Tipo I 42.5kg o Tubo PVC 1/2 pulgada x 3m Pavco" required style="font-weight:700; font-size:1.02rem;">
-          </div>
-
-          <div class="grid-3" style="margin-bottom:1.25rem;">
-            <div class="campo-grupo">
-              <label for="prod-select-categoria">Categoría Ferretera</label>
-              <select class="select" id="prod-select-categoria"></select>
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-marca">Marca / Fabricante</label>
-              <input type="text" class="input" id="prod-input-marca" placeholder="Ej: Stanley, Pavco, Sika...">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-select-unidad">Unidad de Medida</label>
-              <select class="select" id="prod-select-unidad"></select>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+            <label style="font-size:0.8rem; font-weight:700; color:var(--slate-700);">Productos a Imprimir:</label>
+            <div style="display:flex; gap:0.35rem;">
+              <button type="button" class="btn btn-outline btn-sm" id="btn-etiquetas-sel-todos" style="padding:0.2rem 0.5rem; font-size:0.75rem;">Todos</button>
+              <button type="button" class="btn btn-outline btn-sm" id="btn-etiquetas-limpiar" style="padding:0.2rem 0.5rem; font-size:0.75rem;">Ninguno</button>
             </div>
           </div>
 
-          <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:1rem;">
-
-          <!-- Bloque 2: Precios, Costos y Calculadora Bidireccional -->
-          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
-            2. Costos, Precios y Margen de Utilidad
+          <div class="lista-seleccion-etiquetas" id="etiquetas-lista-productos">
+            <!-- Lista dinámica con checkboxes de productos -->
           </div>
-          <div class="grid-3" style="margin-bottom:0.5rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-compra">P. Compra / Costo (S/)</label>
-              <input type="number" step="0.01" min="0" class="input" id="prod-input-compra" placeholder="0.00" value="0.00">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-margen">Margen Deseado (%)</label>
-              <input type="number" step="0.5" min="0" class="input" id="prod-input-margen" placeholder="30.0" value="30.0">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-venta">Precio Venta Público (S/) *</label>
-              <input type="number" step="0.01" min="0" class="input" id="prod-input-venta" placeholder="0.00" required style="font-weight:800; font-size:1.1rem; color:var(--brand-primary);">
-            </div>
-          </div>
-
-          <div class="grid-2" style="margin-bottom:0.75rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-mayor">Precio por Mayor / Especial (Opcional)</label>
-              <input type="number" step="0.01" min="0" class="input" id="prod-input-mayor" placeholder="0.00">
-            </div>
-            <div class="campo-grupo" style="display:flex; align-items:center; gap:0.5rem; margin-top:1.5rem;">
-              <input type="checkbox" id="prod-chk-fraccionada" checked style="width:18px; height:18px; accent-color:var(--brand-primary); cursor:pointer;">
-              <label for="prod-chk-fraccionada" style="margin:0; cursor:pointer; font-weight:600;">Permite venta fraccionada (ej: 1.5 metros, 0.25 kg)</label>
-            </div>
-          </div>
-
-          <!-- Tarjeta de Diagnóstico Financiero en Tiempo Real -->
-          <div class="tarjeta-margen-calculadora" style="margin-bottom:1.25rem;">
-            <div class="margen-stat-item">
-              <span class="margen-stat-label">Costo Unitario</span>
-              <span class="margen-stat-val" id="calc-preview-costo">S/ 0.00</span>
-            </div>
-            <div class="margen-stat-item">
-              <span class="margen-stat-label">Ganancia Neta</span>
-              <span class="margen-stat-val ganancia-positiva" id="calc-preview-ganancia">+ S/ 0.00</span>
-            </div>
-            <div class="margen-stat-item">
-              <span class="margen-stat-label">Margen sobre Costo</span>
-              <span class="margen-stat-val ganancia-positiva" id="calc-preview-margen">+0.0%</span>
-            </div>
-          </div>
-
-          <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:1rem;">
-
-          <!-- Bloque 3: Stock y Almacén -->
-          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
-            3. Control de Existencias y Ubicación
-          </div>
-          <div class="grid-3" style="margin-bottom:0.85rem;">
-            <div class="campo-grupo">
-              <label for="prod-input-stock">Stock Actual</label>
-              <input type="number" step="any" min="0" class="input" id="prod-input-stock" placeholder="0" value="0">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-stock-min">Stock Mínimo (Alerta)</label>
-              <input type="number" step="any" min="0" class="input" id="prod-input-stock-min" placeholder="5" value="5">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-stock-max">Stock Máximo / Capacidad</label>
-              <input type="number" step="any" min="0" class="input" id="prod-input-stock-max" placeholder="Opcional">
-            </div>
-          </div>
-
-          <div class="grid-2">
-            <div class="campo-grupo">
-              <label for="prod-input-ubicacion">Ubicación Física en Almacén</label>
-              <input type="text" class="input" id="prod-input-ubicacion" placeholder="Ej: Pasillo 2 - Estante C - Nivel 1">
-            </div>
-            <div class="campo-grupo">
-              <label for="prod-input-descripcion">Especificaciones Técnicas / Notas</label>
-              <input type="text" class="input" id="prod-input-descripcion" placeholder="Ej: Rosca 1/4, acabado galvanizado...">
-            </div>
-          </div>
-
         </div>
-        <div class="modal-pie">
-          <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="btn-guardar-producto-modal">💾 Guardar Producto</button>
+
+        <!-- Panel Derecho: Previsualización en Vivo de la Hoja de Etiquetas -->
+        <div class="card-seccion-pagina">
+          <div class="card-seccion-titulo">
+            <span>👁️ Vista Previa de Impresión en Tiempo Real</span>
+            <span id="etiquetas-resumen-total" style="font-size:0.78rem; color:var(--brand-primary); font-weight:800;">0 etiquetas listas</span>
+          </div>
+          <div id="etiquetas-preview-contenedor" style="min-height:380px; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:1rem; background:#f8fafc;">
+            <!-- Previsualización dinámica de etiquetas -->
+          </div>
         </div>
-      </form>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         PÁGINA INDIVIDUAL 7: CONFIGURACIÓN, CATEGORÍAS Y COPIAS DE SEGURIDAD
+         ==================================================================== -->
+    <section class="modulo-seccion" id="seccion-ajustes">
+      <div class="pagina-individual-header">
+        <div class="pagina-header-izquierda">
+          <button type="button" class="btn-volver-pagina" id="btn-volver-desde-ajustes">
+            ← Volver al Punto de Venta
+          </button>
+          <div class="pagina-titulo-bloque">
+            <h2>⚙️ Configuración General, Categorías y Copias de Seguridad</h2>
+            <p>Personaliza los datos fiscales de tu ferretería, administra categorías/unidades de medida y gestiona respaldos de base de datos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pagina-grid-simetrico">
+        <!-- Columna 1: Datos del Negocio y Ticket -->
+        <div class="card-seccion-pagina">
+          <div class="card-seccion-titulo">
+            <span>🏢 Datos Comerciales y Encabezado de Comprobantes</span>
+          </div>
+          <form id="form-configuracion" style="display:flex; flex-direction:column; gap:0.9rem;">
+            <div class="campo-grupo">
+              <label for="cfg-empresa">Nombre Comercial de la Ferretería</label>
+              <input type="text" class="input" id="cfg-empresa" placeholder="Ej: Ferretería Sullcairi">
+            </div>
+
+            <div class="grid-2">
+              <div class="campo-grupo">
+                <label for="cfg-ruc">RUC / Identificación Fiscal</label>
+                <input type="text" class="input" id="cfg-ruc" placeholder="Ej: 20601234567">
+              </div>
+              <div class="campo-grupo">
+                <label for="cfg-telefono">Teléfono / WhatsApp</label>
+                <input type="text" class="input" id="cfg-telefono" placeholder="Ej: 987654321">
+              </div>
+            </div>
+
+            <div class="campo-grupo">
+              <label for="cfg-direccion">Dirección Comercial del Local</label>
+              <input type="text" class="input" id="cfg-direccion" placeholder="Ej: Av. Principal N° 123">
+            </div>
+
+            <div class="grid-2">
+              <div class="campo-grupo">
+                <label for="cfg-moneda">Símbolo de Moneda</label>
+                <input type="text" class="input" id="cfg-moneda" value="S/">
+              </div>
+              <div class="campo-grupo">
+                <label for="cfg-pie">Mensaje al Pie del Ticket</label>
+                <input type="text" class="input" id="cfg-pie" placeholder="Ej: ¡Gracias por su compra! Vuelva pronto.">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="btn-guardar-config-negocio" style="align-self:flex-start;">
+              💾 Guardar Datos del Negocio
+            </button>
+          </form>
+        </div>
+
+        <!-- Columna 2: Categorías, Unidades y Respaldos -->
+        <div>
+          <div class="card-seccion-pagina">
+            <div class="card-seccion-titulo">
+              <span>🏷️ Gestión de Categorías y Unidades de Medida</span>
+            </div>
+
+            <div class="campo-grupo" style="margin-bottom:1.1rem;">
+              <label for="input-nueva-categoria">Categorías Ferreteras Activas</label>
+              <div style="display:flex; gap:0.5rem;">
+                <input type="text" class="input" id="input-nueva-categoria" placeholder="Nueva categoría (ej: Soldadura y Equipos)">
+                <button type="button" class="btn btn-outline" id="btn-agregar-categoria">+ Agregar</button>
+              </div>
+              <div class="chips-gestion-lista" id="lista-chips-categorias"></div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid var(--border-color); margin:0.85rem 0;">
+
+            <div class="campo-grupo">
+              <label for="input-nueva-unidad">Unidades de Medida Activas</label>
+              <div style="display:flex; gap:0.5rem;">
+                <input type="text" class="input" id="input-nueva-unidad" placeholder="Nueva unidad (ej: Balde, Saco, Varilla)">
+                <button type="button" class="btn btn-outline" id="btn-agregar-unidad">+ Agregar</button>
+              </div>
+              <div class="chips-gestion-lista" id="lista-chips-unidades"></div>
+            </div>
+          </div>
+
+          <div class="card-seccion-pagina">
+            <div class="card-seccion-titulo">
+              <span>💾 Centro de Copias de Seguridad (Backup & Restore)</span>
+            </div>
+            <p style="font-size:0.84rem; color:var(--slate-600); margin-bottom:1rem;">
+              Descarga una copia completa de tu inventario, Kardex y ventas en archivo <code>.json</code> o restaura un respaldo previo en cualquier dispositivo.
+            </p>
+            <div style="display:flex; gap:0.65rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+              <button type="button" class="btn btn-primary" id="btn-descargar-respaldo-json">💾 Descargar Respaldo JSON</button>
+              <button type="button" class="btn btn-outline" id="btn-subir-respaldo-json">📂 Restaurar Respaldo JSON</button>
+              <input type="file" id="input-archivo-subir-json" accept=".json" style="display:none;">
+            </div>
+
+            <div style="background:#fee2e2; border:1px solid #fca5a5; padding:1rem; border-radius:var(--radius-sm);">
+              <h5 style="color:#b91c1c; font-weight:800; margin-bottom:0.25rem;">⚠️ Zona de Mantenimiento y Reinicio</h5>
+              <p style="font-size:0.8rem; color:#991b1b; margin-bottom:0.65rem;">
+                Elimina todos los productos, movimientos y ventas para iniciar la base de datos desde cero.
+              </p>
+              <button type="button" class="btn btn-danger btn-sm" id="btn-reiniciar-sistema">⚠️ Reiniciar Todo el Sistema a Cero</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Barra Flotante de Acceso Rápido al Carrito para Móviles/Tablets en POS -->
+  <div class="pos-mobile-cart-bar no-print" id="pos-mobile-cart-bar">
+    <div>
+      <div style="font-weight:800; font-size:0.92rem;" id="mob-cart-resumen">🛒 0 productos</div>
+      <div style="font-size:0.75rem; opacity:0.9;">Toca para ir a caja y cobrar</div>
     </div>
+    <div style="font-weight:900; font-size:1.1rem;" id="mob-cart-total">S/ 0.00 ↓</div>
   </div>
 
-  <!-- Modal: Reabastecimiento y Ajuste de Stock -->
+  <!-- ======================================================================
+       MODALES RÁPIDOS DE APOYO (+ STOCK, TICKET TÉRMICO Y ACCIONES EN LOTE)
+       ====================================================================== -->
+
+  <!-- Modal Rápido: Reabastecimiento y Ajuste de Stock en 1 Clic -->
   <div class="modal-overlay" id="modal-stock">
     <div class="modal-caja" style="max-width:500px;">
       <div class="modal-head">
@@ -2356,80 +3081,7 @@ th.sort-active .th-sort-indicator {
     </div>
   </div>
 
-  <!-- Modal: Auditoría y Kardex de Movimientos de Stock -->
-  <div class="modal-overlay" id="modal-kardex">
-    <div class="modal-caja" style="max-width:980px;">
-      <div class="modal-head">
-        <h3>📜 Kardex y Auditoría de Movimientos de Stock</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-cuerpo" style="padding:1.25rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; flex:1;">
-            <input type="search" class="input" id="kardex-buscar-input" placeholder="Buscar por producto, código o motivo..." style="min-width:240px; flex:1;">
-            <select class="select" id="kardex-filtro-tipo" style="width:auto; min-width:180px;">
-              <option value="">Todos los Movimientos</option>
-              <option value="Ingreso">📥 Entradas / Compras</option>
-              <option value="Salida">🛒 Salidas por Venta</option>
-              <option value="Ajuste">⚖️ Ajustes de Inventario</option>
-              <option value="Devolución">↩️ Devoluciones</option>
-            </select>
-          </div>
-          <button type="button" class="btn btn-outline" id="btn-kardex-exportar-excel">📊 Exportar Kardex a Excel</button>
-        </div>
-
-        <div class="tabla-container" style="max-height:480px; overflow-y:auto;">
-          <table class="tabla-general">
-            <thead>
-              <tr>
-                <th style="width:130px;">Fecha y Hora</th>
-                <th style="width:100px;">Código</th>
-                <th>Producto</th>
-                <th>Tipo</th>
-                <th class="text-right" style="width:90px;">Cantidad</th>
-                <th class="text-right" style="width:90px;">Stock Ant.</th>
-                <th class="text-right" style="width:90px;">Nuevo Stock</th>
-                <th>Motivo / Referencia</th>
-              </tr>
-            </thead>
-            <tbody id="kardex-tabla-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-pie">
-        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Generador e Impresión de Etiquetas con Códigos de Barras -->
-  <div class="modal-overlay" id="modal-etiquetas-barcode">
-    <div class="modal-caja" style="max-width:880px;">
-      <div class="modal-head">
-        <h3>🏷️ Impresión de Etiquetas de Código de Barras</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-cuerpo" style="padding:1.25rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem; background:var(--slate-50); padding:0.75rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <label for="etiquetas-input-copias" style="font-weight:700; font-size:0.85rem;">Copias por producto:</label>
-            <input type="number" id="etiquetas-input-copias" min="1" max="100" value="2" class="input" style="width:75px; text-align:center; font-weight:800;">
-          </div>
-          <span style="font-size:0.8rem; color:var(--slate-500);">Formato sticker térmico estándar (50x30mm) con código de barras Code-128</span>
-        </div>
-
-        <div id="etiquetas-preview-contenedor" style="max-height:450px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:1rem; background:#f8fafc;">
-          <!-- Previsualización dinámica de etiquetas -->
-        </div>
-      </div>
-      <div class="modal-pie" style="justify-content:space-between;">
-        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
-        <button type="button" class="btn btn-primary" id="btn-imprimir-etiquetas-barcode">🖨️ Mandar a Imprimir Etiquetas</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Ajuste Masivo de Precios (Bulk Price Adjustment) -->
+  <!-- Modal Rápido: Ajuste Masivo de Precios (Bulk Price Adjustment) -->
   <div class="modal-overlay" id="modal-bulk-precios">
     <div class="modal-caja" style="max-width:460px;">
       <div class="modal-head">
@@ -2468,7 +3120,7 @@ th.sort-active .th-sort-indicator {
     </div>
   </div>
 
-  <!-- Modal: Cambio Masivo de Categoría (Bulk Category Assignment) -->
+  <!-- Modal Rápido: Cambio Masivo de Categoría (Bulk Category Assignment) -->
   <div class="modal-overlay" id="modal-bulk-categoria">
     <div class="modal-caja" style="max-width:440px;">
       <div class="modal-head">
@@ -2493,7 +3145,7 @@ th.sort-active .th-sort-indicator {
     </div>
   </div>
 
-  <!-- Modal: Ticket de Venta / Impresión Térmica -->
+  <!-- Modal Rápido: Ticket de Venta / Impresión Térmica -->
   <div class="modal-overlay" id="modal-ticket">
     <div class="modal-caja" style="max-width:440px;">
       <div class="modal-head">
@@ -2506,75 +3158,6 @@ th.sort-active .th-sort-indicator {
       <div class="modal-pie" style="justify-content:space-between;">
         <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
         <button type="button" class="btn btn-primary" id="btn-ticket-imprimir">🖨️ Imprimir Ticket</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Configuración de la Ferretería y Respaldos -->
-  <div class="modal-overlay" id="modal-configuracion">
-    <div class="modal-caja" style="max-width:560px;">
-      <div class="modal-head">
-        <h3>⚙️ Configuración y Copias de Seguridad</h3>
-        <button class="modal-close-btn" type="button">✕</button>
-      </div>
-      <div class="modal-cuerpo">
-        <form id="form-configuracion" style="display:flex; flex-direction:column; gap:0.85rem;">
-          <div class="campo-grupo">
-            <label for="cfg-empresa">Nombre Comercial de la Ferretería</label>
-            <input type="text" class="input" id="cfg-empresa" placeholder="Ej: Ferretería Sullcairi">
-          </div>
-
-          <div class="grid-2">
-            <div class="campo-grupo">
-              <label for="cfg-ruc">RUC / Identificación Fiscal</label>
-              <input type="text" class="input" id="cfg-ruc" placeholder="Ej: 20601234567">
-            </div>
-            <div class="campo-grupo">
-              <label for="cfg-telefono">Teléfono / WhatsApp</label>
-              <input type="text" class="input" id="cfg-telefono" placeholder="Ej: 987654321">
-            </div>
-          </div>
-
-          <div class="campo-grupo">
-            <label for="cfg-direccion">Dirección Comercial</label>
-            <input type="text" class="input" id="cfg-direccion" placeholder="Ej: Av. Principal 123">
-          </div>
-
-          <div class="grid-2">
-            <div class="campo-grupo">
-              <label for="cfg-moneda">Símbolo de Moneda</label>
-              <input type="text" class="input" id="cfg-moneda" value="S/">
-            </div>
-            <div class="campo-grupo">
-              <label for="cfg-pie">Pie de Ticket</label>
-              <input type="text" class="input" id="cfg-pie" placeholder="Ej: ¡Gracias por su preferencia!">
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Guardar Datos del Negocio</button>
-        </form>
-
-        <hr style="border:none; border-top:1px solid var(--border-color); margin:0.5rem 0;">
-
-        <!-- Respaldos -->
-        <div>
-          <h4 style="font-size:0.95rem; font-weight:800; margin-bottom:0.4rem;">Copias de Seguridad (Backup)</h4>
-          <p style="font-size:0.8rem; color:var(--slate-500); margin-bottom:0.75rem;">Guarda una copia en tu PC o restaura tus datos cuando lo necesites.</p>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <button class="btn btn-outline" id="btn-descargar-respaldo-json">💾 Descargar Respaldo JSON</button>
-            <button class="btn btn-outline" id="btn-subir-respaldo-json">📂 Restaurar Respaldo JSON</button>
-            <input type="file" id="input-archivo-subir-json" accept=".json" style="display:none;">
-          </div>
-        </div>
-
-        <div style="background:#fee2e2; border:1px solid #fca5a5; padding:0.85rem; border-radius:var(--radius-sm); margin-top:0.5rem;">
-          <h5 style="color:#b91c1c; font-weight:800; margin-bottom:0.25rem;">Zona de Peligro</h5>
-          <p style="font-size:0.775rem; color:#991b1b; margin-bottom:0.5rem;">Borra todos los productos y ventas si deseas reiniciar todo el sistema a cero.</p>
-          <button class="btn btn-danger btn-sm" id="btn-reiniciar-sistema">⚠️ Reiniciar Todo a Cero</button>
-        </div>
-      </div>
-      <div class="modal-pie">
-        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
       </div>
     </div>
   </div>
@@ -3541,6 +4124,39 @@ const Store = (() => {
     return false;
   }
 
+  function removeCategory(categoria) {
+    const idx = state.categorias.indexOf(categoria);
+    if (idx !== -1 && state.categorias.length > 1) {
+      state.categorias.splice(idx, 1);
+      persistir();
+      notify();
+      return true;
+    }
+    return false;
+  }
+
+  function addUnit(unidad) {
+    const u = String(unidad || "").trim();
+    if (u && !state.unidades.includes(u)) {
+      state.unidades.push(u);
+      persistir();
+      notify();
+      return true;
+    }
+    return false;
+  }
+
+  function removeUnit(unidad) {
+    const idx = state.unidades.indexOf(unidad);
+    if (idx !== -1 && state.unidades.length > 1) {
+      state.unidades.splice(idx, 1);
+      persistir();
+      notify();
+      return true;
+    }
+    return false;
+  }
+
   // Descarga eficiente de respaldo usando Blob (previene límite de Data URI)
   function exportBackupJSON() {
     const raw = JSON.stringify(state, null, 2);
@@ -3614,6 +4230,9 @@ const Store = (() => {
     getSalesSummary,
     updateConfig,
     addCategory,
+    removeCategory,
+    addUnit,
+    removeUnit,
     exportBackupJSON,
     importBackupJSON,
     limpiarTodo
@@ -4234,6 +4853,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderInventario(state);
     renderResumenVentas(state);
     renderConfiguracion(state);
+    renderTablaKardex();
+    renderListaSeleccionEtiquetas();
     actualizarNombreEmpresaCabecera(state);
     actualizarAlertasNavegacion(state);
   });
@@ -4262,17 +4883,39 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // NAVEGACIÓN ENTRE WORKSPACES (PESTAÑAS)
+  // ENRUTADOR DE PÁGINAS INDIVIDUALES (MULTI-PAGE ROUTER + HASH NAVIGATION)
   // ==========================================================================
+
+  const TITULOS_PAGINAS = {
+    pos: "Punto de Venta (Caja) | Ferretería Sullcairi PRO",
+    inventario: "Inventario y Catálogo de Stock | Ferretería Sullcairi PRO",
+    producto: "Ficha de Producto | Ferretería Sullcairi PRO",
+    kardex: "Kardex y Movimientos de Stock | Ferretería Sullcairi PRO",
+    etiquetas: "Estudio de Etiquetas y Códigos de Barras | Ferretería Sullcairi PRO",
+    resumen: "Resumen y Reportes de Ventas | Ferretería Sullcairi PRO",
+    ajustes: "Configuración y Copias de Seguridad | Ferretería Sullcairi PRO"
+  };
 
   navBotones.forEach(btn => {
     btn.addEventListener('click', () => {
       const seccionDestino = btn.getAttribute('data-seccion');
-      if (seccionDestino) cambiarSeccion(seccionDestino);
+      if (!seccionDestino) return;
+      if (seccionDestino === 'producto' && !productoEnEdicion) {
+        abrirModalNuevoProducto();
+      } else if (seccionDestino === 'kardex') {
+        abrirModalKardex(null);
+      } else if (seccionDestino === 'etiquetas') {
+        const activos = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
+        abrirModalEtiquetasBarcode(activos);
+      } else {
+        cambiarSeccion(seccionDestino);
+      }
     });
   });
 
   function cambiarSeccion(seccionId) {
+    if (!TITULOS_PAGINAS[seccionId]) seccionId = 'pos';
+
     navBotones.forEach(b => {
       b.classList.toggle('activo', b.getAttribute('data-seccion') === seccionId);
     });
@@ -4280,13 +4923,64 @@ document.addEventListener('DOMContentLoaded', () => {
       sec.classList.toggle('activo', sec.id === `seccion-${seccionId}`);
     });
 
+    document.title = TITULOS_PAGINAS[seccionId] || "Sistema Ferretero PRO";
+    if (window.location.hash !== `#${seccionId}`) {
+      try {
+        history.pushState(null, "", `#${seccionId}`);
+      } catch (e) {
+        window.location.hash = seccionId;
+      }
+    }
+
+    // Mostrar/ocultar barra flotante de carrito en móvil solo en POS
+    const mobCartBar = document.getElementById('pos-mobile-cart-bar');
+    if (mobCartBar) {
+      mobCartBar.classList.toggle('visible-en-pos', seccionId === 'pos');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     if (seccionId === 'pos') {
       const inputBusq = document.getElementById('pos-buscar-input');
       if (inputBusq) inputBusq.focus();
+    } else if (seccionId === 'kardex') {
+      renderTablaKardex();
+    } else if (seccionId === 'etiquetas') {
+      renderListaSeleccionEtiquetas();
+      renderPrevisualizacionEtiquetas();
+    } else if (seccionId === 'ajustes') {
+      renderConfiguracion(Store.getState());
     }
   }
 
-  // Atajos de Teclado Profesionales
+  // Soporte para botón Atrás/Adelante del navegador
+  window.addEventListener('popstate', () => {
+    const hash = (window.location.hash || "").replace("#", "").trim();
+    if (hash && TITULOS_PAGINAS[hash]) {
+      cambiarSeccion(hash);
+    }
+  });
+
+  // Botones "← Volver" de cada página individual
+  document.getElementById('btn-volver-desde-producto')?.addEventListener('click', () => {
+    productoEnEdicion = null;
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-cancelar-producto-pag')?.addEventListener('click', () => {
+    productoEnEdicion = null;
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-volver-desde-kardex')?.addEventListener('click', () => {
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-volver-desde-etiquetas')?.addEventListener('click', () => {
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-volver-desde-ajustes')?.addEventListener('click', () => {
+    cambiarSeccion('pos');
+  });
+
+  // Atajos de Teclado Profesionales para todas las páginas
   document.addEventListener('keydown', (e) => {
     if (e.key === 'F2') {
       e.preventDefault();
@@ -4304,15 +4998,24 @@ document.addEventListener('DOMContentLoaded', () => {
       cambiarSeccion('inventario');
     } else if (e.altKey && e.key === '3') {
       e.preventDefault();
+      abrirModalNuevoProducto();
+    } else if (e.altKey && e.key === '4') {
+      e.preventDefault();
+      abrirModalKardex(null);
+    } else if (e.altKey && e.key === '5') {
+      e.preventDefault();
+      abrirModalEtiquetasBarcode((Store.getState().productos || []).filter(p => p.estado !== "inactivo"));
+    } else if (e.altKey && e.key === '6') {
+      e.preventDefault();
       cambiarSeccion('resumen');
     }
   });
 
-  // Botón Ajustes / Configuración en cabecera
+  // Botón Ajustes / Configuración en cabecera navega a su página individual
   const btnAbrirConfiguracion = document.getElementById('btn-abrir-configuracion');
   if (btnAbrirConfiguracion) {
     btnAbrirConfiguracion.addEventListener('click', () => {
-      document.getElementById('modal-configuracion')?.classList.add('activo');
+      cambiarSeccion('ajustes');
     });
   }
 
@@ -4517,6 +5220,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (badgeCantidadItems) badgeCantidadItems.textContent = `${totalUnidades} items`;
     if (elSubtotal) elSubtotal.textContent = `${moneda} ${totalVenta.toFixed(2)}`;
     if (elTotal) elTotal.textContent = `${moneda} ${totalVenta.toFixed(2)}`;
+
+    // Actualizar barra flotante móvil de POS
+    const mobResumen = document.getElementById('mob-cart-resumen');
+    const mobTotal = document.getElementById('mob-cart-total');
+    if (mobResumen) mobResumen.textContent = `🛒 ${totalUnidades} producto${totalUnidades === 1 ? '' : 's'} en caja`;
+    if (mobTotal) mobTotal.textContent = `${moneda} ${totalVenta.toFixed(2)} ↓`;
 
     // Cálculo y visualización de vuelto
     if (inputRecibido && cajaVuelto && textoVuelto) {
@@ -5293,12 +6002,39 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // MODAL PRODUCTO CON CALCULADORA DE RENTABILIDAD EN VIVO
+  // PÁGINA INDIVIDUAL: FICHA DE PRODUCTO CON CALCULADORA Y BARCODE EN VIVO
   // ==========================================================================
 
   const inputCompraProd = document.getElementById('prod-input-compra');
   const inputMargenProd = document.getElementById('prod-input-margen');
   const inputVentaProd = document.getElementById('prod-input-venta');
+
+  function actualizarVistaPreviaEtiquetaProducto() {
+    const previewCont = document.getElementById('prod-live-barcode-preview');
+    if (!previewCont) return;
+
+    const codigo = document.getElementById('prod-input-codigo')?.value.trim() || "FER-0001";
+    const codigoBarras = document.getElementById('prod-input-barcode')?.value.trim() || codigo;
+    const nombre = document.getElementById('prod-input-nombre')?.value.trim() || "Nombre del Producto";
+    const categoria = document.getElementById('prod-select-categoria')?.value || "General";
+    const marca = document.getElementById('prod-input-marca')?.value.trim() || "";
+    const unidad = document.getElementById('prod-select-unidad')?.value || "Unidad";
+    const precioVenta = parseFloat(document.getElementById('prod-input-venta')?.value) || 0;
+
+    const htmlSticker = ExportManager.generarEtiquetasHTML([{
+      producto: {
+        codigo,
+        codigoBarras,
+        nombre,
+        categoria,
+        marca,
+        unidad,
+        precioVenta
+      },
+      copias: 1
+    }]);
+    previewCont.innerHTML = htmlSticker;
+  }
 
   function actualizarCalculadoraMargen(origen = 'costo') {
     const costo = parseFloat(inputCompraProd?.value) || 0;
@@ -5333,17 +6069,28 @@ document.addEventListener('DOMContentLoaded', () => {
       prevMargen.textContent = `${Number(margenCalc) >= 0 ? '+' : ''}${margenCalc}%`;
       prevMargen.className = `margen-stat-val ${Number(margenCalc) >= 0 ? 'ganancia-positiva' : 'ganancia-negativa'}`;
     }
+
+    actualizarVistaPreviaEtiquetaProducto();
   }
 
   inputCompraProd?.addEventListener('input', () => actualizarCalculadoraMargen('costo'));
   inputMargenProd?.addEventListener('input', () => actualizarCalculadoraMargen('margen'));
   inputVentaProd?.addEventListener('input', () => actualizarCalculadoraMargen('venta'));
 
+  ['prod-input-codigo', 'prod-input-barcode', 'prod-input-nombre', 'prod-input-marca', 'prod-select-categoria', 'prod-select-unidad'].forEach(idCampo => {
+    const el = document.getElementById(idCampo);
+    if (el) {
+      el.addEventListener('input', actualizarVistaPreviaEtiquetaProducto);
+      el.addEventListener('change', actualizarVistaPreviaEtiquetaProducto);
+    }
+  });
+
   document.getElementById('btn-autogenerar-codigo')?.addEventListener('click', () => {
     const inputCod = document.getElementById('prod-input-codigo');
     if (inputCod) {
       const correlativo = String((Store.getState().productos || []).length + 1).padStart(4, "0");
       inputCod.value = "FER-" + correlativo;
+      actualizarVistaPreviaEtiquetaProducto();
     }
   });
 
@@ -5353,16 +6100,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function abrirModalNuevoProducto() {
     productoEnEdicion = null;
-    const modal = document.getElementById('modal-producto');
     const titulo = document.getElementById('modal-producto-titulo');
     const form = document.getElementById('form-producto');
-    if (!modal || !form) return;
+    if (!form) return;
 
-    titulo.textContent = "Nuevo Producto de Ferretería";
+    if (titulo) titulo.textContent = "➕ Nuevo Producto de Ferretería";
     form.reset();
     poblarSelectsProducto();
 
-    // Generar código sugerido por defecto
     const correlativo = String((Store.getState().productos || []).length + 1).padStart(4, "0");
     const codInput = document.getElementById('prod-input-codigo');
     if (codInput) codInput.value = "FER-" + correlativo;
@@ -5372,7 +6117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputVentaProd) inputVentaProd.value = "0.00";
     actualizarCalculadoraMargen('costo');
 
-    modal.classList.add('activo');
+    cambiarSeccion('producto');
     document.getElementById('prod-input-nombre')?.focus();
   }
 
@@ -5381,11 +6126,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!prod) return;
 
     productoEnEdicion = prod;
-    const modal = document.getElementById('modal-producto');
     const titulo = document.getElementById('modal-producto-titulo');
-    if (!modal) return;
-
-    titulo.textContent = "Editar Producto: " + prod.nombre;
+    if (titulo) titulo.textContent = "✏️ Editar Producto: " + prod.nombre;
     poblarSelectsProducto();
 
     const setVal = (elemId, val) => {
@@ -5413,7 +6155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chkFrac) chkFrac.checked = prod.permiteDecimales !== false;
 
     actualizarCalculadoraMargen('venta');
-    modal.classList.add('activo');
+    cambiarSeccion('producto');
   }
 
   function poblarSelectsProducto() {
@@ -5465,11 +6207,12 @@ document.addEventListener('DOMContentLoaded', () => {
       Store.addProduct(payload);
     }
 
-    cerrarModales();
+    productoEnEdicion = null;
+    cambiarSeccion('inventario');
   });
 
   // ==========================================================================
-  // MODAL REABASTECIMIENTO Y AJUSTE DE STOCK (+ STOCK)
+  // MODAL RÁPIDO: REABASTECIMIENTO Y AJUSTE DE STOCK (+ STOCK)
   // ==========================================================================
 
   function abrirModalAgregarStock(id) {
@@ -5547,29 +6290,59 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // MODAL KARDEX / AUDITORÍA DE MOVIMIENTOS DE STOCK
+  // PÁGINA INDIVIDUAL: KARDEX / AUDITORÍA DE MOVIMIENTOS DE STOCK
   // ==========================================================================
 
   document.getElementById('btn-inv-abrir-kardex')?.addEventListener('click', () => {
     abrirModalKardex(null);
   });
 
+  document.getElementById('btn-kardex-ver-todos')?.addEventListener('click', () => {
+    abrirModalKardex(null);
+  });
+
   function abrirModalKardex(productoId = null) {
     productoFiltroKardex = productoId;
-    const modal = document.getElementById('modal-kardex');
-    if (!modal) return;
-
     renderTablaKardex();
-    modal.classList.add('activo');
+    cambiarSeccion('kardex');
   }
 
   function renderTablaKardex() {
     const tbody = document.getElementById('kardex-tabla-tbody');
     if (!tbody) return;
 
+    const subtitulo = document.getElementById('kardex-subtitulo-filtro');
+    const btnVerTodos = document.getElementById('btn-kardex-ver-todos');
+
+    if (productoFiltroKardex) {
+      const prod = (Store.getState().productos || []).find(p => p.id === productoFiltroKardex);
+      if (subtitulo) subtitulo.innerHTML = `Filtrando historial del producto: <b>${escapeHtml(prod ? prod.nombre : productoFiltroKardex)}</b>`;
+      if (btnVerTodos) btnVerTodos.style.display = 'inline-flex';
+    } else {
+      if (subtitulo) subtitulo.textContent = "Trazabilidad completa de entradas por compra, salidas por venta, devoluciones y ajustes físicos.";
+      if (btnVerTodos) btnVerTodos.style.display = 'none';
+    }
+
+    const todosMovs = Store.getStockMovements(productoFiltroKardex, 1000);
+
+    // Actualizar KPIs de la página Kardex
+    const kpiTotal = document.getElementById('kardex-kpi-total');
+    const kpiEntradas = document.getElementById('kardex-kpi-entradas');
+    const kpiSalidas = document.getElementById('kardex-kpi-salidas');
+    const kpiAjustes = document.getElementById('kardex-kpi-ajustes');
+
+    const cntEntradas = todosMovs.filter(m => m.tipo && m.tipo.includes("Ingreso")).length;
+    const cntSalidas = todosMovs.filter(m => m.tipo && m.tipo.includes("Salida")).length;
+    const cntAjustes = todosMovs.length - cntEntradas - cntSalidas;
+
+    if (kpiTotal) kpiTotal.textContent = String(todosMovs.length);
+    if (kpiEntradas) kpiEntradas.textContent = String(cntEntradas);
+    if (kpiSalidas) kpiSalidas.textContent = String(cntSalidas);
+    if (kpiAjustes) kpiAjustes.textContent = String(cntAjustes);
+
     const busqueda = (document.getElementById('kardex-buscar-input')?.value || "").toLowerCase().trim();
     const filtroTipo = document.getElementById('kardex-filtro-tipo')?.value || "";
-    let movs = Store.getStockMovements(productoFiltroKardex, 500);
+    let movs = todosMovs;
 
     if (filtroTipo) {
       movs = movs.filter(m => m.tipo && m.tipo.includes(filtroTipo));
@@ -5586,8 +6359,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (movs.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" style="text-align:center; padding:2rem; color:#64748b;">
-            No hay registros de movimientos en el Kardex para este criterio.
+          <td colspan="8" style="text-align:center; padding:3rem 1.5rem; color:#64748b;">
+            <div style="font-size:2.4rem; margin-bottom:0.4rem;">📜</div>
+            <p style="font-weight:700; color:#1e293b;">No hay movimientos registrados en el Kardex para este criterio</p>
+            <p style="font-size:0.82rem; margin-top:0.2rem;">Cada ingreso de stock, venta o ajuste quedará auditado automáticamente aquí.</p>
           </td>
         </tr>
       `;
@@ -5606,7 +6381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td style="font-size:0.75rem; color:#475569;">${m.fecha ? m.fecha.replace("T", " ").slice(0, 19) : "-"}</td>
+          <td style="font-size:0.78rem; color:#475569; white-space:nowrap;">${m.fecha ? m.fecha.replace("T", " ").slice(0, 19) : "-"}</td>
           <td><code style="font-family:var(--font-mono); font-weight:700;">${escapeHtml(m.codigo)}</code></td>
           <td style="font-weight:700; color:#0f172a;">${escapeHtml(m.nombre)}</td>
           <td><span class="kardex-badge ${claseBadge}">${escapeHtml(m.tipo)}</span></td>
@@ -5614,8 +6389,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="text-right" style="font-family:var(--font-mono); color:#64748b;">${m.stockAnterior}</td>
           <td class="text-right" style="font-family:var(--font-mono); font-weight:800; color:#0f172a;">${m.stockNuevo}</td>
           <td>
-            <div style="font-size:0.8rem; color:#334155;">${escapeHtml(m.motivo || '-')}</div>
-            ${m.referencia ? `<div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(m.referencia)}</div>` : ''}
+            <div style="font-size:0.82rem; color:#334155;">${escapeHtml(m.motivo || '-')}</div>
+            ${m.referencia ? `<div style="font-size:0.72rem; color:#94a3b8;">${escapeHtml(m.referencia)}</div>` : ''}
           </td>
         </tr>
       `;
@@ -5629,44 +6404,109 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // MODAL ETIQUETAS CON CÓDIGO DE BARRAS
+  // PÁGINA INDIVIDUAL: ESTUDIO E IMPRESIÓN DE ETIQUETAS CON CÓDIGO DE BARRAS
   // ==========================================================================
 
   document.getElementById('btn-inv-abrir-etiquetas')?.addEventListener('click', () => {
     const todosActivos = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
-    if (todosActivos.length === 0) {
-      alert("No hay productos registrados en el inventario para imprimir etiquetas.");
-      return;
-    }
-    abrirModalEtiquetasBarcode(todosActivos.slice(0, 20)); // Sugerir los primeros 20
+    abrirModalEtiquetasBarcode(todosActivos.slice(0, 20));
   });
 
   function abrirModalEtiquetasBarcode(productos) {
-    productosParaEtiquetas = productos;
-    const modal = document.getElementById('modal-etiquetas-barcode');
-    if (!modal) return;
-
+    productosParaEtiquetas = Array.isArray(productos) ? productos : [];
+    renderListaSeleccionEtiquetas();
     renderPrevisualizacionEtiquetas();
-    modal.classList.add('activo');
+    cambiarSeccion('etiquetas');
   }
+
+  function renderListaSeleccionEtiquetas() {
+    const listaCont = document.getElementById('etiquetas-lista-productos');
+    if (!listaCont) return;
+
+    const todosProds = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
+    if (todosProds.length === 0) {
+      listaCont.innerHTML = `<div style="padding:1.5rem; text-align:center; color:#64748b; font-size:0.85rem;">No hay productos activos en el catálogo.</div>`;
+      return;
+    }
+
+    const idsActivos = new Set(productosParaEtiquetas.map(p => p.id));
+    listaCont.innerHTML = todosProds.map(p => {
+      const marcado = idsActivos.has(p.id);
+      return `
+        <label class="item-seleccion-etiqueta">
+          <div style="display:flex; align-items:center; gap:0.55rem;">
+            <input type="checkbox" class="chk-etiqueta-item" data-id="${p.id}" ${marcado ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--brand-primary);">
+            <div>
+              <div style="font-weight:700; color:#0f172a;">${escapeHtml(p.nombre)}</div>
+              <div style="font-size:0.72rem; color:#64748b; font-family:var(--font-mono);">${escapeHtml(p.codigo)}</div>
+            </div>
+          </div>
+          <span style="font-weight:800; font-size:0.82rem; color:var(--brand-primary);">S/ ${Number(p.precioVenta || 0).toFixed(2)}</span>
+        </label>
+      `;
+    }).join('');
+
+    listaCont.querySelectorAll('.chk-etiqueta-item').forEach(chk => {
+      chk.addEventListener('change', () => {
+        const marcadosIds = new Set(
+          Array.from(listaCont.querySelectorAll('.chk-etiqueta-item:checked')).map(c => c.getAttribute('data-id'))
+        );
+        productosParaEtiquetas = todosProds.filter(p => marcadosIds.has(p.id));
+        renderPrevisualizacionEtiquetas();
+      });
+    });
+  }
+
+  document.getElementById('btn-etiquetas-sel-todos')?.addEventListener('click', () => {
+    productosParaEtiquetas = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
+    renderListaSeleccionEtiquetas();
+    renderPrevisualizacionEtiquetas();
+  });
+
+  document.getElementById('btn-etiquetas-limpiar')?.addEventListener('click', () => {
+    productosParaEtiquetas = [];
+    renderListaSeleccionEtiquetas();
+    renderPrevisualizacionEtiquetas();
+  });
 
   function renderPrevisualizacionEtiquetas() {
     const contenedor = document.getElementById('etiquetas-preview-contenedor');
     const inputCopias = document.getElementById('etiquetas-input-copias');
+    const resumenTotal = document.getElementById('etiquetas-resumen-total');
     if (!contenedor) return;
 
-    const copias = parseInt(inputCopias?.value, 10) || 2;
+    const copias = Math.max(1, parseInt(inputCopias?.value, 10) || 1);
+    const totalStickers = productosParaEtiquetas.length * copias;
+    if (resumenTotal) {
+      resumenTotal.textContent = `${totalStickers} etiqueta${totalStickers === 1 ? '' : 's'} lista${totalStickers === 1 ? '' : 's'}`;
+    }
+
+    if (productosParaEtiquetas.length === 0) {
+      contenedor.innerHTML = `
+        <div style="text-align:center; padding:3.5rem 1rem; color:#64748b;">
+          <div style="font-size:2.5rem; margin-bottom:0.5rem;">🏷️</div>
+          <p style="font-weight:700; color:#1e293b;">Selecciona uno o más productos en la lista izquierda</p>
+          <p style="font-size:0.82rem; margin-top:0.25rem;">Las etiquetas con códigos de barras Code-128 se generarán aquí al instante.</p>
+        </div>
+      `;
+      return;
+    }
+
     const items = productosParaEtiquetas.map(p => ({ producto: p, copias: copias }));
     const htmlEtiquetas = ExportManager.generarEtiquetasHTML(items);
     contenedor.innerHTML = htmlEtiquetas;
   }
 
   document.getElementById('etiquetas-input-copias')?.addEventListener('input', renderPrevisualizacionEtiquetas);
+  document.getElementById('etiquetas-select-formato')?.addEventListener('change', renderPrevisualizacionEtiquetas);
 
   document.getElementById('btn-imprimir-etiquetas-barcode')?.addEventListener('click', () => {
     const contenedor = document.getElementById('etiquetas-preview-contenedor');
     const seccionImpresion = document.getElementById('seccion-impresion');
-    if (!contenedor || !seccionImpresion) return;
+    if (!contenedor || !seccionImpresion || productosParaEtiquetas.length === 0) {
+      alert("Selecciona al menos un producto para imprimir sus etiquetas.");
+      return;
+    }
 
     seccionImpresion.innerHTML = contenedor.innerHTML;
     window.print();
@@ -5897,7 +6737,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ==========================================================================
-  // CONFIGURACIÓN Y RESPALDOS
+  // PÁGINA INDIVIDUAL: CONFIGURACIÓN, CATEGORÍAS Y RESPALDOS
   // ==========================================================================
 
   function renderConfiguracion(state) {
@@ -5916,7 +6756,71 @@ document.addEventListener('DOMContentLoaded', () => {
         el.value = val;
       }
     });
+
+    // Renderizar chips de categorías editables
+    const contCat = document.getElementById('lista-chips-categorias');
+    if (contCat) {
+      contCat.innerHTML = (state.categorias || []).map(cat => `
+        <span class="chip-editable">
+          <span>${escapeHtml(cat)}</span>
+          <button type="button" class="btn-quitar-cat" data-cat="${escapeHtml(cat)}" title="Eliminar categoría">✕</button>
+        </span>
+      `).join('');
+
+      contCat.querySelectorAll('.btn-quitar-cat').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cat = btn.getAttribute('data-cat');
+          if (cat && confirm(`¿Eliminar la categoría "${cat}"?`)) {
+            Store.removeCategory(cat);
+          }
+        });
+      });
+    }
+
+    // Renderizar chips de unidades editables
+    const contUni = document.getElementById('lista-chips-unidades');
+    if (contUni) {
+      contUni.innerHTML = (state.unidades || []).map(uni => `
+        <span class="chip-editable">
+          <span>${escapeHtml(uni)}</span>
+          <button type="button" class="btn-quitar-uni" data-uni="${escapeHtml(uni)}" title="Eliminar unidad">✕</button>
+        </span>
+      `).join('');
+
+      contUni.querySelectorAll('.btn-quitar-uni').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const uni = btn.getAttribute('data-uni');
+          if (uni && confirm(`¿Eliminar la unidad de medida "${uni}"?`)) {
+            Store.removeUnit(uni);
+          }
+        });
+      });
+    }
   }
+
+  document.getElementById('btn-agregar-categoria')?.addEventListener('click', () => {
+    const input = document.getElementById('input-nueva-categoria');
+    const val = input?.value.trim();
+    if (val) {
+      if (Store.addCategory(val)) {
+        input.value = "";
+      } else {
+        alert("La categoría ya existe en la lista.");
+      }
+    }
+  });
+
+  document.getElementById('btn-agregar-unidad')?.addEventListener('click', () => {
+    const input = document.getElementById('input-nueva-unidad');
+    const val = input?.value.trim();
+    if (val) {
+      if (Store.addUnit(val)) {
+        input.value = "";
+      } else {
+        alert("La unidad de medida ya existe en la lista.");
+      }
+    }
+  });
 
   document.getElementById('form-configuracion')?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -5928,9 +6832,25 @@ document.addEventListener('DOMContentLoaded', () => {
       moneda: document.getElementById('cfg-moneda')?.value.trim() || "S/",
       pieTicket: document.getElementById('cfg-pie')?.value.trim()
     });
-    alert("Datos de la ferretería guardados correctamente.");
-    cerrarModales();
+    alert("Datos comerciales de la ferretería guardados correctamente.");
   });
+
+  document.getElementById('btn-guardar-config-negocio')?.addEventListener('click', () => {
+    document.getElementById('form-configuracion')?.requestSubmit?.();
+  });
+
+  // Barra flotante móvil de POS desplaza hacia la caja registradora
+  document.getElementById('pos-mobile-cart-bar')?.addEventListener('click', () => {
+    document.querySelector('.pos-carrito-caja')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // Inicializar página según el hash actual de la URL
+  const hashInicial = (window.location.hash || "").replace("#", "").trim();
+  if (hashInicial && TITULOS_PAGINAS[hashInicial]) {
+    cambiarSeccion(hashInicial);
+  } else {
+    cambiarSeccion('pos');
+  }
 
   document.getElementById('btn-descargar-respaldo-json')?.addEventListener('click', () => Store.exportBackupJSON());
 
