@@ -19,11 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let filtroMarcaInventario = "";
   let filasPorPagina = 25;
   let paginaActual = 1;
+  let vistaInventario = "tabla";
+  let rolUsuario = "admin";
+  try {
+    vistaInventario = localStorage.getItem('ferreteria_vista_inventario') || "tabla";
+    rolUsuario = localStorage.getItem('ferreteria_rol_usuario') || "admin";
+  } catch (e) {}
   const productosSeleccionados = new Set();
   let productosParaEtiquetas = [];
   let productoFiltroKardex = null;
   let productoEnEdicion = null;
   let productoParaStock = null;
+  let productoEnDetalleId = null;
+  let imagenProductoActual = "";
+  let guardarYAgregarOtroFlag = false;
   let ventaActivaParaTicket = null;
 
   // Mapa de iconos temáticos por categoría ferretera
@@ -180,12 +189,34 @@ document.addEventListener('DOMContentLoaded', () => {
     backdropEl?.classList.remove('activo');
   });
 
+  // Selector de Rol y Permisos de Visualización de Costos (Sección 4B, 6, 7B, 14)
+  const selectRolUsuario = document.getElementById('select-rol-usuario');
+  function aplicarPermisosRol(rol) {
+    rolUsuario = rol === 'operador' ? 'operador' : 'admin';
+    document.body.classList.toggle('ocultar-costos', rolUsuario === 'operador');
+    if (selectRolUsuario && selectRolUsuario.value !== rolUsuario) {
+      selectRolUsuario.value = rolUsuario;
+    }
+    try { localStorage.setItem('ferreteria_rol_usuario', rolUsuario); } catch (e) {}
+    if (productoEnDetalleId) {
+      renderContenidoDrawerDetalle(productoEnDetalleId);
+    }
+  }
+  aplicarPermisosRol(rolUsuario);
+  selectRolUsuario?.addEventListener('change', (e) => {
+    aplicarPermisosRol(e.target.value);
+    renderInventario(Store.getState());
+  });
+
   // Botones de acceso rápido en Topbar
   document.getElementById('btn-topbar-ver-stock')?.addEventListener('click', () => {
     cambiarSeccion('inventario');
   });
   document.getElementById('btn-topbar-nuevo-prod')?.addEventListener('click', () => {
-    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+    try {
+      sessionStorage.removeItem('ferreteria_edit_prod_id');
+      sessionStorage.removeItem('ferreteria_dup_draft');
+    } catch (e) {}
     abrirModalNuevoProducto();
   });
 
@@ -194,7 +225,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const seccionDestino = btn.getAttribute('data-seccion');
       if (!seccionDestino) return;
       if (seccionDestino === 'producto') {
-        try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+        try {
+          sessionStorage.removeItem('ferreteria_edit_prod_id');
+          sessionStorage.removeItem('ferreteria_dup_draft');
+        } catch (e) {}
         abrirModalNuevoProducto();
       } else if (seccionDestino === 'kardex') {
         try { sessionStorage.removeItem('ferreteria_kardex_prod_id'); } catch (e) {}
@@ -271,8 +305,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (paginaBody === 'producto') {
       contextoInicialSincronizado = true;
+      let dupRaw = null;
       let editId = null;
-      try { editId = sessionStorage.getItem('ferreteria_edit_prod_id'); } catch (e) {}
+      try {
+        dupRaw = sessionStorage.getItem('ferreteria_dup_draft');
+        editId = sessionStorage.getItem('ferreteria_edit_prod_id');
+      } catch (e) {}
+      if (dupRaw) {
+        try {
+          const draft = JSON.parse(dupRaw);
+          abrirFormularioDuplicado(draft, true);
+          return;
+        } catch (e) {}
+      }
       if (editId && (state.productos || []).some(p => p.id === editId)) {
         abrirModalEditarProducto(editId, true);
       } else {
@@ -306,12 +351,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Botones "← Volver" de cada página individual
   document.getElementById('btn-volver-desde-producto')?.addEventListener('click', () => {
     productoEnEdicion = null;
-    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+    try {
+      sessionStorage.removeItem('ferreteria_edit_prod_id');
+      sessionStorage.removeItem('ferreteria_dup_draft');
+    } catch (e) {}
     cambiarSeccion('inventario');
   });
   document.getElementById('btn-cancelar-producto-pag')?.addEventListener('click', () => {
     productoEnEdicion = null;
-    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+    try {
+      sessionStorage.removeItem('ferreteria_edit_prod_id');
+      sessionStorage.removeItem('ferreteria_dup_draft');
+    } catch (e) {}
     cambiarSeccion('inventario');
   });
   document.getElementById('btn-volver-desde-kardex')?.addEventListener('click', () => {
@@ -822,29 +873,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const productos = state.productos || [];
     const kpis = Store.getKpiInventario();
 
-    // Actualizar Tarjetas KPIs
+    // Actualizar Tarjetas KPIs Interactivas (Sección 4B)
     const kpiTotalProd = document.getElementById('inv-kpi-total-prod');
     const kpiValorInv = document.getElementById('inv-kpi-valor-total');
+    const kpiCostoSub = document.getElementById('inv-kpi-sub-costo');
     const kpiBajoStock = document.getElementById('inv-kpi-bajo-stock');
     const kpiAgotados = document.getElementById('inv-kpi-agotados');
+    const kpiInactivos = document.getElementById('inv-kpi-inactivos');
 
-    if (kpiTotalProd) kpiTotalProd.textContent = String(kpis.total);
+    if (kpiTotalProd) kpiTotalProd.textContent = String(kpis.activos);
     if (kpiValorInv) kpiValorInv.textContent = `${moneda} ${kpis.valorVenta.toFixed(2)}`;
+    if (kpiCostoSub) {
+      kpiCostoSub.textContent = rolUsuario === 'admin'
+        ? `Costo compra activos: ${moneda} ${kpis.valorCompra.toFixed(2)}`
+        : `Base: Precio venta productos activos`;
+    }
     if (kpiBajoStock) kpiBajoStock.textContent = String(kpis.bajoStock);
     if (kpiAgotados) kpiAgotados.textContent = String(kpis.agotados);
+    if (kpiInactivos) kpiInactivos.textContent = String(kpis.inactivos);
 
-    // Actualizar Contadores de las Pestañas de Estado (Shopify Style)
+    // Resaltar tarjeta KPI activa
+    const mapaKpiFiltro = {
+      '': 'kpi-card-activos',
+      'bajo': 'kpi-card-bajo',
+      'agotado': 'kpi-card-agotado',
+      'inactivo': 'kpi-card-inactivo'
+    };
+    ['kpi-card-activos', 'kpi-card-bajo', 'kpi-card-agotado', 'kpi-card-inactivo'].forEach(cardId => {
+      const cardEl = document.getElementById(cardId);
+      if (cardEl) {
+        cardEl.classList.toggle('kpi-filtro-activo', mapaKpiFiltro[filtroStockInventario] === cardId);
+      }
+    });
+
+    // Actualizar Contadores de las Pestañas de Estado
     const tabTodos = document.getElementById('tab-cnt-todos');
     const tabNormal = document.getElementById('tab-cnt-normal');
     const tabBajo = document.getElementById('tab-cnt-bajo');
     const tabAgotado = document.getElementById('tab-cnt-agotado');
     const tabInactivo = document.getElementById('tab-cnt-inactivo');
 
-    if (tabTodos) tabTodos.textContent = String(kpis.total);
-    if (tabNormal) tabNormal.textContent = String(kpis.activos - kpis.bajoStock - kpis.agotados);
+    if (tabTodos) tabTodos.textContent = String(kpis.activos);
+    if (tabNormal) tabNormal.textContent = String(kpis.disponibles);
     if (tabBajo) tabBajo.textContent = String(kpis.bajoStock);
     if (tabAgotado) tabAgotado.textContent = String(kpis.agotados);
     if (tabInactivo) tabInactivo.textContent = String(kpis.inactivos);
+
+    // Sincronizar pestaña activa con filtroStockInventario
+    document.querySelectorAll('.pastilla-stock').forEach(t => {
+      t.classList.toggle('activo', (t.getAttribute('data-filtro') || '') === filtroStockInventario);
+    });
 
     // Llenar Filtro de Categorías
     const selectFiltroCat = document.getElementById('inv-filtro-categoria');
@@ -863,17 +941,146 @@ document.addEventListener('DOMContentLoaded', () => {
         marcasUnicas.map(m => `<option value="${escapeHtml(m)}" ${marcaActual === m ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
     }
 
+    // Sincronizar vista Tabla vs Tarjetas
+    aplicarModoVistaInventario(vistaInventario, false);
     renderTablaInventario(state);
+
+    if (productoEnDetalleId) {
+      renderContenidoDrawerDetalle(productoEnDetalleId);
+    }
   }
+
+  function aplicarModoVistaInventario(modo, reRender = true) {
+    vistaInventario = modo === "tarjetas" ? "tarjetas" : "tabla";
+    try { localStorage.setItem('ferreteria_vista_inventario', vistaInventario); } catch (e) {}
+
+    const btnTabla = document.getElementById('btn-vista-tabla');
+    const btnTarjetas = document.getElementById('btn-vista-tarjetas');
+    const contTabla = document.getElementById('inv-contenedor-tabla');
+    const contTarjetas = document.getElementById('inv-contenedor-tarjetas');
+
+    if (btnTabla) btnTabla.classList.toggle('activo', vistaInventario === 'tabla');
+    if (btnTarjetas) btnTarjetas.classList.toggle('activo', vistaInventario === 'tarjetas');
+    if (contTabla) contTabla.style.display = vistaInventario === 'tabla' ? 'block' : 'none';
+    if (contTarjetas) contTarjetas.style.display = vistaInventario === 'tarjetas' ? 'grid' : 'none';
+
+    if (reRender) {
+      renderTablaInventario(Store.getState());
+    }
+  }
+
+  document.getElementById('btn-vista-tabla')?.addEventListener('click', () => aplicarModoVistaInventario('tabla'));
+  document.getElementById('btn-vista-tarjetas')?.addEventListener('click', () => aplicarModoVistaInventario('tarjetas'));
+
+  // Clic en Tarjetas KPI Interactivas (Sección 4B)
+  function alternarFiltroKpi(nuevoFiltro) {
+    if (nuevoFiltro === 'todos') {
+      filtroStockInventario = '';
+    } else if (filtroStockInventario === nuevoFiltro) {
+      filtroStockInventario = '';
+    } else {
+      filtroStockInventario = nuevoFiltro;
+    }
+    paginaActual = 1;
+    renderInventario(Store.getState());
+  }
+
+  document.getElementById('kpi-card-activos')?.addEventListener('click', () => alternarFiltroKpi('todos'));
+  document.getElementById('kpi-card-bajo')?.addEventListener('click', () => alternarFiltroKpi('bajo'));
+  document.getElementById('kpi-card-agotado')?.addEventListener('click', () => alternarFiltroKpi('agotado'));
+  document.getElementById('kpi-card-inactivo')?.addEventListener('click', () => alternarFiltroKpi('inactivo'));
+
+  function renderBarraFiltrosAplicados(busqueda, catFiltro, marcaFiltro, estadoComercialFiltro, totalFiltrados, totalInventario) {
+    const barra = document.getElementById('barra-filtros-aplicados');
+    const contChips = document.getElementById('chips-filtros-activos');
+    const btnLimpiarTodos = document.getElementById('btn-limpiar-todos-filtros');
+    if (!barra || !contChips) return;
+
+    const chips = [];
+    const etiquetasEstado = {
+      'normal': 'Disponibilidad: Disponible',
+      'bajo': 'Disponibilidad: Stock Bajo',
+      'agotado': 'Disponibilidad: Agotado',
+      'inactivo': 'Estado Comercial: Inactivos'
+    };
+
+    if (filtroStockInventario && etiquetasEstado[filtroStockInventario]) {
+      chips.push({ tipo: 'estado', texto: etiquetasEstado[filtroStockInventario] });
+    }
+    if (estadoComercialFiltro && estadoComercialFiltro !== 'todos') {
+      chips.push({ tipo: 'comercial', texto: `Estado: ${estadoComercialFiltro === 'activo' ? 'Activos' : 'Inactivos'}` });
+    }
+    if (catFiltro) {
+      chips.push({ tipo: 'categoria', texto: `Categoría: ${catFiltro}` });
+    }
+    if (marcaFiltro) {
+      chips.push({ tipo: 'marca', texto: `Marca: ${marcaFiltro}` });
+    }
+    if (busqueda) {
+      chips.push({ tipo: 'busqueda', texto: `Búsqueda: "${busqueda}"` });
+    }
+
+    if (chips.length === 0) {
+      contChips.innerHTML = `<span style="font-size:0.78rem; color:var(--slate-500); font-weight:600;" id="texto-alcance-inventario">Mostrando inventario activo completo (${totalFiltrados} productos)</span>`;
+      if (btnLimpiarTodos) btnLimpiarTodos.style.display = 'none';
+      return;
+    }
+
+    if (btnLimpiarTodos) btnLimpiarTodos.style.display = 'inline-flex';
+    contChips.innerHTML = chips.map(ch => `
+      <span class="chip-filtro-removible">
+        <span>${escapeHtml(ch.texto)}</span>
+        <button type="button" class="btn-quitar-chip-filtro" data-tipo="${ch.tipo}" title="Quitar filtro">×</button>
+      </span>
+    `).join('') + `<span style="font-size:0.77rem; color:var(--slate-500); font-weight:600; margin-left:0.35rem;" id="texto-alcance-inventario">• Resultado filtrado (${totalFiltrados} de ${totalInventario} en catálogo)</span>`;
+
+    contChips.querySelectorAll('.btn-quitar-chip-filtro').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tipo = btn.getAttribute('data-tipo');
+        if (tipo === 'estado') filtroStockInventario = '';
+        if (tipo === 'comercial' && document.getElementById('inv-filtro-estado-comercial')) {
+          document.getElementById('inv-filtro-estado-comercial').value = 'todos';
+        }
+        if (tipo === 'categoria' && document.getElementById('inv-filtro-categoria')) {
+          document.getElementById('inv-filtro-categoria').value = '';
+        }
+        if (tipo === 'marca' && document.getElementById('inv-filtro-marca')) {
+          document.getElementById('inv-filtro-marca').value = '';
+        }
+        if (tipo === 'busqueda' && document.getElementById('inv-buscar-input')) {
+          document.getElementById('inv-buscar-input').value = '';
+        }
+        paginaActual = 1;
+        renderInventario(Store.getState());
+      });
+    });
+  }
+
+  document.getElementById('btn-limpiar-todos-filtros')?.addEventListener('click', () => {
+    filtroStockInventario = '';
+    if (document.getElementById('inv-filtro-estado-comercial')) document.getElementById('inv-filtro-estado-comercial').value = 'todos';
+    if (document.getElementById('inv-filtro-categoria')) document.getElementById('inv-filtro-categoria').value = '';
+    if (document.getElementById('inv-filtro-marca')) document.getElementById('inv-filtro-marca').value = '';
+    if (document.getElementById('inv-buscar-input')) document.getElementById('inv-buscar-input').value = '';
+    paginaActual = 1;
+    renderInventario(Store.getState());
+  });
+
+  document.getElementById('inv-filtro-estado-comercial')?.addEventListener('change', () => {
+    paginaActual = 1;
+    renderTablaInventario(Store.getState());
+  });
 
   function renderTablaInventario(state) {
     const tbody = document.getElementById('inv-tabla-tbody');
+    const gridTarjetas = document.getElementById('inv-contenedor-tarjetas');
     if (!tbody) return;
 
     const moneda = (state.configuracion && state.configuracion.moneda) || "S/";
     const busqueda = (document.getElementById('inv-buscar-input')?.value || "").toLowerCase().trim();
     const catFiltro = document.getElementById('inv-filtro-categoria')?.value || "";
     const marcaFiltro = document.getElementById('inv-filtro-marca')?.value || "";
+    const estadoComercialFiltro = document.getElementById('inv-filtro-estado-comercial')?.value || "todos";
 
     // Toggle botón limpiar búsqueda
     const btnLimpiarBusq = document.getElementById('btn-limpiar-busqueda-inv');
@@ -881,46 +1088,53 @@ document.addEventListener('DOMContentLoaded', () => {
       btnLimpiarBusq.style.display = busqueda ? 'block' : 'none';
     }
 
-    // 1. Filtrado Multicriterio
-    let filtrados = (state.productos || []).filter(p => {
+    const todosProductos = state.productos || [];
+
+    // 1. Filtrado Multicriterio Combinable
+    let filtrados = todosProductos.filter(p => {
       const stock = Number(p.stock) || 0;
       const stockMin = Number(p.stockMinimo) || 5;
       const esInactivo = p.estado === "inactivo";
 
-      // Filtro de Pestaña de Estado
+      // Filtro explícito de selector de Estado Comercial
+      if (estadoComercialFiltro === 'activo' && esInactivo) return false;
+      if (estadoComercialFiltro === 'inactivo' && !esInactivo) return false;
+
+      // Filtro de Disponibilidad / Tarjeta KPI
       if (filtroStockInventario === 'normal' && (stock <= stockMin || esInactivo)) return false;
       if (filtroStockInventario === 'bajo' && (stock <= 0 || stock > stockMin || esInactivo)) return false;
       if (filtroStockInventario === 'agotado' && (stock > 0 || esInactivo)) return false;
       if (filtroStockInventario === 'inactivo' && !esInactivo) return false;
-      if (filtroStockInventario === '' && esInactivo) return false; // "Todos" muestra catálogo activo por defecto
+      if (filtroStockInventario === '' && estadoComercialFiltro === 'todos' && esInactivo) return false; // Por defecto muestra activos
 
-      // Filtro Categoría
       if (catFiltro && p.categoria !== catFiltro) return false;
-
-      // Filtro Marca
       if (marcaFiltro && p.marca !== marcaFiltro) return false;
 
-      // Filtro Búsqueda de texto (código, código de barras, nombre, marca, ubicación)
       if (busqueda) {
         const strNombre = (p.nombre || "").toLowerCase();
-        const strCodigo = (p.codigo || "").toLowerCase();
-        const strBarcode = (p.codigoBarras || "").toLowerCase();
+        const strCodigo = String(p.codigo || "").toLowerCase();
+        const strBarcode = String(p.codigoBarras || "").toLowerCase();
         const strMarca = (p.marca || "").toLowerCase();
         const strUbicacion = (p.ubicacion || "").toLowerCase();
         const strCat = (p.categoria || "").toLowerCase();
+        const strSubcat = (p.subcategoria || "").toLowerCase();
 
         const coincide = strNombre.includes(busqueda) ||
           strCodigo.includes(busqueda) ||
           strBarcode.includes(busqueda) ||
           strMarca.includes(busqueda) ||
           strUbicacion.includes(busqueda) ||
-          strCat.includes(busqueda);
+          strCat.includes(busqueda) ||
+          strSubcat.includes(busqueda);
 
         if (!coincide) return false;
       }
 
       return true;
     });
+
+    // Renderizar barra de etiquetas removibles para filtros aplicados (Sección 4C)
+    renderBarraFiltrosAplicados(busqueda, catFiltro, marcaFiltro, estadoComercialFiltro, filtrados.length, todosProductos.length);
 
     // 2. Ordenamiento por Columna
     filtrados.sort((a, b) => {
@@ -990,27 +1204,44 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnAnt) btnAnt.disabled = paginaActual <= 1;
     if (btnSig) btnSig.disabled = paginaActual >= totalPaginas;
 
-    // Sincronizar select de orden
     const selOrden = document.getElementById('inv-select-ordenar');
     if (selOrden && selOrden.value !== ordenInventario) {
       selOrden.value = ordenInventario;
     }
 
-    // 4. Renderizado de Filas
+    // 4. Estado vacío claro (Inventario vacío vs Filtro sin resultados - Sección 11)
     if (registrosPagina.length === 0) {
+      const esInventarioVacio = todosProductos.length === 0;
+      const tituloVacio = esInventarioVacio
+        ? "Tu inventario aún no tiene productos registrados"
+        : "No se encontraron productos con los filtros aplicados";
+      const subVacio = esInventarioVacio
+        ? "Agrega tu primer artículo ferretero con SKU, stock inicial y precio, o importa tu catálogo desde Excel."
+        : "Prueba quitando alguno de los filtros activos o buscando con otro término.";
+
       tbody.innerHTML = `
         <tr>
           <td colspan="10" style="text-align:center; padding: 3.5rem 1.5rem; color: #64748b;">
-            <div style="font-size:2.8rem; margin-bottom:0.6rem;">📦</div>
-            <p style="font-weight:800; font-size:1.05rem; color:#1e293b;">No hay productos para el criterio seleccionado</p>
-            <p style="font-size:0.85rem; margin-top:0.35rem; color:#64748b;">Haz clic en <b>"+ Nuevo Producto"</b> para registrar artículos o ajusta los filtros superiores.</p>
+            <div style="font-size:2.6rem; margin-bottom:0.5rem;">${esInventarioVacio ? '📦' : '🔍'}</div>
+            <p style="font-weight:800; font-size:1.05rem; color:#1e293b;">${tituloVacio}</p>
+            <p style="font-size:0.85rem; margin-top:0.35rem; color:#64748b;">${subVacio}</p>
           </td>
         </tr>
       `;
+      if (gridTarjetas) {
+        gridTarjetas.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:3.5rem 1.5rem; color:#64748b; background:#fff; border:1px dashed var(--border-color); border-radius:var(--radius-md);">
+            <div style="font-size:2.6rem; margin-bottom:0.5rem;">${esInventarioVacio ? '📦' : '🔍'}</div>
+            <p style="font-weight:800; font-size:1.05rem; color:#1e293b;">${tituloVacio}</p>
+            <p style="font-size:0.85rem; margin-top:0.35rem; color:#64748b;">${subVacio}</p>
+          </div>
+        `;
+      }
       actualizarBarraAccionesMasivas();
       return;
     }
 
+    // 5. Renderizado de Filas de Tabla (Sección 5: miniatura, SKU, disponibilidad separada de estado comercial)
     tbody.innerHTML = registrosPagina.map(p => {
       const stock = Number(p.stock) || 0;
       const stockMin = Number(p.stockMinimo) || 5;
@@ -1020,34 +1251,37 @@ document.addEventListener('DOMContentLoaded', () => {
       const margenNum = Number(margen);
       const esInactivo = p.estado === "inactivo";
       const estaSeleccionado = productosSeleccionados.has(p.id);
+      const iconoCat = ICONOS_CATEGORIAS[p.categoria] || "📦";
 
-      // Color e indicador de margen de utilidad
-      let claseMargen = "color:#10b981;"; // Verde > 30%
-      if (margenNum < 15) {
-        claseMargen = "color:#ef4444;"; // Rojo < 15%
-      } else if (margenNum < 30) {
-        claseMargen = "color:#f59e0b;"; // Naranja 15-30%
-      }
+      let claseMargen = "color:#10b981;";
+      if (margenNum < 15) claseMargen = "color:#ef4444;";
+      else if (margenNum < 30) claseMargen = "color:#f59e0b;";
 
-      // Estado de stock y barra visual
+      // Disponibilidad física (Disponible / Stock bajo / Agotado)
       let tagClase = "ok";
       let tagTexto = `${stock} ${p.unidad}`;
-      let estadoBadge = `<span class="stock-tag ok">En Stock</span>`;
+      let dispBadge = `<span class="stock-tag ok">● Disponible</span>`;
       let porcentajeBarra = Math.min(100, Math.max(5, (stock / Math.max(stockMin * 3, p.stockMaximo || 20)) * 100));
 
-      if (esInactivo) {
-        tagClase = "cero";
-        estadoBadge = `<span class="stock-tag" style="background:#f1f5f9; color:#64748b;">Inactivo</span>`;
-      } else if (stock <= 0) {
+      if (stock <= 0) {
         tagClase = "cero";
         tagTexto = `0 ${p.unidad}`;
-        estadoBadge = `<span class="stock-tag cero">Agotado</span>`;
+        dispBadge = `<span class="stock-tag cero">● Agotado</span>`;
         porcentajeBarra = 0;
       } else if (stock <= stockMin) {
         tagClase = "alerta";
         tagTexto = `${stock} ${p.unidad}`;
-        estadoBadge = `<span class="stock-tag alerta">Bajo Stock</span>`;
+        dispBadge = `<span class="stock-tag alerta">● Stock bajo</span>`;
       }
+
+      // Estado comercial separado (Activo / Inactivo)
+      const comercialBadge = esInactivo
+        ? `<span class="badge-comercial inactivo">⏸ Inactivo</span>`
+        : `<span class="badge-comercial activo">✓ Activo</span>`;
+
+      const thumbHtml = p.imagen
+        ? `<span class="prod-thumb-mini"><img src="${escapeHtml(p.imagen)}" alt="${escapeHtml(p.nombre)}"></span>`
+        : `<span class="prod-thumb-mini" title="${escapeHtml(p.categoria || 'Producto')}">${iconoCat}</span>`;
 
       return `
         <tr class="${estaSeleccionado ? 'fila-seleccionada' : ''} ${esInactivo ? 'fila-anulada' : ''}">
@@ -1055,47 +1289,55 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="checkbox" class="chk-prod-item" data-id="${p.id}" ${estaSeleccionado ? 'checked' : ''} style="cursor:pointer; width:16px; height:16px; accent-color:var(--brand-primary);">
           </td>
           <td>
+            <div class="prod-celda-principal">
+              ${thumbHtml}
+              <div>
+                <button type="button" class="btn-ver-detalle-prod" data-id="${p.id}" style="background:none; border:none; padding:0; text-align:left; font-weight:800; color:#0f172a; font-size:0.9rem; cursor:pointer;" title="Ver ficha completa sin salir del listado">
+                  ${escapeHtml(p.nombre)}
+                </button>
+                <div style="display:flex; align-items:center; gap:0.45rem; margin-top:2px; flex-wrap:wrap;">
+                  <span class="chip-cat" style="font-size:0.68rem; padding:0.1rem 0.45rem;">${escapeHtml(p.categoria || 'Otros')}</span>
+                  ${p.marca ? `<span class="marca-tag" style="font-size:0.68rem; font-weight:700; background:#f1f5f9; color:#475569; padding:1px 6px; border-radius:4px; border:1px solid #e2e8f0;">${escapeHtml(p.marca)}</span>` : ''}
+                  ${p.subcategoria ? `<span style="font-size:0.7rem; color:#64748b;">• ${escapeHtml(p.subcategoria)}</span>` : ''}
+                  ${p.ubicacion ? `<span style="font-size:0.7rem; color:#64748b;">📍 ${escapeHtml(p.ubicacion)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
             <div style="display:flex; flex-direction:column; gap:2px;">
-              <code style="font-weight:700; color:#334155; font-family:var(--font-mono); font-size:0.85rem;">${escapeHtml(p.codigo || '-')}</code>
-              ${p.codigoBarras && p.codigoBarras !== p.codigo ? `<span style="font-size:0.7rem; color:#94a3b8; font-family:var(--font-mono);">🏷️ ${escapeHtml(p.codigoBarras)}</span>` : ''}
+              <code style="font-weight:700; color:#334155; font-family:var(--font-mono); font-size:0.84rem;">${escapeHtml(p.codigo || '-')}</code>
+              ${p.codigoBarras && p.codigoBarras !== p.codigo ? `<span style="font-size:0.69rem; color:#94a3b8; font-family:var(--font-mono);">🏷️ ${escapeHtml(p.codigoBarras)}</span>` : ''}
             </div>
           </td>
-          <td>
-            <div style="font-weight:800; color:#0f172a; font-size:0.92rem;">${escapeHtml(p.nombre)}</div>
-            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:2px; flex-wrap:wrap;">
-              ${p.marca ? `<span class="marca-tag" style="font-size:0.7rem; font-weight:700; background:#f1f5f9; color:#475569; padding:1px 6px; border-radius:4px; border:1px solid #e2e8f0;">${escapeHtml(p.marca)}</span>` : ''}
-              ${p.ubicacion ? `<span style="font-size:0.72rem; color:#64748b;">📍 ${escapeHtml(p.ubicacion)}</span>` : ''}
-            </div>
-          </td>
-          <td>
-            <span class="chip-cat" style="font-size:0.75rem; padding:0.18rem 0.55rem;">${escapeHtml(p.categoria || 'Otros')}</span>
-          </td>
-          <td class="text-right" style="font-family:var(--font-mono); color:#475569;">${moneda} ${pCompra.toFixed(2)}</td>
-          <td class="text-right">
-            <div style="font-weight:900; color:var(--brand-primary); font-family:var(--font-mono); font-size:0.95rem;">${moneda} ${pVenta.toFixed(2)}</div>
-            ${p.precioMayor ? `<div style="font-size:0.7rem; color:#64748b;">x Mayor: ${moneda} ${Number(p.precioMayor).toFixed(2)}</div>` : ''}
+          <td class="text-right col-costo-protegido" style="font-family:var(--font-mono); color:#475569;">
+            <div>${moneda} ${pCompra.toFixed(2)}</div>
+            <div style="font-size:0.72rem; font-weight:800; ${claseMargen}">+${margen}%</div>
           </td>
           <td class="text-right">
-            <span style="font-size:0.82rem; font-weight:800; font-family:var(--font-mono); ${claseMargen}">+${margen}%</span>
+            <div style="font-weight:900; color:var(--brand-primary); font-family:var(--font-mono); font-size:0.93rem;">${moneda} ${pVenta.toFixed(2)}</div>
+            ${p.precioMayor ? `<div style="font-size:0.69rem; color:#64748b;">x Mayor: ${moneda} ${Number(p.precioMayor).toFixed(2)}</div>` : ''}
           </td>
           <td>
             <div style="display:flex; align-items:center; gap:0.4rem;">
               <span class="stock-tag ${tagClase}" style="font-weight:800;">${tagTexto}</span>
-              <button type="button" class="btn btn-outline btn-sm btn-agregar-stock" data-id="${p.id}" title="Reabastecer o ingresar stock (+ Stock)" style="padding:0.2rem 0.45rem; font-size:0.75rem; border-color:var(--brand-primary); color:var(--brand-primary);">
-                <b>+ Stock</b>
+              <button type="button" class="btn btn-outline btn-sm btn-agregar-stock" data-id="${p.id}" title="Ajustar stock con trazabilidad" style="padding:0.18rem 0.45rem; font-size:0.73rem; border-color:var(--brand-primary); color:var(--brand-primary);">
+                <b>⚖️ Ajustar</b>
               </button>
             </div>
             <div class="stock-nivel-barra" title="Nivel de existencias">
               <div class="stock-nivel-llenado ${tagClase}" style="width:${porcentajeBarra}%;"></div>
             </div>
           </td>
-          <td>${estadoBadge}</td>
+          <td>${dispBadge}</td>
+          <td>${comercialBadge}</td>
           <td class="text-right">
-            <div style="display:inline-flex; gap:0.25rem;">
-              <button type="button" class="btn btn-outline btn-sm btn-editar-prod" data-id="${p.id}" title="Editar ficha de producto">✏️</button>
-              <button type="button" class="btn btn-outline btn-sm btn-duplicar-prod" data-id="${p.id}" title="Duplicar / Clonar producto">📄</button>
-              <button type="button" class="btn btn-outline btn-sm btn-etiqueta-prod" data-id="${p.id}" title="Imprimir etiqueta con código de barras">🏷️</button>
-              <button type="button" class="btn btn-outline btn-sm btn-kardex-prod" data-id="${p.id}" title="Ver historial y movimientos en Kardex">📜</button>
+            <div style="display:inline-flex; gap:0.22rem;">
+              <button type="button" class="btn btn-outline btn-sm btn-ver-detalle-prod" data-id="${p.id}" title="Ver detalle del producto">👁️</button>
+              <button type="button" class="btn btn-outline btn-sm btn-editar-prod" data-id="${p.id}" title="Editar producto">✏️</button>
+              <button type="button" class="btn btn-outline btn-sm btn-duplicar-prod" data-id="${p.id}" title="Duplicar producto (abre formulario con nuevo SKU)">📄</button>
+              <button type="button" class="btn btn-outline btn-sm btn-toggle-estado-prod" data-id="${p.id}" title="${esInactivo ? 'Activar producto' : 'Desactivar producto'}">${esInactivo ? '▶️' : '⏸️'}</button>
+              <button type="button" class="btn btn-outline btn-sm btn-kardex-prod" data-id="${p.id}" title="Ver historial en Kardex">📜</button>
               <button type="button" class="btn btn-outline btn-sm btn-eliminar-prod" data-id="${p.id}" title="Eliminar producto" style="color:var(--danger);">🗑️</button>
             </div>
           </td>
@@ -1103,77 +1345,350 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Bindeo de eventos en elementos de fila
+    // 6. Renderizado de Vista de Tarjetas (Grid View - Sección 4C)
+    if (gridTarjetas) {
+      gridTarjetas.innerHTML = registrosPagina.map(p => {
+        const stock = Number(p.stock) || 0;
+        const stockMin = Number(p.stockMinimo) || 5;
+        const pVenta = Number(p.precioVenta) || 0;
+        const esInactivo = p.estado === "inactivo";
+        const iconoCat = ICONOS_CATEGORIAS[p.categoria] || "📦";
+
+        let tagClase = "ok";
+        let dispTexto = "Disponible";
+        if (stock <= 0) { tagClase = "cero"; dispTexto = "Agotado"; }
+        else if (stock <= stockMin) { tagClase = "alerta"; dispTexto = "Stock bajo"; }
+
+        const thumbHtml = p.imagen
+          ? `<span class="prod-thumb-mini" style="width:46px; height:46px;"><img src="${escapeHtml(p.imagen)}" alt="${escapeHtml(p.nombre)}"></span>`
+          : `<span class="prod-thumb-mini" style="width:46px; height:46px; font-size:1.3rem;">${iconoCat}</span>`;
+
+        return `
+          <div class="inv-card-producto ${esInactivo ? 'inactivo' : ''}">
+            <div class="inv-card-top">
+              ${thumbHtml}
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.35rem;">
+                  <code style="font-size:0.75rem; font-weight:700; color:var(--slate-600); font-family:var(--font-mono);">${escapeHtml(p.codigo)}</code>
+                  <span class="badge-comercial ${esInactivo ? 'inactivo' : 'activo'}">${esInactivo ? 'Inactivo' : 'Activo'}</span>
+                </div>
+                <div style="font-weight:800; font-size:0.93rem; color:var(--slate-900); margin-top:0.2rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(p.nombre)}">
+                  ${escapeHtml(p.nombre)}
+                </div>
+                <div style="font-size:0.74rem; color:var(--slate-500); margin-top:0.15rem;">
+                  ${escapeHtml(p.categoria || 'General')} ${p.marca ? '• ' + escapeHtml(p.marca) : ''}
+                </div>
+              </div>
+            </div>
+
+            <div class="inv-card-metricas">
+              <div>
+                <div style="font-size:0.68rem; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Precio Venta</div>
+                <div style="font-size:1.05rem; font-weight:900; color:var(--brand-primary); font-family:var(--font-mono);">${moneda} ${pVenta.toFixed(2)}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:0.68rem; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Existencias (${dispTexto})</div>
+                <span class="stock-tag ${tagClase}" style="font-weight:800;">${stock} ${escapeHtml(p.unidad)}</span>
+              </div>
+            </div>
+
+            <div class="inv-card-acciones">
+              <button type="button" class="btn btn-outline btn-sm btn-ver-detalle-prod" data-id="${p.id}">👁️ Detalle</button>
+              <button type="button" class="btn btn-outline btn-sm btn-agregar-stock" data-id="${p.id}">⚖️ Stock</button>
+              <button type="button" class="btn btn-outline btn-sm btn-editar-prod" data-id="${p.id}">✏️ Editar</button>
+              <button type="button" class="btn btn-outline btn-sm btn-duplicar-prod" data-id="${p.id}" title="Duplicar">📄</button>
+              <button type="button" class="btn btn-outline btn-sm btn-toggle-estado-prod" data-id="${p.id}" title="${esInactivo ? 'Activar' : 'Desactivar'}">${esInactivo ? '▶️' : '⏸️'}</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Bindeo unificado de eventos para Tabla y Tarjetas
+    const contenedores = [tbody, gridTarjetas].filter(Boolean);
+
     tbody.querySelectorAll('.chk-prod-item').forEach(chk => {
-      chk.addEventListener('change', (e) => {
+      chk.addEventListener('change', () => {
         const id = chk.getAttribute('data-id');
-        if (chk.checked) {
-          productosSeleccionados.add(id);
-        } else {
-          productosSeleccionados.delete(id);
-        }
+        if (chk.checked) productosSeleccionados.add(id);
+        else productosSeleccionados.delete(id);
         actualizarBarraAccionesMasivas();
         actualizarCheckboxMaestro();
       });
     });
 
-    tbody.querySelectorAll('.btn-agregar-stock').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        if (id) abrirModalAgregarStock(id);
+    contenedores.forEach(cont => {
+      cont.querySelectorAll('.btn-ver-detalle-prod').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (id) abrirDrawerDetalleProducto(id);
+        });
       });
-    });
 
-    tbody.querySelectorAll('.btn-editar-prod').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        if (id) abrirModalEditarProducto(id);
+      cont.querySelectorAll('.btn-agregar-stock').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (id) abrirModalAgregarStock(id);
+        });
       });
-    });
 
-    tbody.querySelectorAll('.btn-duplicar-prod').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        if (id) {
-          const clon = Store.duplicateProduct(id);
-          if (clon) {
-            abrirModalEditarProducto(clon.id);
+      cont.querySelectorAll('.btn-editar-prod').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (id) abrirModalEditarProducto(id);
+        });
+      });
+
+      // Duplicación segura según Sección 5 (abre formulario con borrador, sin SKU, sin código de barras y stock = 0)
+      cont.querySelectorAll('.btn-duplicar-prod').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (id) {
+            const draft = Store.prepareDuplicateDraft(id);
+            if (draft) {
+              try {
+                sessionStorage.removeItem('ferreteria_edit_prod_id');
+                sessionStorage.setItem('ferreteria_dup_draft', JSON.stringify(draft));
+              } catch (e) {}
+              abrirFormularioDuplicado(draft);
+            }
           }
-        }
+        });
       });
-    });
 
-    tbody.querySelectorAll('.btn-etiqueta-prod').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        const prod = (Store.getState().productos || []).find(p => p.id === id);
-        if (prod) {
-          abrirModalEtiquetasBarcode([prod]);
-        }
+      cont.querySelectorAll('.btn-toggle-estado-prod').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (id) Store.toggleProductStatus(id);
+        });
       });
-    });
 
-    tbody.querySelectorAll('.btn-kardex-prod').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        if (id) abrirModalKardex(id);
+      cont.querySelectorAll('.btn-kardex-prod').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (id) abrirModalKardex(id);
+        });
       });
-    });
 
-    tbody.querySelectorAll('.btn-eliminar-prod').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        const prod = (Store.getState().productos || []).find(p => p.id === id);
-        if (prod && confirm(`¿Deseas eliminar definitivamente "${prod.nombre}" del catálogo?`)) {
-          productosSeleccionados.delete(id);
-          Store.deleteProduct(id);
-        }
+      cont.querySelectorAll('.btn-eliminar-prod').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const prod = (Store.getState().productos || []).find(p => p.id === id);
+          if (prod && confirm(`¿Deseas eliminar definitivamente "${prod.nombre}" del catálogo?\n(Sugerencia: Si el producto tiene historial, puedes desactivarlo con ⏸️ en lugar de eliminarlo).`)) {
+            productosSeleccionados.delete(id);
+            Store.deleteProduct(id);
+          }
+        });
       });
     });
 
     actualizarBarraAccionesMasivas();
     actualizarCheckboxMaestro();
   }
+
+  // ==========================================================================
+  // SECCIÓN 6: VISTA DE DETALLE DEL PRODUCTO (SLIDE-OVER DRAWER SIN PERDER CONTEXTO)
+  // ==========================================================================
+
+  function abrirDrawerDetalleProducto(id) {
+    const drawer = document.getElementById('drawer-detalle-producto');
+    if (!drawer) return;
+    productoEnDetalleId = id;
+    renderContenidoDrawerDetalle(id);
+    drawer.classList.add('activo');
+    drawer.setAttribute('aria-hidden', 'false');
+  }
+
+  function cerrarDrawerDetalleProducto() {
+    const drawer = document.getElementById('drawer-detalle-producto');
+    if (!drawer) return;
+    drawer.classList.remove('activo');
+    drawer.setAttribute('aria-hidden', 'true');
+    productoEnDetalleId = null;
+  }
+
+  function renderContenidoDrawerDetalle(id) {
+    const cuerpo = document.getElementById('drawer-detalle-cuerpo');
+    const titulo = document.getElementById('drawer-detalle-titulo');
+    const btnToggle = document.getElementById('btn-drawer-toggle-estado');
+    if (!cuerpo) return;
+
+    const state = Store.getState();
+    const moneda = (state.configuracion && state.configuracion.moneda) || "S/";
+    const p = (state.productos || []).find(x => x.id === id);
+    if (!p) {
+      cerrarDrawerDetalleProducto();
+      return;
+    }
+
+    if (titulo) titulo.textContent = p.nombre;
+    const esInactivo = p.estado === "inactivo";
+    if (btnToggle) {
+      btnToggle.textContent = esInactivo ? "▶️ Activar Producto" : "⏸️ Desactivar Producto";
+    }
+
+    const stock = Number(p.stock) || 0;
+    const stockMin = Number(p.stockMinimo) || 5;
+    let dispBadge = `<span class="stock-tag ok">● Disponible</span>`;
+    if (stock <= 0) dispBadge = `<span class="stock-tag cero">● Agotado</span>`;
+    else if (stock <= stockMin) dispBadge = `<span class="stock-tag alerta">● Stock bajo</span>`;
+
+    const comercialBadge = esInactivo
+      ? `<span class="badge-comercial inactivo">⏸ Inactivo (Oculto en catálogo público)</span>`
+      : `<span class="badge-comercial activo">✓ Activo en catálogo</span>`;
+
+    const iconoCat = ICONOS_CATEGORIAS[p.categoria] || "📦";
+    const imgHtml = p.imagen
+      ? `<img src="${escapeHtml(p.imagen)}" alt="${escapeHtml(p.nombre)}" style="width:76px; height:76px; object-fit:cover; border-radius:10px; border:1px solid var(--border-color);">`
+      : `<div style="width:76px; height:76px; border-radius:10px; background:var(--slate-100); display:flex; align-items:center; justify-content:center; font-size:2rem; border:1px solid var(--border-color);">${iconoCat}</div>`;
+
+    const attrs = p.atributos || {};
+    const listaAttrs = [
+      ['Medida / Dimensiones', attrs.medida],
+      ['Material', attrs.material],
+      ['Diámetro / Calibre', attrs.diametro],
+      ['Tipo de Rosca', attrs.rosca],
+      ['Potencia / Voltaje', attrs.potencia],
+      ['Color / Presentación', attrs.presentacion]
+    ].filter(([, val]) => val && String(val).trim() !== "");
+
+    const movsRecientes = Store.getStockMovements(p.id, 6);
+
+    cuerpo.innerHTML = `
+      <div style="display:flex; gap:1rem; align-items:center; background:#fff; padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+        ${imgHtml}
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.35rem;">
+            ${dispBadge}
+            ${comercialBadge}
+          </div>
+          <div style="font-weight:800; font-size:1.05rem; color:var(--slate-900);">${escapeHtml(p.nombre)}</div>
+          <div style="font-size:0.78rem; color:var(--slate-500); margin-top:0.15rem;">
+            SKU: <code style="font-weight:800; color:var(--slate-800);">${escapeHtml(p.codigo)}</code>
+            ${p.codigoBarras ? ` • EAN/Barcode: <code style="font-weight:700;">${escapeHtml(p.codigoBarras)}</code>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-seccion">
+        <div class="drawer-seccion-titulo">📊 Precios y Existencias</div>
+        <div class="drawer-grid-datos">
+          <div class="drawer-dato-item">
+            <span class="lbl">Precio de Venta</span>
+            <span class="val" style="color:var(--brand-primary); font-size:1.08rem; font-family:var(--font-mono);">${moneda} ${(Number(p.precioVenta) || 0).toFixed(2)}</span>
+          </div>
+          ${rolUsuario === 'admin' ? `
+          <div class="drawer-dato-item">
+            <span class="lbl">Costo de Compra</span>
+            <span class="val" style="font-family:var(--font-mono);">${moneda} ${(Number(p.precioCompra) || 0).toFixed(2)}</span>
+          </div>
+          ` : ''}
+          <div class="drawer-dato-item">
+            <span class="lbl">Stock Actual</span>
+            <span class="val">${stock} ${escapeHtml(p.unidad)}</span>
+          </div>
+          <div class="drawer-dato-item">
+            <span class="lbl">Stock Mínimo / Alerta</span>
+            <span class="val">${stockMin} ${escapeHtml(p.unidad)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-seccion">
+        <div class="drawer-seccion-titulo">🗂️ Clasificación y Ubicación</div>
+        <div class="drawer-grid-datos">
+          <div class="drawer-dato-item">
+            <span class="lbl">Categoría</span>
+            <span class="val">${escapeHtml(p.categoria || '-')}</span>
+          </div>
+          <div class="drawer-dato-item">
+            <span class="lbl">Subcategoría</span>
+            <span class="val">${escapeHtml(p.subcategoria || '-')}</span>
+          </div>
+          <div class="drawer-dato-item">
+            <span class="lbl">Marca / Fabricante</span>
+            <span class="val">${escapeHtml(p.marca || '-')}</span>
+          </div>
+          <div class="drawer-dato-item">
+            <span class="lbl">Ubicación en Almacén</span>
+            <span class="val">${escapeHtml(p.ubicacion || '-')}</span>
+          </div>
+        </div>
+        ${p.descripcion ? `<div style="margin-top:0.65rem; font-size:0.82rem; color:var(--slate-600); border-top:1px solid var(--slate-100); padding-top:0.55rem;"><b>Descripción:</b> ${escapeHtml(p.descripcion)}</div>` : ''}
+      </div>
+
+      ${listaAttrs.length > 0 ? `
+      <div class="drawer-seccion">
+        <div class="drawer-seccion-titulo">🔩 Atributos Técnicos de Ferretería</div>
+        <div class="drawer-grid-datos">
+          ${listaAttrs.map(([etiqueta, valor]) => `
+            <div class="drawer-dato-item">
+              <span class="lbl">${escapeHtml(etiqueta)}</span>
+              <span class="val">${escapeHtml(valor)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ` : ''}
+
+      <div class="drawer-seccion">
+        <div class="drawer-seccion-titulo" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>📜 Movimientos Recientes en Kardex</span>
+          <span style="font-size:0.7rem; color:var(--slate-400); text-transform:none;">Últimos ${movsRecientes.length} registros</span>
+        </div>
+        ${movsRecientes.length === 0 ? `
+          <p style="font-size:0.8rem; color:var(--slate-500);">No hay movimientos registrados para este producto.</p>
+        ` : `
+          <div style="display:flex; flex-direction:column; gap:0.45rem;">
+            ${movsRecientes.map(m => {
+              const pos = Number(m.cantidad) >= 0;
+              return `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.6rem; background:var(--slate-50); border-radius:6px; border:1px solid var(--slate-200); font-size:0.78rem;">
+                  <div>
+                    <div style="font-weight:700; color:var(--slate-800);">${escapeHtml(m.tipo)} <span style="font-weight:500; color:var(--slate-500);">• ${escapeHtml(m.usuario || 'Administrador')}</span></div>
+                    <div style="font-size:0.72rem; color:var(--slate-500);">${escapeHtml(m.motivo || '-')} (${m.fecha ? m.fecha.replace('T', ' ').slice(0, 16) : '-'})</div>
+                  </div>
+                  <div style="text-align:right; font-family:var(--font-mono);">
+                    <div style="font-weight:800; color:${pos ? 'var(--success-dark)' : 'var(--danger)'};">${pos ? '+' : ''}${m.cantidad}</div>
+                    <div style="font-size:0.68rem; color:var(--slate-500);">Saldo: ${m.stockNuevo}</div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `}
+      </div>
+
+      <div style="font-size:0.73rem; color:var(--slate-400); display:flex; justify-content:space-between; padding:0 0.25rem;">
+        <span>Creado: ${p.fechaCreacion ? p.fechaCreacion.replace('T', ' ').slice(0, 16) : '-'}</span>
+        <span>Actualizado: ${p.fechaActualizacion ? p.fechaActualizacion.replace('T', ' ').slice(0, 16) : '-'}</span>
+      </div>
+    `;
+  }
+
+  document.getElementById('btn-cerrar-drawer-detalle')?.addEventListener('click', cerrarDrawerDetalleProducto);
+  document.getElementById('drawer-detalle-producto')?.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'drawer-detalle-producto') {
+      cerrarDrawerDetalleProducto();
+    }
+  });
+  document.getElementById('btn-drawer-toggle-estado')?.addEventListener('click', () => {
+    if (productoEnDetalleId) {
+      Store.toggleProductStatus(productoEnDetalleId);
+    }
+  });
+  document.getElementById('btn-drawer-ajustar-stock')?.addEventListener('click', () => {
+    if (productoEnDetalleId) {
+      abrirModalAgregarStock(productoEnDetalleId);
+    }
+  });
+  document.getElementById('btn-drawer-editar-prod')?.addEventListener('click', () => {
+    if (productoEnDetalleId) {
+      const id = productoEnDetalleId;
+      cerrarDrawerDetalleProducto();
+      abrirModalEditarProducto(id);
+    }
+  });
 
   function actualizarCheckboxMaestro() {
     const chkMaestro = document.getElementById('inv-chk-todos');
@@ -1474,16 +1989,128 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-inv-nuevo-producto')?.addEventListener('click', () => {
-    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+    try {
+      sessionStorage.removeItem('ferreteria_edit_prod_id');
+      sessionStorage.removeItem('ferreteria_dup_draft');
+    } catch (e) {}
     abrirModalNuevoProducto();
+  });
+
+  // Gestión de Imagen Principal del Producto con Drag & Drop y Validación (Sección 7D)
+  const dropzoneImagen = document.getElementById('prod-dropzone-imagen');
+  const inputArchivoImagen = document.getElementById('prod-input-archivo-imagen');
+  const boxImagenVacia = document.getElementById('prod-dropzone-placeholder');
+  const boxImagenPreview = document.getElementById('prod-imagen-preview-wrap');
+  const imgPreviewEl = document.getElementById('prod-imagen-preview-img');
+  const btnQuitarImagen = document.getElementById('btn-quitar-imagen-prod');
+
+  function actualizarPreviewImagenProducto(dataUrl) {
+    imagenProductoActual = dataUrl || "";
+    if (imagenProductoActual) {
+      if (boxImagenVacia) boxImagenVacia.style.display = 'none';
+      if (boxImagenPreview) boxImagenPreview.style.display = 'block';
+      if (imgPreviewEl) imgPreviewEl.src = imagenProductoActual;
+      if (btnQuitarImagen) btnQuitarImagen.style.display = 'inline-flex';
+    } else {
+      if (boxImagenVacia) boxImagenVacia.style.display = 'block';
+      if (boxImagenPreview) boxImagenPreview.style.display = 'none';
+      if (imgPreviewEl) imgPreviewEl.src = "";
+      if (inputArchivoImagen) inputArchivoImagen.value = "";
+      if (btnQuitarImagen) btnQuitarImagen.style.display = 'none';
+    }
+  }
+
+  function procesarArchivoImagenProducto(file) {
+    if (!file) return;
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!tiposPermitidos.includes(file.type)) {
+      alert("Formato de imagen no válido. Usa JPG, PNG o WEBP.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert("La imagen supera el tamaño máximo recomendado de 2 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      actualizarPreviewImagenProducto(String(evt.target?.result || ""));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  dropzoneImagen?.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'btn-quitar-imagen-prod') return;
+    inputArchivoImagen?.click();
+  });
+  inputArchivoImagen?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) procesarArchivoImagenProducto(file);
+  });
+  dropzoneImagen?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzoneImagen.classList.add('dragover');
+  });
+  dropzoneImagen?.addEventListener('dragleave', () => {
+    dropzoneImagen.classList.remove('dragover');
+  });
+  dropzoneImagen?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzoneImagen.classList.remove('dragover');
+    const file = e.dataTransfer?.files?.[0];
+    if (file) procesarArchivoImagenProducto(file);
+  });
+  document.getElementById('btn-quitar-imagen-prod')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    actualizarPreviewImagenProducto("");
+  });
+
+  // Limpiar errores inline del formulario de producto
+  function limpiarErroresFormularioProducto() {
+    ['err-prod-codigo', 'err-prod-barcode', 'err-prod-nombre', 'err-prod-venta'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = "";
+    });
+    ['prod-input-codigo', 'prod-input-barcode', 'prod-input-nombre', 'prod-input-venta'].forEach(id => {
+      document.getElementById(id)?.classList.remove('input-error');
+    });
+  }
+
+  function configurarBloqueoStockEdicion(esEdicion) {
+    const inputStock = document.getElementById('prod-input-stock');
+    const avisoEdicion = document.getElementById('aviso-stock-edicion');
+    const labelStock = document.getElementById('label-prod-stock');
+    if (inputStock) {
+      inputStock.readOnly = Boolean(esEdicion);
+      inputStock.style.backgroundColor = esEdicion ? "#f1f5f9" : "";
+      inputStock.style.cursor = esEdicion ? "not-allowed" : "";
+    }
+    if (avisoEdicion) {
+      avisoEdicion.style.display = esEdicion ? "flex" : "none";
+    }
+    if (labelStock) {
+      labelStock.textContent = esEdicion ? "Existencia Actual (Protegida por Kardex)" : "Stock Inicial *";
+    }
+  }
+
+  document.getElementById('btn-ir-ajustar-desde-edicion')?.addEventListener('click', () => {
+    if (productoEnEdicion && productoEnEdicion.id) {
+      abrirModalAgregarStock(productoEnEdicion.id);
+    }
   });
 
   function abrirModalNuevoProducto(forzarLocal = false) {
     productoEnEdicion = null;
-    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+    try {
+      sessionStorage.removeItem('ferreteria_edit_prod_id');
+      sessionStorage.removeItem('ferreteria_dup_draft');
+    } catch (e) {}
     const titulo = document.getElementById('modal-producto-titulo');
     const form = document.getElementById('form-producto');
     if (!form) return;
+
+    limpiarErroresFormularioProducto();
+    configurarBloqueoStockEdicion(false);
+    actualizarPreviewImagenProducto("");
 
     if (titulo) titulo.textContent = "➕ Nuevo Producto de Ferretería";
     form.reset();
@@ -1502,8 +2129,65 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('prod-input-nombre')?.focus();
   }
 
+  // Abrir formulario prellenado para Duplicar Producto (Sección 5: exige nuevo SKU, no copia código de barras ni stock)
+  function abrirFormularioDuplicado(draft, forzarLocal = false) {
+    productoEnEdicion = null;
+    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+    const titulo = document.getElementById('modal-producto-titulo');
+    const form = document.getElementById('form-producto');
+    if (!form) return;
+
+    limpiarErroresFormularioProducto();
+    configurarBloqueoStockEdicion(false);
+    form.reset();
+    poblarSelectsProducto();
+
+    if (titulo) titulo.textContent = "📄 Duplicar Producto (Ingresa el nuevo SKU)";
+
+    const setVal = (elemId, val) => {
+      const el = document.getElementById(elemId);
+      if (el) el.value = val !== undefined && val !== null ? val : "";
+    };
+
+    setVal('prod-input-codigo', "");
+    setVal('prod-input-barcode', "");
+    setVal('prod-select-estado', draft.estado || "activo");
+    setVal('prod-input-nombre', draft.nombre || "");
+    setVal('prod-select-categoria', draft.categoria || "Otros");
+    setVal('prod-input-subcategoria', draft.subcategoria || "");
+    setVal('prod-input-marca', draft.marca || "");
+    setVal('prod-select-unidad', draft.unidad || "Unidad");
+    setVal('prod-input-compra', draft.precioCompra || 0);
+    setVal('prod-input-venta', draft.precioVenta || 0);
+    setVal('prod-input-mayor', draft.precioMayor || "");
+    setVal('prod-input-stock', 0);
+    setVal('prod-input-stock-min', draft.stockMinimo ?? 5);
+    setVal('prod-input-stock-max', draft.stockMaximo || "");
+    setVal('prod-input-ubicacion', draft.ubicacion || "");
+    setVal('prod-input-descripcion', draft.descripcion || "");
+
+    const attrs = draft.atributos || {};
+    setVal('attr-medida', attrs.medida || "");
+    setVal('attr-material', attrs.material || "");
+    setVal('attr-diametro', attrs.diametro || "");
+    setVal('attr-rosca', attrs.rosca || "");
+    setVal('attr-potencia', attrs.potencia || "");
+    setVal('attr-presentacion', attrs.presentacion || "");
+
+    const chkFrac = document.getElementById('prod-chk-fraccionada');
+    if (chkFrac) chkFrac.checked = draft.permiteDecimales !== false;
+
+    actualizarPreviewImagenProducto(draft.imagen || "");
+    actualizarCalculadoraMargen('venta');
+    cambiarSeccion('producto', forzarLocal);
+    document.getElementById('prod-input-codigo')?.focus();
+  }
+
   function abrirModalEditarProducto(id, forzarLocal = false) {
-    try { sessionStorage.setItem('ferreteria_edit_prod_id', id); } catch (e) {}
+    try {
+      sessionStorage.removeItem('ferreteria_dup_draft');
+      sessionStorage.setItem('ferreteria_edit_prod_id', id);
+    } catch (e) {}
     const prod = (Store.getState().productos || []).find(p => p.id === id);
     if (!prod) {
       cambiarSeccion('producto', forzarLocal);
@@ -1511,6 +2195,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     productoEnEdicion = prod;
+    limpiarErroresFormularioProducto();
+    configurarBloqueoStockEdicion(true);
+
     const titulo = document.getElementById('modal-producto-titulo');
     if (titulo) titulo.textContent = "✏️ Editar Producto: " + prod.nombre;
     poblarSelectsProducto();
@@ -1521,10 +2208,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     setVal('prod-input-codigo', prod.codigo);
-    setVal('prod-input-barcode', prod.codigoBarras || prod.codigo);
+    setVal('prod-input-barcode', prod.codigoBarras || "");
     setVal('prod-select-estado', prod.estado || "activo");
     setVal('prod-input-nombre', prod.nombre);
     setVal('prod-select-categoria', prod.categoria || "Otros");
+    setVal('prod-input-subcategoria', prod.subcategoria || "");
     setVal('prod-input-marca', prod.marca || "");
     setVal('prod-select-unidad', prod.unidad || "Unidad");
     setVal('prod-input-compra', prod.precioCompra);
@@ -1536,9 +2224,18 @@ document.addEventListener('DOMContentLoaded', () => {
     setVal('prod-input-ubicacion', prod.ubicacion);
     setVal('prod-input-descripcion', prod.descripcion || "");
 
+    const attrs = prod.atributos || {};
+    setVal('attr-medida', attrs.medida || "");
+    setVal('attr-material', attrs.material || "");
+    setVal('attr-diametro', attrs.diametro || "");
+    setVal('attr-rosca', attrs.rosca || "");
+    setVal('attr-potencia', attrs.potencia || "");
+    setVal('attr-presentacion', attrs.presentacion || "");
+
     const chkFrac = document.getElementById('prod-chk-fraccionada');
     if (chkFrac) chkFrac.checked = prod.permiteDecimales !== false;
 
+    actualizarPreviewImagenProducto(prod.imagen || "");
     actualizarCalculadoraMargen('venta');
     cambiarSeccion('producto', forzarLocal);
   }
@@ -1556,14 +2253,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  document.getElementById('btn-guardar-y-otro')?.addEventListener('click', () => {
+    guardarYAgregarOtroFlag = true;
+    document.getElementById('form-producto')?.requestSubmit?.();
+  });
+
   document.getElementById('form-producto')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const codigo = document.getElementById('prod-input-codigo')?.value.trim();
-    const codigoBarras = document.getElementById('prod-input-barcode')?.value.trim();
+    const mantenerEnFormulario = guardarYAgregarOtroFlag;
+    guardarYAgregarOtroFlag = false;
+
+    limpiarErroresFormularioProducto();
+
+    // Preservar ceros a la izquierda en SKU y Código de Barras como string
+    const codigo = String(document.getElementById('prod-input-codigo')?.value || "").trim();
+    const codigoBarras = String(document.getElementById('prod-input-barcode')?.value || "").trim();
     const estado = document.getElementById('prod-select-estado')?.value || "activo";
-    const nombre = document.getElementById('prod-input-nombre')?.value.trim();
+    const nombre = (document.getElementById('prod-input-nombre')?.value || "").trim();
     const categoria = document.getElementById('prod-select-categoria')?.value;
-    const marca = document.getElementById('prod-input-marca')?.value.trim();
+    const subcategoria = (document.getElementById('prod-input-subcategoria')?.value || "").trim();
+    const marca = (document.getElementById('prod-input-marca')?.value || "").trim();
     const unidad = document.getElementById('prod-select-unidad')?.value;
     const precioCompra = parseFloat(document.getElementById('prod-input-compra')?.value) || 0;
     const precioVenta = parseFloat(document.getElementById('prod-input-venta')?.value) || 0;
@@ -1572,32 +2281,77 @@ document.addEventListener('DOMContentLoaded', () => {
     const stock = parseFloat(document.getElementById('prod-input-stock')?.value) || 0;
     const stockMinimo = parseFloat(document.getElementById('prod-input-stock-min')?.value) || 5;
     const stockMaximo = parseFloat(document.getElementById('prod-input-stock-max')?.value) || 0;
-    const ubicacion = document.getElementById('prod-input-ubicacion')?.value.trim();
-    const descripcion = document.getElementById('prod-input-descripcion')?.value.trim();
+    const ubicacion = (document.getElementById('prod-input-ubicacion')?.value || "").trim();
+    const descripcion = (document.getElementById('prod-input-descripcion')?.value || "").trim();
 
-    if (!nombre) {
-      alert("El nombre del producto es obligatorio.");
+    const atributos = {
+      medida: (document.getElementById('attr-medida')?.value || "").trim(),
+      material: (document.getElementById('attr-material')?.value || "").trim(),
+      diametro: (document.getElementById('attr-diametro')?.value || "").trim(),
+      rosca: (document.getElementById('attr-rosca')?.value || "").trim(),
+      potencia: (document.getElementById('attr-potencia')?.value || "").trim(),
+      presentacion: (document.getElementById('attr-presentacion')?.value || "").trim()
+    };
+
+    const payload = {
+      codigo, codigoBarras, estado, nombre, categoria, subcategoria, marca, unidad,
+      precioCompra, precioVenta, precioMayor, permiteDecimales,
+      stock, stockMinimo, stockMaximo, ubicacion, descripcion,
+      imagen: imagenProductoActual,
+      atributos
+    };
+
+    // Validación con mensajes específicos junto al campo correspondiente sin borrar lo escrito (Sección 8 & 10)
+    const validacion = Store.validarProductoUnico(payload, productoEnEdicion ? productoEnEdicion.id : null);
+    if (!validacion.ok) {
+      const mapaCampoError = {
+        codigo: ['err-prod-codigo', 'prod-input-codigo'],
+        codigoBarras: ['err-prod-barcode', 'prod-input-barcode'],
+        nombre: ['err-prod-nombre', 'prod-input-nombre'],
+        precioVenta: ['err-prod-venta', 'prod-input-venta']
+      };
+      const par = mapaCampoError[validacion.campo];
+      if (par) {
+        const errEl = document.getElementById(par[0]);
+        const inpEl = document.getElementById(par[1]);
+        if (errEl) errEl.textContent = validacion.error;
+        if (inpEl) {
+          inpEl.classList.add('input-error');
+          inpEl.focus();
+        }
+      } else {
+        alert(validacion.error);
+      }
       return;
     }
 
-    const payload = {
-      codigo, codigoBarras, estado, nombre, categoria, marca, unidad,
-      precioCompra, precioVenta, precioMayor, permiteDecimales,
-      stock, stockMinimo, stockMaximo, ubicacion, descripcion
-    };
-
+    let resultado;
     if (productoEnEdicion) {
-      Store.updateProduct(productoEnEdicion.id, payload);
+      resultado = Store.updateProduct(productoEnEdicion.id, payload);
     } else {
-      Store.addProduct(payload);
+      resultado = Store.addProduct(payload);
     }
 
+    if (resultado && resultado.ok === false) {
+      alert(resultado.error || "No se pudo guardar el producto.");
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem('ferreteria_edit_prod_id');
+      sessionStorage.removeItem('ferreteria_dup_draft');
+    } catch (err) {}
+
     productoEnEdicion = null;
-    cambiarSeccion('inventario');
+    if (mantenerEnFormulario) {
+      abrirModalNuevoProducto(true);
+    } else {
+      cambiarSeccion('inventario');
+    }
   });
 
   // ==========================================================================
-  // MODAL RÁPIDO: REABASTECIMIENTO Y AJUSTE DE STOCK (+ STOCK)
+  // SECCIÓN 9: AJUSTE DE EXISTENCIAS Y MOVIMIENTOS DE STOCK CON TRAZABILIDAD
   // ==========================================================================
 
   function abrirModalAgregarStock(id) {
@@ -1608,31 +2362,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('modal-stock');
     if (!modal) return;
 
-    document.getElementById('stock-modal-prod-nombre').textContent = prod.nombre;
+    document.getElementById('stock-modal-prod-nombre').textContent = `${prod.nombre} (SKU: ${prod.codigo})`;
     document.getElementById('stock-modal-actual').textContent = `${prod.stock} ${prod.unidad}`;
     document.getElementById('stock-input-cantidad').value = "";
     document.getElementById('stock-input-compra').value = prod.precioCompra || "";
+    if (document.getElementById('stock-input-motivo')) {
+      document.getElementById('stock-input-motivo').value = "";
+    }
     document.getElementById('stock-preview-nuevo').textContent = `${prod.stock} ${prod.unidad}`;
 
     modal.classList.add('activo');
     const inputCant = document.getElementById('stock-input-cantidad');
     const selectTipo = document.getElementById('stock-select-tipo');
+    const labelCant = document.getElementById('stock-label-cantidad');
+    const cajaPreview = document.getElementById('stock-caja-preview');
 
     const actualizarPreviewStock = () => {
       const val = parseFloat(inputCant?.value) || 0;
       const tipo = selectTipo?.value || "Ingreso por Compra";
-      let total = prod.stock;
-      if (tipo === "Merma / Daño" || tipo === "Uso Interno") {
-        total = Math.max(0, Math.round(((Number(prod.stock) || 0) - val) * 1000) / 1000);
-        document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (-${val})`;
+      const stockActual = Number(prod.stock) || 0;
+
+      if (tipo === "Retiro por Merma / Daño") {
+        if (labelCant) labelCant.textContent = "Cantidad a Retirar *";
+        const resultante = Math.round((stockActual - val) * 1000) / 1000;
+        if (resultante < 0) {
+          document.getElementById('stock-preview-nuevo').textContent = `⚠️ Inválido (${resultante} ${prod.unidad} - No puede quedar negativo)`;
+          if (cajaPreview) {
+            cajaPreview.style.background = "var(--danger-light)";
+            cajaPreview.style.color = "var(--danger)";
+          }
+        } else {
+          document.getElementById('stock-preview-nuevo').textContent = `${resultante} ${prod.unidad} (-${val})`;
+          if (cajaPreview) {
+            cajaPreview.style.background = "var(--warning-light)";
+            cajaPreview.style.color = "#b45309";
+          }
+        }
       } else if (tipo === "Ajuste de Conteo Físico") {
-        total = val;
-        document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (Fijado a ${val})`;
+        if (labelCant) labelCant.textContent = "Existencia Física Contada *";
+        const delta = Math.round((val - stockActual) * 1000) / 1000;
+        const signo = delta >= 0 ? "+" : "";
+        document.getElementById('stock-preview-nuevo').textContent = `${val} ${prod.unidad} (Variación: ${signo}${delta})`;
+        if (cajaPreview) {
+          cajaPreview.style.background = "var(--info-light)";
+          cajaPreview.style.color = "var(--info)";
+        }
       } else {
-        total = Math.round(((Number(prod.stock) || 0) + val) * 1000) / 1000;
+        if (labelCant) labelCant.textContent = "Cantidad a Agregar *";
+        const total = Math.round((stockActual + val) * 1000) / 1000;
         document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (+${val})`;
+        if (cajaPreview) {
+          cajaPreview.style.background = "var(--success-light)";
+          cajaPreview.style.color = "var(--success-dark)";
+        }
       }
     };
+
+    actualizarPreviewStock();
 
     if (inputCant) {
       inputCant.focus();
@@ -1647,28 +2433,45 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     if (!productoParaStock) return;
 
+    const tipo = document.getElementById('stock-select-tipo')?.value || "Ingreso por Compra";
     const cantidad = parseFloat(document.getElementById('stock-input-cantidad')?.value);
-    if (isNaN(cantidad) || cantidad <= 0) {
-      alert("Ingresa una cantidad mayor a cero.");
+    const usuario = (document.getElementById('stock-input-usuario')?.value || "").trim() || "Administrador";
+    const motivo = (document.getElementById('stock-input-motivo')?.value || "").trim();
+    const nuevoCosto = document.getElementById('stock-input-compra')?.value;
+
+    if (isNaN(cantidad) || (tipo !== "Ajuste de Conteo Físico" && cantidad <= 0) || cantidad < 0) {
+      alert("Ingresa una cantidad numérica válida.");
+      return;
+    }
+    if (!motivo) {
+      alert("El motivo o justificación del ajuste es obligatorio para la trazabilidad en el Kardex.");
+      document.getElementById('stock-input-motivo')?.focus();
       return;
     }
 
-    const tipo = document.getElementById('stock-select-tipo')?.value || "Ingreso por Compra";
-    const nuevoCosto = document.getElementById('stock-input-compra')?.value;
-    const motivo = document.getElementById('stock-input-motivo')?.value || tipo;
-
     let res;
     if (tipo === "Ajuste de Conteo Físico") {
-      res = Store.adjustStock(productoParaStock.id, cantidad, motivo, tipo);
-    } else if (tipo === "Merma / Daño" || tipo === "Uso Interno") {
-      const nuevoStock = Math.max(0, productoParaStock.stock - cantidad);
-      res = Store.adjustStock(productoParaStock.id, nuevoStock, motivo, tipo);
+      res = Store.adjustStock(productoParaStock.id, cantidad, motivo, tipo, usuario);
+    } else if (tipo === "Retiro por Merma / Daño") {
+      res = Store.retirarStock(productoParaStock.id, cantidad, motivo, tipo, usuario);
     } else {
-      res = Store.addStock(productoParaStock.id, cantidad, motivo, nuevoCosto ? parseFloat(nuevoCosto) : null, tipo);
+      res = Store.addStock(productoParaStock.id, cantidad, motivo, nuevoCosto ? parseFloat(nuevoCosto) : null, tipo, usuario);
     }
 
     if (res && res.ok) {
+      const idActualizado = productoParaStock.id;
       cerrarModales();
+      if (productoEnEdicion && productoEnEdicion.id === idActualizado) {
+        const prodFresco = (Store.getState().productos || []).find(p => p.id === idActualizado);
+        if (prodFresco) {
+          productoEnEdicion = prodFresco;
+          const inpSt = document.getElementById('prod-input-stock');
+          if (inpSt) inpSt.value = prodFresco.stock;
+        }
+      }
+      if (productoEnDetalleId === idActualizado) {
+        renderContenidoDrawerDetalle(idActualizado);
+      }
     } else {
       alert("Error: " + (res?.error || "No se pudo actualizar el stock"));
     }
@@ -1742,8 +2545,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (busqueda) {
       movs = movs.filter(m =>
         (m.nombre && m.nombre.toLowerCase().includes(busqueda)) ||
-        (m.codigo && m.codigo.toLowerCase().includes(busqueda)) ||
+        (m.codigo && String(m.codigo).toLowerCase().includes(busqueda)) ||
         (m.motivo && m.motivo.toLowerCase().includes(busqueda)) ||
+        (m.usuario && m.usuario.toLowerCase().includes(busqueda)) ||
         (m.referencia && m.referencia.toLowerCase().includes(busqueda))
       );
     }
@@ -1751,7 +2555,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (movs.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" style="text-align:center; padding:3rem 1.5rem; color:#64748b;">
+          <td colspan="9" style="text-align:center; padding:3rem 1.5rem; color:#64748b;">
             <div style="font-size:2.4rem; margin-bottom:0.4rem;">📜</div>
             <p style="font-weight:700; color:#1e293b;">No hay movimientos registrados en el Kardex para este criterio</p>
             <p style="font-size:0.82rem; margin-top:0.2rem;">Cada ingreso de stock, venta o ajuste quedará auditado automáticamente aquí.</p>
@@ -1777,9 +2581,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <td><code style="font-family:var(--font-mono); font-weight:700;">${escapeHtml(m.codigo)}</code></td>
           <td style="font-weight:700; color:#0f172a;">${escapeHtml(m.nombre)}</td>
           <td><span class="kardex-badge ${claseBadge}">${escapeHtml(m.tipo)}</span></td>
-          <td class="text-right ${claseDelta}">${signo}${m.cantidad}</td>
+          <td class="text-right ${claseDelta}">${signo}${m.cantidad} ${escapeHtml(m.unidad || '')}</td>
           <td class="text-right" style="font-family:var(--font-mono); color:#64748b;">${m.stockAnterior}</td>
           <td class="text-right" style="font-family:var(--font-mono); font-weight:800; color:#0f172a;">${m.stockNuevo}</td>
+          <td style="font-size:0.79rem; font-weight:700; color:#334155;">👤 ${escapeHtml(m.usuario || 'Administrador')}</td>
           <td>
             <div style="font-size:0.82rem; color:#334155;">${escapeHtml(m.motivo || '-')}</div>
             ${m.referencia ? `<div style="font-size:0.72rem; color:#94a3b8;">${escapeHtml(m.referencia)}</div>` : ''}
@@ -2298,11 +3103,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function cerrarModales() {
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('activo'));
-    productoEnEdicion = null;
     productoParaStock = null;
   }
 
   document.querySelectorAll('.modal-close-btn, .btn-cancelar-modal').forEach(btn => {
+    if (btn.id === 'btn-cerrar-drawer-detalle') return;
     btn.addEventListener('click', cerrarModales);
   });
 
@@ -2313,7 +3118,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') cerrarModales();
+    if (e.key === 'Escape') {
+      cerrarModales();
+      cerrarDrawerDetalleProducto();
+    }
   });
 
   function escapeHtml(texto) {

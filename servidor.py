@@ -70,13 +70,58 @@ VACIO: Dict[str, Any] = {
 }
 
 
+def normalizar_codigo(valor: Any) -> str:
+    """Convierte el código a texto conservando ceros iniciales y normaliza para comparación."""
+    if valor is None:
+        return ""
+    return str(valor).strip()
+
+
 def validar_esquema(datos: Any) -> Tuple[bool, str]:
-    """Valida la integridad del esquema de datos antes de permitir la persistencia."""
+    """Valida la integridad del esquema y las reglas de negocio (unicidad de SKU, precios y stock no negativos)."""
     if not isinstance(datos, dict):
         return False, "La carga útil debe ser un objeto JSON (dict)"
 
-    if "productos" in datos and not isinstance(datos["productos"], list):
-        return False, "El campo 'productos' debe ser una lista"
+    if "productos" in datos:
+        if not isinstance(datos["productos"], list):
+            return False, "El campo 'productos' debe ser una lista"
+
+        skus_vistos = set()
+        barcodes_vistos = set()
+
+        for idx, prod in enumerate(datos["productos"]):
+            if not isinstance(prod, dict):
+                return False, f"El producto en la posición {idx} debe ser un objeto"
+
+            # Conservar SKU y código de barras como texto (preserva ceros iniciales como '00125')
+            sku_raw = normalizar_codigo(prod.get("codigo", ""))
+            if sku_raw:
+                prod["codigo"] = sku_raw
+                sku_key = sku_raw.upper()
+                if sku_key in skus_vistos:
+                    return False, f"SKU duplicado detectado: '{sku_raw}'. Cada producto debe tener un SKU único."
+                skus_vistos.add(sku_key)
+
+            barcode_raw = normalizar_codigo(prod.get("codigoBarras", ""))
+            if barcode_raw:
+                prod["codigoBarras"] = barcode_raw
+                # Si el código de barras es distinto del SKU propio, validar que no colisione con otro producto
+                bc_key = barcode_raw.upper()
+                if bc_key in barcodes_vistos:
+                    return False, f"Código de barras duplicado: '{barcode_raw}' ya pertenece a otro artículo."
+                barcodes_vistos.add(bc_key)
+
+            # Validar que precios y existencias no sean negativos
+            try:
+                p_compra = float(prod.get("precioCompra", 0) or 0)
+                p_venta = float(prod.get("precioVenta", 0) or 0)
+                stock = float(prod.get("stock", 0) or 0)
+                stock_min = float(prod.get("stockMinimo", 0) or 0)
+            except (ValueError, TypeError):
+                return False, f"Valores numéricos inválidos en el producto '{prod.get('nombre', idx)}'"
+
+            if p_compra < 0 or p_venta < 0 or stock < 0 or stock_min < 0:
+                return False, f"No se permiten precios ni cantidades de stock negativas en '{prod.get('nombre', idx)}'"
 
     if "ventas" in datos and not isinstance(datos["ventas"], list):
         return False, "El campo 'ventas' debe ser una lista"
@@ -87,6 +132,44 @@ def validar_esquema(datos: Any) -> Tuple[bool, str]:
     if "configuracion" in datos and not isinstance(datos["configuracion"], dict):
         return False, "El campo 'configuracion' debe ser un objeto"
 
+    return True, ""
+
+
+def obtener_catalogo_publico(datos: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Filtra únicamente productos activos y excluye costos de compra e información interna restringida."""
+    publicos = []
+    for p in datos.get("productos", []):
+        if not isinstance(p, dict):
+            continue
+        if p.get("estado", "activo") != "activo":
+            continue
+        stock = float(p.get("stock", 0) or 0)
+        stock_min = float(p.get("stockMinimo", 5) or 5)
+        disponibilidad = "agotado" if stock <= 0 else ("bajo" if stock <= stock_min else "disponible")
+        publicos.append({
+            "id": p.get("id"),
+            "codigo": str(p.get("codigo", "")),
+            "codigoBarras": str(p.get("codigoBarras", "")),
+            "nombre": p.get("nombre", ""),
+            "descripcion": p.get("descripcion", ""),
+            "categoria": p.get("categoria", "Otros"),
+            "subcategoria": p.get("subcategoria", ""),
+            "marca": p.get("marca", ""),
+            "unidad": p.get("unidad", "Unidad"),
+            "precioVenta": float(p.get("precioVenta", 0) or 0),
+            "stock": stock,
+            "disponibilidad": disponibilidad,
+            "imagen": p.get("imagen", ""),
+            "atributos": p.get("atributos", {})
+        })
+    return publicos
+
+
+def verificar_permiso_rol(rol: str, accion: str = "lectura") -> Tuple[bool, str]:
+    """Verifica permisos de acceso según el rol del usuario en el servidor."""
+    rol_norm = (rol or "admin").strip().lower()
+    if accion == "escritura" and rol_norm in ("visitante", "invitado", "sin_permiso", "publico", "readonly"):
+        return False, "Acceso denegado (403): Tu rol actual no tiene permisos para modificar el inventario."
     return True, ""
 
 
@@ -192,7 +275,7 @@ class ManejadorFerreteria(SimpleHTTPRequestHandler):
         # Cabeceras de seguridad y control de caché
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-User-Role")
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
@@ -203,7 +286,7 @@ class ManejadorFerreteria(SimpleHTTPRequestHandler):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-User-Role")
         self.end_headers()
 
     def do_GET(self) -> None:
@@ -211,6 +294,14 @@ class ManejadorFerreteria(SimpleHTTPRequestHandler):
 
         if ruta in ("/api/datos", "api/datos"):
             self.responder_json(200, leer_datos())
+            return
+
+        if ruta in ("/api/catalogo-publico", "api/catalogo-publico"):
+            datos = leer_datos()
+            self.responder_json(200, {
+                "ok": True,
+                "productos": obtener_catalogo_publico(datos)
+            })
             return
 
         if ruta in ("/api/ping", "api/ping"):
@@ -242,6 +333,13 @@ class ManejadorFerreteria(SimpleHTTPRequestHandler):
         ruta = self.path.split("?")[0].rstrip("/")
         if ruta not in ("/api/datos", "api/datos"):
             self.send_error(404, "Endpoint no encontrado")
+            return
+
+        # Verificar permisos de rol en servidor (RBAC)
+        rol_usuario = self.headers.get("X-User-Role", "admin")
+        autorizado, error_rol = verificar_permiso_rol(rol_usuario, "escritura")
+        if not autorizado:
+            self.responder_json(403, {"ok": False, "error": error_rol})
             return
 
         try:

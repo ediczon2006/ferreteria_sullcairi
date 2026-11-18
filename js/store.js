@@ -202,9 +202,70 @@ const Store = (() => {
   // ==========================================================================
 
   /**
+   * Validación de reglas de negocio y unicidad de SKU / Código de Barras
+   */
+  function validarProductoUnico(prod, excludeId = null) {
+    if (!prod || !prod.nombre || !String(prod.nombre).trim()) {
+      return { ok: false, campo: "nombre", error: "El nombre del producto es obligatorio." };
+    }
+
+    const skuNorm = String(prod.codigo !== undefined && prod.codigo !== null ? prod.codigo : "").trim();
+    if (!skuNorm) {
+      return { ok: false, campo: "codigo", error: "El código SKU interno es obligatorio." };
+    }
+
+    const skuUpper = skuNorm.toUpperCase();
+    const duplicadoSku = (state.productos || []).find(p =>
+      p.id !== excludeId && String(p.codigo || "").trim().toUpperCase() === skuUpper
+    );
+    if (duplicadoSku) {
+      return {
+        ok: false,
+        campo: "codigo",
+        error: `El SKU "${skuNorm}" ya está registrado en "${duplicadoSku.nombre}". Debe ser único.`
+      };
+    }
+
+    const barcodeNorm = String(prod.codigoBarras !== undefined && prod.codigoBarras !== null ? prod.codigoBarras : "").trim();
+    if (barcodeNorm) {
+      const bcUpper = barcodeNorm.toUpperCase();
+      const duplicadoBc = (state.productos || []).find(p =>
+        p.id !== excludeId && p.codigoBarras && String(p.codigoBarras).trim().toUpperCase() === bcUpper
+      );
+      if (duplicadoBc) {
+        return {
+          ok: false,
+          campo: "codigoBarras",
+          error: `El código de barras "${barcodeNorm}" ya pertenece a "${duplicadoBc.nombre}".`
+        };
+      }
+    }
+
+    const pVenta = Number(prod.precioVenta);
+    const pCompra = Number(prod.precioCompra || 0);
+    const stock = Number(prod.stock || 0);
+    const stockMin = Number(prod.stockMinimo !== undefined ? prod.stockMinimo : 5);
+
+    if (isNaN(pVenta) || pVenta < 0) {
+      return { ok: false, campo: "precioVenta", error: "El precio de venta debe ser un número válido mayor o igual a 0." };
+    }
+    if (isNaN(pCompra) || pCompra < 0) {
+      return { ok: false, campo: "precioCompra", error: "El costo de compra no puede ser negativo." };
+    }
+    if (isNaN(stock) || stock < 0) {
+      return { ok: false, campo: "stock", error: "La existencia inicial no puede ser negativa." };
+    }
+    if (isNaN(stockMin) || stockMin < 0) {
+      return { ok: false, campo: "stockMinimo", error: "El stock mínimo no puede ser negativo." };
+    }
+
+    return { ok: true };
+  }
+
+  /**
    * Registro en Kardex (Auditoría de Movimientos de Stock en tiempo real)
    */
-  function registrarMovimientoStock({ productoId, codigo, nombre, tipo, cantidad, stockAnterior, stockNuevo, motivo = "", costoUnitario = 0, referencia = "" }) {
+  function registrarMovimientoStock({ productoId, codigo, nombre, unidad = "Unidad", tipo, cantidad, stockAnterior, stockNuevo, motivo = "", usuario = "Administrador", costoUnitario = 0, referencia = "" }) {
     if (!Array.isArray(state.movimientosStock)) {
       state.movimientosStock = [];
     }
@@ -212,18 +273,19 @@ const Store = (() => {
       id: "MOV-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
       fecha: new Date().toISOString(),
       productoId: productoId || "",
-      codigo: codigo || "",
+      codigo: String(codigo || ""),
       nombre: nombre || "",
-      tipo: tipo || "Ajuste", // 'Ingreso por Compra', 'Salida por Venta', 'Ajuste de Conteo Físico', 'Merma / Daño', 'Devolución por Anulación', 'Ingreso Inicial'
+      unidad: unidad || "Unidad",
+      tipo: tipo || "Ajuste",
       cantidad: round3(cantidad),
       stockAnterior: round3(stockAnterior),
       stockNuevo: round3(stockNuevo),
       costoUnitario: round2(costoUnitario),
       motivo: String(motivo || "").trim(),
+      usuario: String(usuario || "Administrador").trim(),
       referencia: String(referencia || "").trim()
     };
 
-    // Mantener hasta 5,000 movimientos en memoria para alto rendimiento
     state.movimientosStock.unshift(mov);
     if (state.movimientosStock.length > 5000) {
       state.movimientosStock.pop();
@@ -237,19 +299,29 @@ const Store = (() => {
     }
 
     const nuevoId = "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 100000);
-    const nuevoCodigo = (prod.codigo && String(prod.codigo).trim())
+    // Conservar SKU y código de barras como texto (preserva ceros iniciales como '00125')
+    const nuevoCodigo = (prod.codigo !== undefined && prod.codigo !== null && String(prod.codigo).trim())
       ? String(prod.codigo).trim()
       : "FER-" + String(state.productos.length + 1).padStart(4, "0");
 
+    const check = validarProductoUnico({ ...prod, codigo: nuevoCodigo });
+    if (!check.ok) {
+      return { error: check.error, campo: check.campo, ok: false };
+    }
+
     const stockInicial = Math.max(0, round3(prod.stock));
     const pCompra = Math.max(0, round2(prod.precioCompra));
+    const codigoBarrasLimpio = (prod.codigoBarras !== undefined && prod.codigoBarras !== null)
+      ? String(prod.codigoBarras).trim()
+      : "";
 
     const producto = {
       id: nuevoId,
       codigo: nuevoCodigo,
-      codigoBarras: (prod.codigoBarras && String(prod.codigoBarras).trim()) || nuevoCodigo,
+      codigoBarras: codigoBarrasLimpio,
       nombre: String(prod.nombre).trim(),
       categoria: prod.categoria || "Otros",
+      subcategoria: String(prod.subcategoria || "").trim(),
       marca: String(prod.marca || "").trim(),
       unidad: prod.unidad || "Unidad",
       precioCompra: pCompra,
@@ -260,6 +332,8 @@ const Store = (() => {
       stockMaximo: prod.stockMaximo !== undefined && Number(prod.stockMaximo) > 0 ? round3(prod.stockMaximo) : 0,
       ubicacion: String(prod.ubicacion || "").trim(),
       descripcion: String(prod.descripcion || "").trim(),
+      imagen: String(prod.imagen || "").trim(),
+      atributos: (prod.atributos && typeof prod.atributos === "object") ? { ...prod.atributos } : {},
       permiteDecimales: prod.permiteDecimales !== undefined ? Boolean(prod.permiteDecimales) : true,
       estado: prod.estado === "inactivo" ? "inactivo" : "activo",
       fechaCreacion: new Date().toISOString(),
@@ -268,23 +342,23 @@ const Store = (() => {
 
     state.productos.push(producto);
 
-    // Registro inicial en Kardex si tiene stock
-    if (stockInicial > 0) {
-      registrarMovimientoStock({
-        productoId: nuevoId,
-        codigo: nuevoCodigo,
-        nombre: producto.nombre,
-        tipo: "Ingreso Inicial",
-        cantidad: stockInicial,
-        stockAnterior: 0,
-        stockNuevo: stockInicial,
-        costoUnitario: pCompra,
-        motivo: "Inventario inicial al crear producto",
-        referencia: "Alta de Producto"
-      });
-    }
+    // Registrar siempre el stock inicial como movimiento de apertura trazable
+    registrarMovimientoStock({
+      productoId: nuevoId,
+      codigo: nuevoCodigo,
+      nombre: producto.nombre,
+      unidad: producto.unidad,
+      tipo: "Ingreso Inicial",
+      cantidad: stockInicial,
+      stockAnterior: 0,
+      stockNuevo: stockInicial,
+      costoUnitario: pCompra,
+      motivo: "Apertura de inventario al registrar producto",
+      usuario: prod.usuario || "Administrador",
+      referencia: "Alta de Producto"
+    });
 
-    persistir();
+    persistir(true);
     notify();
     return producto;
   }
@@ -301,9 +375,14 @@ const Store = (() => {
       if (!p || !p.nombre || !String(p.nombre).trim()) continue;
 
       const nuevoId = "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 100000) + "-" + agregados;
-      const nuevoCodigo = (p.codigo && String(p.codigo).trim())
+      let nuevoCodigo = (p.codigo && String(p.codigo).trim())
         ? String(p.codigo).trim()
         : "FER-" + String(state.productos.length + 1).padStart(4, "0");
+
+      // Evitar colisión de SKU en carga masiva
+      if (state.productos.some(ex => String(ex.codigo).toUpperCase() === nuevoCodigo.toUpperCase())) {
+        nuevoCodigo = `${nuevoCodigo}-${agregados + 1}`;
+      }
 
       const stockVal = Math.max(0, round3(p.stock));
       const pCompra = Math.max(0, round2(p.precioCompra));
@@ -311,9 +390,10 @@ const Store = (() => {
       const prodObj = {
         id: nuevoId,
         codigo: nuevoCodigo,
-        codigoBarras: (p.codigoBarras && String(p.codigoBarras).trim()) || nuevoCodigo,
+        codigoBarras: (p.codigoBarras && String(p.codigoBarras).trim()) || "",
         nombre: String(p.nombre).trim(),
         categoria: p.categoria || "Otros",
+        subcategoria: String(p.subcategoria || "").trim(),
         marca: String(p.marca || "").trim(),
         unidad: p.unidad || "Unidad",
         precioCompra: pCompra,
@@ -324,6 +404,8 @@ const Store = (() => {
         stockMaximo: p.stockMaximo ? round3(p.stockMaximo) : 0,
         ubicacion: String(p.ubicacion || "").trim(),
         descripcion: String(p.descripcion || "").trim(),
+        imagen: String(p.imagen || "").trim(),
+        atributos: (p.atributos && typeof p.atributos === "object") ? { ...p.atributos } : {},
         permiteDecimales: p.permiteDecimales !== undefined ? Boolean(p.permiteDecimales) : true,
         estado: p.estado === "inactivo" ? "inactivo" : "activo",
         fechaCreacion: now,
@@ -332,20 +414,20 @@ const Store = (() => {
 
       state.productos.push(prodObj);
 
-      if (stockVal > 0) {
-        registrarMovimientoStock({
-          productoId: nuevoId,
-          codigo: nuevoCodigo,
-          nombre: prodObj.nombre,
-          tipo: "Ingreso Inicial",
-          cantidad: stockVal,
-          stockAnterior: 0,
-          stockNuevo: stockVal,
-          costoUnitario: pCompra,
-          motivo: "Carga masiva / Importación de inventario",
-          referencia: "Importación Excel"
-        });
-      }
+      registrarMovimientoStock({
+        productoId: nuevoId,
+        codigo: nuevoCodigo,
+        nombre: prodObj.nombre,
+        unidad: prodObj.unidad,
+        tipo: "Ingreso Inicial",
+        cantidad: stockVal,
+        stockAnterior: 0,
+        stockNuevo: stockVal,
+        costoUnitario: pCompra,
+        motivo: "Carga masiva / Importación de inventario",
+        usuario: "Administrador",
+        referencia: "Importación Excel"
+      });
       agregados++;
     }
 
@@ -356,53 +438,69 @@ const Store = (() => {
     return agregados;
   }
 
+  /**
+   * Actualiza los datos descriptivos y comerciales del producto.
+   * REGLA DE NEGOCIO (Sección 7.C): No modifica el stock actual silenciosamente desde la edición general.
+   */
   function updateProduct(id, datosActualizados) {
     const idx = state.productos.findIndex(p => p.id === id);
-    if (idx === -1) return false;
+    if (idx === -1) return { ok: false, error: "Producto no encontrado" };
 
     const actual = state.productos[idx];
-    const nuevoStock = datosActualizados.stock !== undefined ? Math.max(0, round3(datosActualizados.stock)) : actual.stock;
-    const stockAnterior = actual.stock;
+    const candidato = {
+      ...actual,
+      ...datosActualizados,
+      codigo: datosActualizados.codigo !== undefined ? String(datosActualizados.codigo).trim() : actual.codigo,
+      codigoBarras: datosActualizados.codigoBarras !== undefined ? String(datosActualizados.codigoBarras).trim() : (actual.codigoBarras || "")
+    };
+
+    const check = validarProductoUnico(candidato, id);
+    if (!check.ok) {
+      return { ok: false, campo: check.campo, error: check.error };
+    }
+
+    // Preservar el stock actual intacto (los cambios de stock solo ocurren mediante movimientos trazables)
+    const stockInmutable = actual.stock;
 
     state.productos[idx] = {
       ...actual,
       ...datosActualizados,
-      codigo: datosActualizados.codigo !== undefined ? String(datosActualizados.codigo).trim() : actual.codigo,
-      codigoBarras: datosActualizados.codigoBarras !== undefined ? String(datosActualizados.codigoBarras).trim() : (actual.codigoBarras || actual.codigo),
+      codigo: candidato.codigo,
+      codigoBarras: candidato.codigoBarras,
       nombre: datosActualizados.nombre !== undefined ? String(datosActualizados.nombre).trim() : actual.nombre,
       categoria: datosActualizados.categoria || actual.categoria,
+      subcategoria: datosActualizados.subcategoria !== undefined ? String(datosActualizados.subcategoria).trim() : (actual.subcategoria || ""),
       marca: datosActualizados.marca !== undefined ? String(datosActualizados.marca).trim() : (actual.marca || ""),
       unidad: datosActualizados.unidad || actual.unidad,
       precioCompra: datosActualizados.precioCompra !== undefined ? Math.max(0, round2(datosActualizados.precioCompra)) : actual.precioCompra,
       precioVenta: datosActualizados.precioVenta !== undefined ? Math.max(0, round2(datosActualizados.precioVenta)) : actual.precioVenta,
       precioMayor: datosActualizados.precioMayor !== undefined ? Math.max(0, round2(datosActualizados.precioMayor)) : (actual.precioMayor || 0),
-      stock: nuevoStock,
+      stock: stockInmutable,
       stockMinimo: datosActualizados.stockMinimo !== undefined ? Math.max(0, round3(datosActualizados.stockMinimo)) : actual.stockMinimo,
       stockMaximo: datosActualizados.stockMaximo !== undefined ? Math.max(0, round3(datosActualizados.stockMaximo)) : (actual.stockMaximo || 0),
       ubicacion: datosActualizados.ubicacion !== undefined ? String(datosActualizados.ubicacion).trim() : actual.ubicacion,
       descripcion: datosActualizados.descripcion !== undefined ? String(datosActualizados.descripcion).trim() : (actual.descripcion || ""),
+      imagen: datosActualizados.imagen !== undefined ? String(datosActualizados.imagen).trim() : (actual.imagen || ""),
+      atributos: (datosActualizados.atributos && typeof datosActualizados.atributos === "object")
+        ? { ...datosActualizados.atributos }
+        : (actual.atributos || {}),
       permiteDecimales: datosActualizados.permiteDecimales !== undefined ? Boolean(datosActualizados.permiteDecimales) : actual.permiteDecimales,
       estado: datosActualizados.estado !== undefined ? (datosActualizados.estado === "inactivo" ? "inactivo" : "activo") : (actual.estado || "activo"),
       fechaModificacion: new Date().toISOString()
     };
 
-    // Si el stock cambió directamente en la edición, registrar movimiento de ajuste en Kardex
-    if (stockAnterior !== nuevoStock) {
-      registrarMovimientoStock({
-        productoId: actual.id,
-        codigo: actual.codigo,
-        nombre: state.productos[idx].nombre,
-        tipo: "Ajuste de Conteo Físico",
-        cantidad: round3(nuevoStock - stockAnterior),
-        stockAnterior: stockAnterior,
-        stockNuevo: nuevoStock,
-        costoUnitario: state.productos[idx].precioCompra,
-        motivo: "Ajuste directo al editar producto",
-        referencia: "Edición Manual"
-      });
-    }
+    persistir(true);
+    notify();
+    return state.productos[idx];
+  }
 
-    persistir();
+  function toggleProductStatus(id) {
+    const idx = state.productos.findIndex(p => p.id === id);
+    if (idx === -1) return null;
+    const actual = state.productos[idx].estado === "inactivo" ? "inactivo" : "activo";
+    state.productos[idx].estado = actual === "activo" ? "inactivo" : "activo";
+    state.productos[idx].fechaModificacion = new Date().toISOString();
+    persistir(true);
     notify();
     return state.productos[idx];
   }
@@ -416,42 +514,40 @@ const Store = (() => {
     return true;
   }
 
-  function duplicateProduct(id) {
+  /**
+   * Prepara un borrador de duplicación según reglas de negocio (Sección 5):
+   * - Exige un nuevo SKU (vacío para revisión)
+   * - No copia código de barras
+   * - No copia existencias (stock = 0)
+   * - Permite revisar datos antes de guardar
+   */
+  function prepareDuplicateDraft(id) {
     const prod = state.productos.find(p => p.id === id);
     if (!prod) return null;
-
-    const correlativo = String(state.productos.length + 1).padStart(4, "0");
-    const nuevoCodigo = "FER-" + correlativo;
-    const now = new Date().toISOString();
-
-    const clon = {
+    return {
       ...JSON.parse(JSON.stringify(prod)),
-      id: "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
-      codigo: nuevoCodigo,
-      codigoBarras: nuevoCodigo,
+      id: null,
+      codigo: "",
+      codigoBarras: "",
       nombre: prod.nombre + " (Copia)",
-      stock: 0,
-      fechaCreacion: now,
-      fechaModificacion: now
+      stock: 0
     };
+  }
 
-    state.productos.push(clon);
-    persistir(true);
-    notify();
-    return clon;
+  function duplicateProduct(id) {
+    return prepareDuplicateDraft(id);
   }
 
   /**
-   * REQUISITO: "que el mismo pueda agregar el stock de sus productos"
-   * Aumenta el stock del producto de forma atómica y precisa, con registro en Kardex.
+   * Agregar existencias de stock con trazabilidad de usuario y motivo
    */
-  function addStock(id, cantidad, motivo = "", nuevoPrecioCompra = null, tipo = "Ingreso por Compra") {
+  function addStock(id, cantidad, motivo = "", nuevoPrecioCompra = null, tipo = "Ingreso por Compra", usuario = "Administrador") {
     const prod = state.productos.find(p => p.id === id);
     if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
 
     const cantNum = round3(cantidad);
     if (isNaN(cantNum) || cantNum <= 0) {
-      return { ok: false, error: "La cantidad a ingresar debe ser un número positivo" };
+      return { ok: false, error: "La cantidad a ingresar debe ser mayor a cero" };
     }
 
     const stockAnterior = prod.stock;
@@ -461,19 +557,21 @@ const Store = (() => {
       prod.precioCompra = round2(nuevoPrecioCompra);
     }
     prod.fechaUltimoIngreso = new Date().toISOString();
+    prod.fechaModificacion = new Date().toISOString();
     prod.ultimoMotivoIngreso = motivo ? String(motivo).trim() : "Reabastecimiento";
 
-    // Registrar en Kardex
     registrarMovimientoStock({
       productoId: prod.id,
       codigo: prod.codigo,
       nombre: prod.nombre,
-      tipo: tipo || "Ingreso por Compra",
+      unidad: prod.unidad,
+      tipo: tipo || "Agregar Existencias",
       cantidad: cantNum,
       stockAnterior: stockAnterior,
       stockNuevo: prod.stock,
       costoUnitario: prod.precioCompra,
-      motivo: motivo || "Reabastecimiento de existencias",
+      motivo: motivo || "Entrada de existencias a almacén",
+      usuario: usuario || "Administrador",
       referencia: "Entrada de Almacén"
     });
 
@@ -483,13 +581,60 @@ const Store = (() => {
   }
 
   /**
-   * Ajuste de stock por inventario físico / merma / conteo
+   * Retirar existencias (Merma, daño, uso interno) impidiendo stock negativo
    */
-  function adjustStock(id, nuevoStock, motivo = "Conteo Físico", tipo = "Ajuste de Conteo Físico") {
+  function retirarStock(id, cantidad, motivo = "Merma / Retiro", tipo = "Retirar Existencias", usuario = "Administrador") {
     const prod = state.productos.find(p => p.id === id);
     if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
 
-    const stockFinal = Math.max(0, round3(nuevoStock));
+    const cantNum = round3(cantidad);
+    if (isNaN(cantNum) || cantNum <= 0) {
+      return { ok: false, error: "La cantidad a retirar debe ser mayor a cero" };
+    }
+
+    if (cantNum > prod.stock) {
+      return {
+        ok: false,
+        error: `No se puede retirar ${cantNum} ${prod.unidad}. Stock actual disponible: ${prod.stock} ${prod.unidad}. No se permite stock negativo.`
+      };
+    }
+
+    const stockAnterior = prod.stock;
+    prod.stock = round3(prod.stock - cantNum);
+    prod.fechaModificacion = new Date().toISOString();
+
+    registrarMovimientoStock({
+      productoId: prod.id,
+      codigo: prod.codigo,
+      nombre: prod.nombre,
+      unidad: prod.unidad,
+      tipo: tipo || "Retirar Existencias",
+      cantidad: -cantNum,
+      stockAnterior: stockAnterior,
+      stockNuevo: prod.stock,
+      costoUnitario: prod.precioCompra,
+      motivo: motivo || "Salida / Retiro de almacén",
+      usuario: usuario || "Administrador",
+      referencia: "Salida de Almacén"
+    });
+
+    persistir(true);
+    notify();
+    return { ok: true, nuevoStock: prod.stock, producto: prod };
+  }
+
+  /**
+   * Corrección de stock mediante conteo físico
+   */
+  function adjustStock(id, nuevoStock, motivo = "Conteo Físico", tipo = "Corrección por Conteo Físico", usuario = "Administrador") {
+    const prod = state.productos.find(p => p.id === id);
+    if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
+
+    if (isNaN(Number(nuevoStock)) || Number(nuevoStock) < 0) {
+      return { ok: false, error: "El conteo físico no puede ser un número negativo." };
+    }
+
+    const stockFinal = round3(nuevoStock);
     const stockAnterior = prod.stock;
     const delta = round3(stockFinal - stockAnterior);
 
@@ -500,12 +645,14 @@ const Store = (() => {
       productoId: prod.id,
       codigo: prod.codigo,
       nombre: prod.nombre,
-      tipo: tipo || "Ajuste de Conteo Físico",
+      unidad: prod.unidad,
+      tipo: tipo || "Corrección por Conteo Físico",
       cantidad: delta,
       stockAnterior: stockAnterior,
       stockNuevo: stockFinal,
       costoUnitario: prod.precioCompra,
-      motivo: motivo || "Ajuste de inventario",
+      motivo: motivo || "Ajuste por conteo físico de inventario",
+      usuario: usuario || "Administrador",
       referencia: "Auditoría de Stock"
     });
 
@@ -612,17 +759,19 @@ const Store = (() => {
   function getKpiInventario() {
     const prods = state.productos || [];
     const total = prods.length;
-    const activos = prods.filter(p => p.estado !== "inactivo").length;
+    const activosList = prods.filter(p => p.estado !== "inactivo");
+    const activos = activosList.length;
     const inactivos = total - activos;
 
     let valorCosto = 0;
     let valorVenta = 0;
     let bajoStock = 0;
     let agotados = 0;
+    let disponibles = 0;
 
-    prods.forEach(p => {
+    activosList.forEach(p => {
       const s = Number(p.stock) || 0;
-      const sMin = Number(p.stockMinimo) || 5;
+      const sMin = Number(p.stockMinimo !== undefined ? p.stockMinimo : 5);
       const pc = Number(p.precioCompra) || 0;
       const pv = Number(p.precioVenta) || 0;
 
@@ -633,6 +782,8 @@ const Store = (() => {
         agotados++;
       } else if (s <= sMin) {
         bajoStock++;
+      } else {
+        disponibles++;
       }
     });
 
@@ -642,6 +793,7 @@ const Store = (() => {
       total,
       activos,
       inactivos,
+      disponibles,
       valorCosto: round2(valorCosto),
       valorVenta: round2(valorVenta),
       margenGlobal: round2(margenGlobal),
@@ -1036,12 +1188,16 @@ const Store = (() => {
     subscribe,
     getState,
     setSaveCallback,
+    validarProductoUnico,
     addProduct,
     addProductsBatch,
     updateProduct,
+    toggleProductStatus,
     deleteProduct,
+    prepareDuplicateDraft,
     duplicateProduct,
     addStock,
+    retirarStock,
     adjustStock,
     deleteProductsBatch,
     updateCategoryBatch,

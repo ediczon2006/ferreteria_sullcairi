@@ -235,14 +235,103 @@ class TestFerreteriaSistema(unittest.TestCase):
             ruta_arch = os.path.join(self.base_dir, arch)
             self.assertTrue(os.path.exists(ruta_arch), f"Debe existir el archivo HTML individual '{arch}'")
 
-        # Verificar breakpoints responsivos para laptops, tablets y smartphones
+        # Verificar breakpoints responsivos para laptops, tablets, smartphones y accesibilidad
         self.assertIn("@media (max-width: 1360px)", css)
         self.assertIn("@media (max-width: 1150px)", css)
         self.assertIn("@media (max-width: 960px)", css)
         self.assertIn("@media (max-width: 768px)", css)
         self.assertIn("@media (max-width: 480px)", css)
+        self.assertIn("@media (prefers-reduced-motion: reduce)", css)
         self.assertIn(".mobile-bottom-nav", css)
         self.assertIn(".app-sidebar", css)
+        self.assertIn(".drawer-panel", css)
+
+    def test_09_reglas_negocio_sku_unico_ceros_y_stock_no_negativo(self):
+        """Verifica unicidad de SKU, preservación de ceros a la izquierda y bloqueo de stock/precio negativo."""
+        # 1. Preservación de ceros a la izquierda
+        self.assertEqual(servidor.normalizar_codigo("00125"), "00125")
+        self.assertEqual(servidor.normalizar_codigo("  00450 "), "00450")
+
+        # 2. SKU único (case-insensitive)
+        payload_sku_duplicado = {
+            "productos": [
+                {"id": "P1", "codigo": "FER-001", "nombre": "Martillo", "precioVenta": 25, "stock": 10},
+                {"id": "P2", "codigo": "fer-001", "nombre": "Alicate", "precioVenta": 18, "stock": 5}
+            ],
+            "ventas": []
+        }
+        valido, err = servidor.validar_esquema(payload_sku_duplicado)
+        self.assertFalse(valido, "Debe rechazar SKUs duplicados sin importar mayúsculas/minúsculas")
+        self.assertIn("SKU duplicado", err)
+
+        # 3. Código de barras único cuando está presente
+        payload_barcode_duplicado = {
+            "productos": [
+                {"id": "P1", "codigo": "001", "codigoBarras": "7751234567890", "nombre": "A", "precioVenta": 10, "stock": 1},
+                {"id": "P2", "codigo": "002", "codigoBarras": "7751234567890", "nombre": "B", "precioVenta": 12, "stock": 2}
+            ],
+            "ventas": []
+        }
+        valido_bc, err_bc = servidor.validar_esquema(payload_barcode_duplicado)
+        self.assertFalse(valido_bc, "Debe rechazar códigos de barras duplicados")
+
+        # 4. Rechazo de stock o precio negativo
+        payload_stock_negativo = {
+            "productos": [
+                {"id": "P1", "codigo": "00125", "nombre": "Cemento", "precioVenta": 29.0, "stock": -3}
+            ],
+            "ventas": []
+        }
+        valido_neg, _ = servidor.validar_esquema(payload_stock_negativo)
+        self.assertFalse(valido_neg, "No debe permitir stock negativo")
+
+        # 5. Métodos de integridad en store.js
+        with open(self.store_js_path, "r", encoding="utf-8") as f:
+            store_js = f.read()
+        for metodo in ["validarProductoUnico", "toggleProductStatus", "prepareDuplicateDraft", "retirarStock"]:
+            self.assertIn(metodo, store_js, f"Store debe incluir el método de regla de negocio '{metodo}'")
+
+    def test_10_catalogo_publico_y_rbac(self):
+        """Verifica que el catálogo público excluya productos inactivos y costos de compra, y valide RBAC."""
+        datos_prueba = {
+            "configuracion": {"empresa": "Ferretería Sullcairi", "moneda": "S/"},
+            "categorias": ["Herramientas Manuales"],
+            "productos": [
+                {
+                    "id": "P1",
+                    "codigo": "00101",
+                    "nombre": "Martillo Carpintero",
+                    "estado": "activo",
+                    "precioCompra": 15.0,
+                    "precioVenta": 25.0,
+                    "stock": 12,
+                    "stockMinimo": 5,
+                    "unidad": "Unidad"
+                },
+                {
+                    "id": "P2",
+                    "codigo": "00102",
+                    "nombre": "Producto Descontinuado",
+                    "estado": "inactivo",
+                    "precioCompra": 10.0,
+                    "precioVenta": 18.0,
+                    "stock": 4,
+                    "stockMinimo": 2,
+                    "unidad": "Unidad"
+                }
+            ]
+        }
+        catalogo = servidor.obtener_catalogo_publico(datos_prueba)
+        self.assertEqual(len(catalogo), 1, "El catálogo público solo debe exponer productos activos")
+        prod_publico = catalogo[0]
+        self.assertEqual(prod_publico["codigo"], "00101")
+        self.assertNotIn("precioCompra", prod_publico, "El catálogo público nunca debe exponer el costo de compra")
+        self.assertEqual(prod_publico["disponibilidad"], "disponible")
+
+        # Verificación RBAC
+        self.assertTrue(servidor.verificar_permiso_rol("admin", "escritura")[0])
+        self.assertTrue(servidor.verificar_permiso_rol("operador", "escritura")[0])
+        self.assertFalse(servidor.verificar_permiso_rol("invitado", "escritura")[0])
 
 
 if __name__ == "__main__":
