@@ -174,9 +174,14 @@ const Store = (() => {
 
     const ejecutarGuardadoRemoto = async () => {
       try {
+        let rolActual = 'admin';
+        try { rolActual = localStorage.getItem('ferreteria_rol_usuario') || 'admin'; } catch (e) {}
         const res = await fetch('/api/datos', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Role': rolActual
+          },
           body: JSON.stringify(state)
         });
         if (res.ok) {

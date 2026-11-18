@@ -333,6 +333,90 @@ class TestFerreteriaSistema(unittest.TestCase):
         self.assertTrue(servidor.verificar_permiso_rol("operador", "escritura")[0])
         self.assertFalse(servidor.verificar_permiso_rol("invitado", "escritura")[0])
 
+    def test_11_servidor_http_e2e_y_sincronizacion_paginas(self):
+        """Levanta el servidor HTTP real en un hilo efímero y prueba endpoints REST, RBAC y las 7 páginas HTML."""
+        import threading
+        import urllib.request
+        import urllib.error
+        from http.server import HTTPServer
+
+        # 1. Verificar que cada archivo HTML físico tenga su data-pagina y sección activa correcta
+        mapa_paginas = {
+            "index.html": "pos",
+            "inventario.html": "inventario",
+            "producto.html": "producto",
+            "kardex.html": "kardex",
+            "etiquetas.html": "etiquetas",
+            "resumen.html": "resumen",
+            "ajustes.html": "ajustes"
+        }
+        for archivo, seccion in mapa_paginas.items():
+            ruta = os.path.join(self.base_dir, archivo)
+            with open(ruta, "r", encoding="utf-8") as f:
+                contenido = f.read()
+            self.assertIn(f'<body data-pagina="{seccion}">', contenido, f"{archivo} debe tener data-pagina='{seccion}'")
+            self.assertIn(f'<section class="modulo-seccion activo" id="seccion-{seccion}">', contenido, f"{archivo} debe activar #seccion-{seccion}")
+
+        # 2. Levantar servidor HTTP real en puerto libre
+        httpd = HTTPServer(("127.0.0.1", 0), servidor.ManejadorFerreteria)
+        port = httpd.server_address[1]
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+
+        try:
+            base_url = f"http://127.0.0.1:{port}"
+
+            # GET /api/ping
+            with urllib.request.urlopen(f"{base_url}/api/ping", timeout=3) as resp:
+                self.assertEqual(resp.status, 200)
+                ping = json.loads(resp.read().decode("utf-8"))
+                self.assertTrue(ping["ok"])
+
+            # GET /api/catalogo-publico
+            with urllib.request.urlopen(f"{base_url}/api/catalogo-publico", timeout=3) as resp:
+                self.assertEqual(resp.status, 200)
+                cat_pub = json.loads(resp.read().decode("utf-8"))
+                self.assertTrue(cat_pub["ok"])
+                self.assertIsInstance(cat_pub["productos"], list)
+
+            # GET de cada una de las 7 páginas físicas por HTTP
+            for archivo in mapa_paginas.keys():
+                with urllib.request.urlopen(f"{base_url}/{archivo}", timeout=3) as resp_html:
+                    self.assertEqual(resp_html.status, 200)
+
+            # POST /api/datos con rol sin permisos (403 Forbidden)
+            req_403 = urllib.request.Request(
+                f"{base_url}/api/datos",
+                data=json.dumps({"productos": [], "ventas": []}).encode("utf-8"),
+                headers={"Content-Type": "application/json", "X-User-Role": "invitado"},
+                method="POST"
+            )
+            with self.assertRaises(urllib.error.HTTPError) as ctx_403:
+                urllib.request.urlopen(req_403, timeout=3)
+            self.assertEqual(ctx_403.exception.code, 403)
+
+            # POST /api/datos con SKU duplicado (400 Bad Request)
+            payload_dup = {
+                "productos": [
+                    {"id": "1", "codigo": "00125", "nombre": "P1", "precioVenta": 10, "stock": 1},
+                    {"id": "2", "codigo": "00125", "nombre": "P2", "precioVenta": 15, "stock": 2}
+                ],
+                "ventas": []
+            }
+            req_400 = urllib.request.Request(
+                f"{base_url}/api/datos",
+                data=json.dumps(payload_dup).encode("utf-8"),
+                headers={"Content-Type": "application/json", "X-User-Role": "admin"},
+                method="POST"
+            )
+            with self.assertRaises(urllib.error.HTTPError) as ctx_400:
+                urllib.request.urlopen(req_400, timeout=3)
+            self.assertEqual(ctx_400.exception.code, 400)
+
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+
 
 if __name__ == "__main__":
     unittest.main()
