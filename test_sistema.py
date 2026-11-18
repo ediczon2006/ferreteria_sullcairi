@@ -222,12 +222,27 @@ class TestFerreteriaSistema(unittest.TestCase):
         for pag in paginas_individuales:
             self.assertIn(f'id="{pag}"', html, f"Debe existir la página individual dedicada '{pag}'")
 
+        archivos_html = [
+            "index.html",
+            "inventario.html",
+            "producto.html",
+            "kardex.html",
+            "etiquetas.html",
+            "resumen.html",
+            "ajustes.html"
+        ]
+        for arch in archivos_html:
+            ruta_arch = os.path.join(self.base_dir, arch)
+            self.assertTrue(os.path.exists(ruta_arch), f"Debe existir el archivo HTML individual '{arch}'")
+
         # Verificar breakpoints responsivos para laptops, tablets y smartphones
         self.assertIn("@media (max-width: 1360px)", css)
         self.assertIn("@media (max-width: 1150px)", css)
+        self.assertIn("@media (max-width: 960px)", css)
         self.assertIn("@media (max-width: 768px)", css)
         self.assertIn("@media (max-width: 480px)", css)
         self.assertIn(".mobile-bottom-nav", css)
+        self.assertIn(".app-sidebar", css)
 
 
 if __name__ == "__main__":

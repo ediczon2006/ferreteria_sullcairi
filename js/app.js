@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderListaSeleccionEtiquetas();
     actualizarNombreEmpresaCabecera(state);
     actualizarAlertasNavegacion(state);
+    sincronizarContextoPaginaIndividual(state);
   });
 
   // Inicializar carga de datos desde API o almacenamiento local
@@ -113,8 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // ENRUTADOR DE PÁGINAS INDIVIDUALES (MULTI-PAGE ROUTER + HASH NAVIGATION)
+  // ENRUTADOR MULTI-PÁGINA (.HTML INDIVIDUAL POR CADA BOTÓN)
   // ==========================================================================
+
+  const ARCHIVOS_PAGINAS = {
+    pos: "index.html",
+    inventario: "inventario.html",
+    producto: "producto.html",
+    kardex: "kardex.html",
+    etiquetas: "etiquetas.html",
+    resumen: "resumen.html",
+    ajustes: "ajustes.html"
+  };
 
   const TITULOS_PAGINAS = {
     pos: "Punto de Venta (Caja) | Ferretería Sullcairi PRO",
@@ -126,15 +137,70 @@ document.addEventListener('DOMContentLoaded', () => {
     ajustes: "Configuración y Copias de Seguridad | Ferretería Sullcairi PRO"
   };
 
+  const CABECERAS_TOPBAR = {
+    pos: {
+      titulo: "⚡ Punto de Venta y Caja Registradora",
+      subtitulo: "Despacho rápido con descuento automático de stock y emisión de comprobantes"
+    },
+    inventario: {
+      titulo: "📦 Inventario y Control de Stock",
+      subtitulo: "Administra tu catálogo, reabastece existencias y ejecuta acciones masivas en lote"
+    },
+    producto: {
+      titulo: "➕ Ficha Técnica de Producto",
+      subtitulo: "Creación y edición de artículos con calculadora bidireccional de margen y código de barras"
+    },
+    kardex: {
+      titulo: "📜 Kardex y Auditoría de Movimientos",
+      subtitulo: "Historial inmutable de entradas por compra, salidas por venta, devoluciones y ajustes"
+    },
+    etiquetas: {
+      titulo: "🏷️ Estudio de Etiquetas y Códigos de Barras",
+      subtitulo: "Generador e impresión térmica de etiquetas Code-128 vectoriales con precio y SKU"
+    },
+    resumen: {
+      titulo: "📊 Resumen Financiero y Reportes de Ventas",
+      subtitulo: "Análisis de ingresos, ganancia neta, métodos de pago y ranking de productos"
+    },
+    ajustes: {
+      titulo: "⚙️ Configuración General y Copias de Seguridad",
+      subtitulo: "Datos fiscales de la ferretería, gestión de categorías/unidades y respaldos JSON"
+    }
+  };
+
+  // Control del Drawer Lateral en Móviles/Tablets
+  const sidebarEl = document.getElementById('app-sidebar');
+  const backdropEl = document.getElementById('sidebar-backdrop');
+  document.getElementById('btn-toggle-sidebar')?.addEventListener('click', () => {
+    sidebarEl?.classList.toggle('abierto');
+    backdropEl?.classList.toggle('activo');
+  });
+  backdropEl?.addEventListener('click', () => {
+    sidebarEl?.classList.remove('abierto');
+    backdropEl?.classList.remove('activo');
+  });
+
+  // Botones de acceso rápido en Topbar
+  document.getElementById('btn-topbar-ver-stock')?.addEventListener('click', () => {
+    cambiarSeccion('inventario');
+  });
+  document.getElementById('btn-topbar-nuevo-prod')?.addEventListener('click', () => {
+    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+    abrirModalNuevoProducto();
+  });
+
   navBotones.forEach(btn => {
     btn.addEventListener('click', () => {
       const seccionDestino = btn.getAttribute('data-seccion');
       if (!seccionDestino) return;
-      if (seccionDestino === 'producto' && !productoEnEdicion) {
+      if (seccionDestino === 'producto') {
+        try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
         abrirModalNuevoProducto();
       } else if (seccionDestino === 'kardex') {
+        try { sessionStorage.removeItem('ferreteria_kardex_prod_id'); } catch (e) {}
         abrirModalKardex(null);
       } else if (seccionDestino === 'etiquetas') {
+        try { sessionStorage.removeItem('ferreteria_etiquetas_ids'); } catch (e) {}
         const activos = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
         abrirModalEtiquetasBarcode(activos);
       } else {
@@ -143,8 +209,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  function cambiarSeccion(seccionId) {
+  function obtenerArchivoActual() {
+    const path = (window.location.pathname || "").split("/").pop();
+    return path || "index.html";
+  }
+
+  function cambiarSeccion(seccionId, forzarLocal = false) {
     if (!TITULOS_PAGINAS[seccionId]) seccionId = 'pos';
+    const archivoDestino = ARCHIVOS_PAGINAS[seccionId] || "index.html";
+    const archivoActual = obtenerArchivoActual();
+
+    // Si estamos en un archivo HTML diferente, navegar a la página HTML individual correspondiente
+    if (!forzarLocal && archivoActual !== archivoDestino && archivoActual.endsWith(".html")) {
+      window.location.href = archivoDestino;
+      return;
+    }
+
+    sidebarEl?.classList.remove('abierto');
+    backdropEl?.classList.remove('activo');
 
     navBotones.forEach(b => {
       b.classList.toggle('activo', b.getAttribute('data-seccion') === seccionId);
@@ -154,13 +236,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.title = TITULOS_PAGINAS[seccionId] || "Sistema Ferretero PRO";
-    if (window.location.hash !== `#${seccionId}`) {
-      try {
-        history.pushState(null, "", `#${seccionId}`);
-      } catch (e) {
-        window.location.hash = seccionId;
-      }
-    }
+
+    const infoTopbar = CABECERAS_TOPBAR[seccionId] || CABECERAS_TOPBAR.pos;
+    const elTitTopbar = document.getElementById('topbar-titulo-pagina');
+    const elSubTopbar = document.getElementById('topbar-subtitulo-pagina');
+    if (elTitTopbar) elTitTopbar.textContent = infoTopbar.titulo;
+    if (elSubTopbar) elSubTopbar.textContent = infoTopbar.subtitulo;
 
     // Mostrar/ocultar barra flotante de carrito en móvil solo en POS
     const mobCartBar = document.getElementById('pos-mobile-cart-bar');
@@ -183,21 +264,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Soporte para botón Atrás/Adelante del navegador
-  window.addEventListener('popstate', () => {
-    const hash = (window.location.hash || "").replace("#", "").trim();
-    if (hash && TITULOS_PAGINAS[hash]) {
-      cambiarSeccion(hash);
+  let contextoInicialSincronizado = false;
+  function sincronizarContextoPaginaIndividual(state) {
+    if (contextoInicialSincronizado) return;
+    const paginaBody = document.body.getAttribute('data-pagina') || 'pos';
+
+    if (paginaBody === 'producto') {
+      contextoInicialSincronizado = true;
+      let editId = null;
+      try { editId = sessionStorage.getItem('ferreteria_edit_prod_id'); } catch (e) {}
+      if (editId && (state.productos || []).some(p => p.id === editId)) {
+        abrirModalEditarProducto(editId, true);
+      } else {
+        abrirModalNuevoProducto(true);
+      }
+    } else if (paginaBody === 'kardex') {
+      contextoInicialSincronizado = true;
+      let kardexProdId = null;
+      try { kardexProdId = sessionStorage.getItem('ferreteria_kardex_prod_id') || null; } catch (e) {}
+      productoFiltroKardex = kardexProdId;
+      renderTablaKardex();
+    } else if (paginaBody === 'etiquetas') {
+      contextoInicialSincronizado = true;
+      let idsGuardados = null;
+      try {
+        const raw = sessionStorage.getItem('ferreteria_etiquetas_ids');
+        if (raw) idsGuardados = JSON.parse(raw);
+      } catch (e) {}
+      const activos = (state.productos || []).filter(p => p.estado !== "inactivo");
+      if (Array.isArray(idsGuardados) && idsGuardados.length > 0) {
+        const set = new Set(idsGuardados);
+        productosParaEtiquetas = activos.filter(p => set.has(p.id));
+      } else {
+        productosParaEtiquetas = activos.slice(0, 20);
+      }
+      renderListaSeleccionEtiquetas();
+      renderPrevisualizacionEtiquetas();
     }
-  });
+  }
 
   // Botones "← Volver" de cada página individual
   document.getElementById('btn-volver-desde-producto')?.addEventListener('click', () => {
     productoEnEdicion = null;
+    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
     cambiarSeccion('inventario');
   });
   document.getElementById('btn-cancelar-producto-pag')?.addEventListener('click', () => {
     productoEnEdicion = null;
+    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
     cambiarSeccion('inventario');
   });
   document.getElementById('btn-volver-desde-kardex')?.addEventListener('click', () => {
@@ -228,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cambiarSeccion('inventario');
     } else if (e.altKey && e.key === '3') {
       e.preventDefault();
+      try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (err) {}
       abrirModalNuevoProducto();
     } else if (e.altKey && e.key === '4') {
       e.preventDefault();
@@ -241,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Botón Ajustes / Configuración en cabecera navega a su página individual
+  // Botón Ajustes / Configuración navega a su página individual
   const btnAbrirConfiguracion = document.getElementById('btn-abrir-configuracion');
   if (btnAbrirConfiguracion) {
     btnAbrirConfiguracion.addEventListener('click', () => {
@@ -257,6 +372,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const moneda = (state.configuracion && state.configuracion.moneda) || "S/";
     const productos = state.productos || [];
     const categorias = state.categorias || [];
+
+    // Actualizar Cinta Superior de KPIs del Punto de Venta
+    const resumenHoy = Store.getSalesSummary("hoy");
+    const kpisInv = Store.getKpiInventario();
+
+    const elVentasHoy = document.getElementById('pos-kpi-ventas-hoy');
+    const elProdActivos = document.getElementById('pos-kpi-productos-activos');
+    const elAlertas = document.getElementById('pos-kpi-alertas');
+    const elTransHoy = document.getElementById('pos-kpi-transacciones-hoy');
+
+    if (elVentasHoy) elVentasHoy.textContent = `${moneda} ${resumenHoy.totalVentas.toFixed(2)}`;
+    if (elProdActivos) elProdActivos.textContent = String(kpisInv.activos);
+    if (elAlertas) elAlertas.textContent = String(kpisInv.bajoStock + kpisInv.agotados);
+    if (elTransHoy) elTransHoy.textContent = String(resumenHoy.cantidadTransacciones);
 
     // Renderizar categorías como chips con iconos
     const contenedorChips = document.getElementById('pos-categorias-chips');
@@ -295,10 +424,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const query = busquedaPOS.toLowerCase().trim();
     const filtrados = productos.filter(p => {
+      if (p.estado === "inactivo") return false;
       const matchCat = !categoriaSeleccionadaPOS || p.categoria === categoriaSeleccionadaPOS;
       const matchQuery = !query || 
         (p.nombre && p.nombre.toLowerCase().includes(query)) ||
         (p.codigo && p.codigo.toLowerCase().includes(query)) ||
+        (p.codigoBarras && p.codigoBarras.toLowerCase().includes(query)) ||
+        (p.marca && p.marca.toLowerCase().includes(query)) ||
         (p.categoria && p.categoria.toLowerCase().includes(query));
       return matchCat && matchQuery;
     });
@@ -306,19 +438,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filtrados.length === 0) {
       if (productos.length === 0) {
         grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align:center; padding: 3.5rem 1.5rem; color: #64748b;">
-            <div style="font-size:3rem; margin-bottom:0.75rem;">📦</div>
-            <h3 style="font-size:1.2rem; color:#0f172a; margin-bottom:0.4rem; font-weight:800;">Catálogo Vacío (Sin datos demo)</h3>
-            <p style="font-size:0.9rem; margin-bottom:1.25rem;">Registra los productos de tu ferretería en el módulo de Inventario para empezar a despachar.</p>
-            <button type="button" class="btn btn-primary" id="btn-ir-inventario-desde-pos">+ Registrar Primer Producto</button>
+          <div style="grid-column: 1 / -1; padding: 2.25rem 1.5rem; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border:1.5px dashed #cbd5e1; border-radius:var(--radius-md); min-height:360px;">
+            <div style="width:64px; height:64px; border-radius:16px; background:var(--brand-primary-light); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-size:2rem; margin-bottom:1rem; box-shadow:0 4px 12px rgba(234,88,12,0.15);">🔨</div>
+            <h3 style="font-size:1.25rem; color:#0f172a; margin-bottom:0.35rem; font-weight:800;">Catálogo de Ferretería Listo para Empezar</h3>
+            <p style="font-size:0.9rem; color:#64748b; max-width:520px; margin-bottom:1.75rem;">
+              Tu sistema inicia limpio y sin datos demo. Elige cómo deseas cargar tus primeros productos al inventario:
+            </p>
+            <div style="display:flex; gap:0.85rem; flex-wrap:wrap; justify-content:center;">
+              <button type="button" class="btn btn-primary btn-lg" id="btn-ir-inventario-desde-pos">
+                ➕ Crear Primer Producto
+              </button>
+              <a href="inventario.html" class="btn btn-outline btn-lg" style="text-decoration:none;">
+                📦 Ir a Inventario / Importar Excel
+              </a>
+            </div>
           </div>
         `;
         const btnIr = document.getElementById('btn-ir-inventario-desde-pos');
-        if (btnIr) btnIr.addEventListener('click', () => cambiarSeccion('inventario'));
+        if (btnIr) btnIr.addEventListener('click', () => {
+          try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
+          abrirModalNuevoProducto();
+        });
       } else {
         grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align:center; padding: 2.5rem 1rem; color: #64748b;">
-            <p style="font-weight:600;">No se encontraron artículos para "${escapeHtml(busquedaPOS)}".</p>
+          <div style="grid-column: 1 / -1; text-align:center; padding: 3rem 1rem; color: #64748b;">
+            <div style="font-size:2.2rem; margin-bottom:0.4rem;">🔍</div>
+            <p style="font-weight:700; color:#1e293b;">No se encontraron artículos para "${escapeHtml(busquedaPOS)}"</p>
+            <p style="font-size:0.82rem; margin-top:0.2rem;">Prueba con otro término o selecciona "Todas" en las categorías superiores.</p>
           </div>
         `;
       }
@@ -331,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const stockBajo = stock > 0 && stock <= (Number(p.stockMinimo) || 5);
 
       let tagClase = "ok";
-      let tagTexto = `Stock: ${stock} ${p.unidad}`;
+      let tagTexto = `${stock} ${p.unidad}`;
       if (sinStock) {
         tagClase = "cero";
         tagTexto = `AGOTADO (0)`;
@@ -341,18 +487,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <div class="card-pos-producto ${sinStock ? 'agotado' : ''}" data-id="${p.id}" title="${sinStock ? 'Sin stock disponible' : 'Clic para agregar a la venta'}">
-          <div class="card-pos-top">
-            <span class="card-pos-codigo">${escapeHtml(p.codigo || 'S/C')}</span>
-            <span class="stock-tag ${tagClase}">${tagTexto}</span>
-          </div>
-          <div class="card-pos-nombre">${escapeHtml(p.nombre)}</div>
-          <div class="card-pos-bottom">
-            <div>
-              <div class="card-pos-precio">${moneda} ${(Number(p.precioVenta) || 0).toFixed(2)}</div>
-              <small style="font-size:0.75rem; color:#64748b;">por ${escapeHtml(p.unidad)}</small>
+        <div class="prod-card card-pos-producto ${sinStock ? 'agotado' : ''}" data-id="${p.id}" title="${sinStock ? 'Sin stock disponible' : 'Clic para agregar a la venta'}">
+          <div>
+            <div class="prod-card-top">
+              <span class="prod-codigo">${escapeHtml(p.codigo || 'S/C')}</span>
+              <span class="stock-tag ${tagClase}">${tagTexto}</span>
             </div>
-            <button type="button" class="btn btn-primary btn-sm btn-card-anadir" style="padding:0.25rem 0.55rem; font-size:0.75rem;" ${sinStock ? 'disabled' : ''}>
+            <div class="prod-nombre" style="margin-top:0.55rem;">${escapeHtml(p.nombre)}</div>
+            ${p.marca || p.ubicacion ? `<div class="prod-ubicacion">${p.marca ? escapeHtml(p.marca) : ''}${p.marca && p.ubicacion ? ' • ' : ''}${p.ubicacion ? '📍 ' + escapeHtml(p.ubicacion) : ''}</div>` : ''}
+          </div>
+          <div class="prod-card-bottom">
+            <div>
+              <div class="prod-precio">${moneda} ${(Number(p.precioVenta) || 0).toFixed(2)}</div>
+              <div class="prod-unidad">por ${escapeHtml(p.unidad)}</div>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm btn-card-anadir" style="padding:0.32rem 0.65rem; font-size:0.76rem;" ${sinStock ? 'disabled' : ''}>
               + Añadir
             </button>
           </div>
@@ -1325,11 +1474,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-inv-nuevo-producto')?.addEventListener('click', () => {
+    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
     abrirModalNuevoProducto();
   });
 
-  function abrirModalNuevoProducto() {
+  function abrirModalNuevoProducto(forzarLocal = false) {
     productoEnEdicion = null;
+    try { sessionStorage.removeItem('ferreteria_edit_prod_id'); } catch (e) {}
     const titulo = document.getElementById('modal-producto-titulo');
     const form = document.getElementById('form-producto');
     if (!form) return;
@@ -1347,13 +1498,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputVentaProd) inputVentaProd.value = "0.00";
     actualizarCalculadoraMargen('costo');
 
-    cambiarSeccion('producto');
+    cambiarSeccion('producto', forzarLocal);
     document.getElementById('prod-input-nombre')?.focus();
   }
 
-  function abrirModalEditarProducto(id) {
+  function abrirModalEditarProducto(id, forzarLocal = false) {
+    try { sessionStorage.setItem('ferreteria_edit_prod_id', id); } catch (e) {}
     const prod = (Store.getState().productos || []).find(p => p.id === id);
-    if (!prod) return;
+    if (!prod) {
+      cambiarSeccion('producto', forzarLocal);
+      return;
+    }
 
     productoEnEdicion = prod;
     const titulo = document.getElementById('modal-producto-titulo');
@@ -1385,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chkFrac) chkFrac.checked = prod.permiteDecimales !== false;
 
     actualizarCalculadoraMargen('venta');
-    cambiarSeccion('producto');
+    cambiarSeccion('producto', forzarLocal);
   }
 
   function poblarSelectsProducto() {
@@ -1533,6 +1688,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function abrirModalKardex(productoId = null) {
     productoFiltroKardex = productoId;
+    try {
+      if (productoId) {
+        sessionStorage.setItem('ferreteria_kardex_prod_id', productoId);
+      } else {
+        sessionStorage.removeItem('ferreteria_kardex_prod_id');
+      }
+    } catch (e) {}
     renderTablaKardex();
     cambiarSeccion('kardex');
   }
@@ -1644,6 +1806,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function abrirModalEtiquetasBarcode(productos) {
     productosParaEtiquetas = Array.isArray(productos) ? productos : [];
+    try {
+      sessionStorage.setItem('ferreteria_etiquetas_ids', JSON.stringify(productosParaEtiquetas.map(p => p.id)));
+    } catch (e) {}
     renderListaSeleccionEtiquetas();
     renderPrevisualizacionEtiquetas();
     cambiarSeccion('etiquetas');
@@ -2074,13 +2239,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.pos-carrito-caja')?.scrollIntoView({ behavior: 'smooth' });
   });
 
-  // Inicializar página según el hash actual de la URL
-  const hashInicial = (window.location.hash || "").replace("#", "").trim();
-  if (hashInicial && TITULOS_PAGINAS[hashInicial]) {
-    cambiarSeccion(hashInicial);
-  } else {
-    cambiarSeccion('pos');
-  }
+  // Inicializar página según el archivo HTML actual (data-pagina en body)
+  const paginaInicial = document.body.getAttribute('data-pagina') || 'pos';
+  cambiarSeccion(paginaInicial, true);
 
   document.getElementById('btn-descargar-respaldo-json')?.addEventListener('click', () => Store.exportBackupJSON());
 
