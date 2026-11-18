@@ -1273,8 +1273,392 @@ body {
 }
 
 /* ==========================================================================
-   UTILIDADES
+   ADMINISTRACIÓN AVANZADA DE PRODUCTOS (ESTILO SHOPIFY / SQUARE)
    ========================================================================== */
+
+/* Pestañas de Estado con Contador */
+.tabs-estado-catalogo {
+  display: flex;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.85rem;
+  overflow-x: auto;
+}
+
+.tab-estado-item {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--slate-600);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.tab-estado-item:hover {
+  background: var(--slate-100);
+  color: var(--slate-900);
+}
+
+.tab-estado-item.activo {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-hover);
+  font-weight: 700;
+}
+
+.tab-contador {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  background: var(--slate-200);
+  color: var(--slate-700);
+}
+
+.tab-estado-item.activo .tab-contador {
+  background: var(--brand-primary);
+  color: #ffffff;
+}
+
+/* Encabezados Ordenables */
+.tabla-general th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.tabla-general th.sortable:hover {
+  background-color: var(--slate-100);
+  color: var(--brand-primary);
+}
+
+.th-sort-indicator {
+  display: inline-block;
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  opacity: 0.4;
+}
+
+th.sort-active .th-sort-indicator {
+  opacity: 1;
+  color: var(--brand-primary);
+}
+
+/* Barra Flotante de Acciones en Lote (Bulk Actions) */
+.barra-acciones-masivas {
+  position: sticky;
+  bottom: 1.25rem;
+  z-index: 45;
+  background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-850) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  animation: slideUpBulk 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpBulk {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.bulk-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bulk-counter-badge {
+  background: var(--brand-primary);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  letter-spacing: -0.01em;
+}
+
+.bulk-acciones-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-bulk {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-bulk:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-bulk-danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-bulk-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+}
+
+/* Barra de Nivel de Stock Visual */
+.stock-nivel-barra {
+  width: 100%;
+  height: 4px;
+  background: var(--slate-200);
+  border-radius: var(--radius-full);
+  margin-top: 0.35rem;
+  overflow: hidden;
+}
+
+.stock-nivel-llenado {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.stock-nivel-llenado.ok { background: var(--success); }
+.stock-nivel-llenado.alerta { background: var(--warning); }
+.stock-nivel-llenado.cero { background: var(--danger); }
+
+/* Tarjeta Calculadora de Margen en Modal Producto */
+.tarjeta-margen-calculadora {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.margen-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.margen-stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--slate-500);
+  letter-spacing: 0.03em;
+}
+
+.margen-stat-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--slate-900);
+  font-family: var(--font-mono);
+}
+
+.margen-stat-val.ganancia-positiva { color: var(--success-dark); }
+.margen-stat-val.ganancia-negativa { color: var(--danger-dark); }
+
+/* Paginación y Controles de Tabla */
+.paginacion-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.5rem 0 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.paginacion-info {
+  font-size: 0.82rem;
+  color: var(--slate-500);
+}
+
+.paginacion-botones {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.paginacion-btn {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  color: var(--slate-700);
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.paginacion-btn:hover:not(:disabled) {
+  background: var(--slate-100);
+  border-color: var(--slate-300);
+}
+
+.paginacion-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Badges de Movimiento Kardex */
+.kardex-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.kardex-badge.ingreso { background: var(--success-light); color: var(--success-dark); }
+.kardex-badge.salida { background: var(--info-light); color: var(--info); }
+.kardex-badge.ajuste { background: var(--warning-light); color: var(--warning-dark); }
+.kardex-badge.devolucion { background: #f3e8ff; color: #7e22ce; }
+
+.kardex-delta-positivo {
+  color: var(--success-dark);
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.kardex-delta-negativo {
+  color: var(--danger-dark);
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+/* Hoja de Impresión de Etiquetas con Códigos de Barras */
+.contenedor-hoja-etiquetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48mm, 1fr));
+  gap: 4mm;
+  padding: 4mm;
+  background: #ffffff;
+}
+
+.etiqueta-sticker-item {
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  padding: 3mm;
+  text-align: center;
+  background: #ffffff;
+  box-sizing: border-box;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 30mm;
+}
+
+.etiqueta-sticker-empresa {
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 1mm;
+}
+
+.etiqueta-sticker-nombre {
+  font-size: 8pt;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.15;
+  max-height: 2.3em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 1.5mm;
+}
+
+.etiqueta-sticker-cat {
+  font-size: 6.5pt;
+  color: #94a3b8;
+  margin-bottom: 1mm;
+}
+
+.etiqueta-sticker-barcode {
+  margin: 1mm 0;
+}
+
+.etiqueta-sticker-precio {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1mm;
+  margin-top: 1mm;
+}
+
+.etiqueta-sticker-moneda {
+  font-size: 8pt;
+  font-weight: 700;
+  color: #ea580c;
+}
+
+.etiqueta-sticker-monto {
+  font-size: 13pt;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.etiqueta-sticker-unidad {
+  font-size: 7pt;
+  color: #64748b;
+  font-weight: 600;
+}
+
+@media print {
+  .contenedor-hoja-etiquetas {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(48mm, 1fr)) !important;
+    gap: 2mm !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  .etiqueta-sticker-item {
+    border: 1px solid #94a3b8 !important;
+  }
+}
+
 .text-right { text-align: right; }
 .text-center { text-align: center; }
 .fw-bold { font-weight: 700; }

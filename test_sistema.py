@@ -156,6 +156,38 @@ class TestFerreteriaSistema(unittest.TestCase):
             encontrado = (btn_id in app_js) or (btn_id in selectores_agrupados and selectores_agrupados[btn_id] in app_js)
             self.assertTrue(encontrado, f"El botón con id='{btn_id}' en index.html no tiene referencia en app.js")
 
+    def test_07_administracion_avanzada_kardex_y_lotes(self):
+        """Verifica que store.js y export.js contengan los métodos de Kardex, operaciones en lote y etiquetas."""
+        with open(self.store_js_path, "r", encoding="utf-8") as f:
+            store_js = f.read()
+
+        with open(os.path.join(self.base_dir, "js", "export.js"), "r", encoding="utf-8") as f:
+            export_js = f.read()
+
+        # Métodos críticos del Store
+        metodos_store = [
+            "registrarMovimientoStock",
+            "duplicateProduct",
+            "adjustStock",
+            "deleteProductsBatch",
+            "updateCategoryBatch",
+            "adjustPricesBatch",
+            "changeStatusBatch",
+            "getStockMovements",
+            "getKpiInventario"
+        ]
+        for metodo in metodos_store:
+            self.assertIn(metodo, store_js, f"Store debe exportar el método de administración '{metodo}'")
+
+        # Métodos críticos de Exportación y Código de Barras
+        metodos_export = [
+            "generarCodigoBarrasSVG",
+            "generarEtiquetasHTML",
+            "exportarKardexExcel"
+        ]
+        for metodo in metodos_export:
+            self.assertIn(metodo, export_js, f"ExportManager debe contener el método '{metodo}'")
+
 
 if __name__ == "__main__":
     unittest.main()

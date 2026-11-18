@@ -1281,8 +1281,392 @@ body {
 }
 
 /* ==========================================================================
-   UTILIDADES
+   ADMINISTRACIÓN AVANZADA DE PRODUCTOS (ESTILO SHOPIFY / SQUARE)
    ========================================================================== */
+
+/* Pestañas de Estado con Contador */
+.tabs-estado-catalogo {
+  display: flex;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.85rem;
+  overflow-x: auto;
+}
+
+.tab-estado-item {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--slate-600);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.tab-estado-item:hover {
+  background: var(--slate-100);
+  color: var(--slate-900);
+}
+
+.tab-estado-item.activo {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-hover);
+  font-weight: 700;
+}
+
+.tab-contador {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  background: var(--slate-200);
+  color: var(--slate-700);
+}
+
+.tab-estado-item.activo .tab-contador {
+  background: var(--brand-primary);
+  color: #ffffff;
+}
+
+/* Encabezados Ordenables */
+.tabla-general th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.tabla-general th.sortable:hover {
+  background-color: var(--slate-100);
+  color: var(--brand-primary);
+}
+
+.th-sort-indicator {
+  display: inline-block;
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  opacity: 0.4;
+}
+
+th.sort-active .th-sort-indicator {
+  opacity: 1;
+  color: var(--brand-primary);
+}
+
+/* Barra Flotante de Acciones en Lote (Bulk Actions) */
+.barra-acciones-masivas {
+  position: sticky;
+  bottom: 1.25rem;
+  z-index: 45;
+  background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-850) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  animation: slideUpBulk 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpBulk {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.bulk-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bulk-counter-badge {
+  background: var(--brand-primary);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  letter-spacing: -0.01em;
+}
+
+.bulk-acciones-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-bulk {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-bulk:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-bulk-danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-bulk-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+}
+
+/* Barra de Nivel de Stock Visual */
+.stock-nivel-barra {
+  width: 100%;
+  height: 4px;
+  background: var(--slate-200);
+  border-radius: var(--radius-full);
+  margin-top: 0.35rem;
+  overflow: hidden;
+}
+
+.stock-nivel-llenado {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.stock-nivel-llenado.ok { background: var(--success); }
+.stock-nivel-llenado.alerta { background: var(--warning); }
+.stock-nivel-llenado.cero { background: var(--danger); }
+
+/* Tarjeta Calculadora de Margen en Modal Producto */
+.tarjeta-margen-calculadora {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.margen-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.margen-stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--slate-500);
+  letter-spacing: 0.03em;
+}
+
+.margen-stat-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--slate-900);
+  font-family: var(--font-mono);
+}
+
+.margen-stat-val.ganancia-positiva { color: var(--success-dark); }
+.margen-stat-val.ganancia-negativa { color: var(--danger-dark); }
+
+/* Paginación y Controles de Tabla */
+.paginacion-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.5rem 0 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.paginacion-info {
+  font-size: 0.82rem;
+  color: var(--slate-500);
+}
+
+.paginacion-botones {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.paginacion-btn {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  color: var(--slate-700);
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.paginacion-btn:hover:not(:disabled) {
+  background: var(--slate-100);
+  border-color: var(--slate-300);
+}
+
+.paginacion-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Badges de Movimiento Kardex */
+.kardex-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.kardex-badge.ingreso { background: var(--success-light); color: var(--success-dark); }
+.kardex-badge.salida { background: var(--info-light); color: var(--info); }
+.kardex-badge.ajuste { background: var(--warning-light); color: var(--warning-dark); }
+.kardex-badge.devolucion { background: #f3e8ff; color: #7e22ce; }
+
+.kardex-delta-positivo {
+  color: var(--success-dark);
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.kardex-delta-negativo {
+  color: var(--danger-dark);
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+/* Hoja de Impresión de Etiquetas con Códigos de Barras */
+.contenedor-hoja-etiquetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48mm, 1fr));
+  gap: 4mm;
+  padding: 4mm;
+  background: #ffffff;
+}
+
+.etiqueta-sticker-item {
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  padding: 3mm;
+  text-align: center;
+  background: #ffffff;
+  box-sizing: border-box;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 30mm;
+}
+
+.etiqueta-sticker-empresa {
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 1mm;
+}
+
+.etiqueta-sticker-nombre {
+  font-size: 8pt;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.15;
+  max-height: 2.3em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 1.5mm;
+}
+
+.etiqueta-sticker-cat {
+  font-size: 6.5pt;
+  color: #94a3b8;
+  margin-bottom: 1mm;
+}
+
+.etiqueta-sticker-barcode {
+  margin: 1mm 0;
+}
+
+.etiqueta-sticker-precio {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1mm;
+  margin-top: 1mm;
+}
+
+.etiqueta-sticker-moneda {
+  font-size: 8pt;
+  font-weight: 700;
+  color: #ea580c;
+}
+
+.etiqueta-sticker-monto {
+  font-size: 13pt;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.etiqueta-sticker-unidad {
+  font-size: 7pt;
+  color: #64748b;
+  font-weight: 600;
+}
+
+@media print {
+  .contenedor-hoja-etiquetas {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(48mm, 1fr)) !important;
+    gap: 2mm !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  .etiqueta-sticker-item {
+    border: 1px solid #94a3b8 !important;
+  }
+}
+
 .text-right { text-align: right; }
 .text-center { text-align: center; }
 .fw-bold { font-weight: 700; }
@@ -1515,11 +1899,13 @@ body {
       <div class="panel-modulo">
         <div class="panel-head-flex">
           <div class="panel-titulos">
-            <h2>Inventario y Control de Stock</h2>
-            <p>Agrega productos, reabastece existencias en 1 clic con <b>"+ Stock"</b> y supervisa las alertas de reposición.</p>
+            <h2>Inventario y Catálogo de Productos</h2>
+            <p>Control empresarial: auditoría en Kardex, reabastecimiento en 1 clic, calculadora de márgenes, etiquetas de código de barras y acciones en lote.</p>
           </div>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
             <button class="btn btn-primary" id="btn-inv-nuevo-producto">+ Nuevo Producto</button>
+            <button class="btn btn-outline" id="btn-inv-abrir-kardex" title="Ver auditoría de movimientos de stock (Kardex)">📜 Kardex / Movimientos</button>
+            <button class="btn btn-outline" id="btn-inv-abrir-etiquetas" title="Generar e imprimir etiquetas de código de barras">🏷️ Imprimir Etiquetas</button>
             <button class="btn btn-outline" id="btn-inv-descargar-plantilla" title="Descargar plantilla Excel para rellenar">⬇️ Plantilla Excel</button>
             <button class="btn btn-outline" id="btn-inv-importar-excel" title="Subir archivo Excel con productos">⬆️ Importar Excel</button>
             <button class="btn btn-outline" id="btn-inv-exportar-excel" title="Descargar catálogo actual a Excel">📊 Exportar Excel</button>
@@ -1527,40 +1913,124 @@ body {
           </div>
         </div>
 
-        <!-- Filtros de búsqueda rápida -->
-        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
-          <div style="flex:1; min-width:260px;">
-            <input type="search" class="input" id="inv-buscar-input" placeholder="Buscar por código, descripción o categoría...">
-          </div>
-          <select class="select" id="inv-filtro-categoria" style="width:auto; min-width:190px;">
-            <option value="">Todas las Categorías</option>
-          </select>
-          <div style="display:flex; gap:0.35rem;">
-            <button class="chip-cat pastilla-stock activa" data-filtro="">Todos</button>
-            <button class="chip-cat pastilla-stock" data-filtro="normal">En Stock</button>
-            <button class="chip-cat pastilla-stock" data-filtro="bajo">Bajo Stock</button>
-            <button class="chip-cat pastilla-stock" data-filtro="agotado">Agotados</button>
-          </div>
+        <!-- Pestañas de Estado con Contadores en tiempo real (estilo Shopify/Square) -->
+        <div class="tabs-estado-catalogo" id="inv-tabs-estado">
+          <button type="button" class="tab-estado-item activo pastilla-stock" data-filtro="">
+            Todos <span class="tab-contador" id="tab-cnt-todos">0</span>
+          </button>
+          <button type="button" class="tab-estado-item pastilla-stock" data-filtro="normal">
+            En Stock <span class="tab-contador" id="tab-cnt-normal">0</span>
+          </button>
+          <button type="button" class="tab-estado-item pastilla-stock" data-filtro="bajo">
+            Bajo Stock <span class="tab-contador" id="tab-cnt-bajo">0</span>
+          </button>
+          <button type="button" class="tab-estado-item pastilla-stock" data-filtro="agotado">
+            Agotados <span class="tab-contador" id="tab-cnt-agotado">0</span>
+          </button>
+          <button type="button" class="tab-estado-item pastilla-stock" data-filtro="inactivo">
+            Inactivos <span class="tab-contador" id="tab-cnt-inactivo">0</span>
+          </button>
         </div>
 
-        <!-- Tabla de Inventario -->
+        <!-- Barra de Búsqueda Rápida y Filtros Multicriterio -->
+        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+          <div style="flex:1; min-width:240px; position:relative; display:flex; align-items:center;">
+            <input type="search" class="input" id="inv-buscar-input" placeholder="Buscar por código, código de barras, descripción, marca o ubicación..." style="padding-right:2.25rem;">
+            <button type="button" id="btn-limpiar-busqueda-inv" title="Limpiar búsqueda" style="position:absolute; right:8px; background:none; border:none; cursor:pointer; font-size:0.9rem; color:var(--slate-400); display:none;">✕</button>
+          </div>
+          <select class="select" id="inv-filtro-categoria" style="width:auto; min-width:180px;">
+            <option value="">Todas las Categorías</option>
+          </select>
+          <select class="select" id="inv-filtro-marca" style="width:auto; min-width:150px;">
+            <option value="">Todas las Marcas</option>
+          </select>
+          <select class="select" id="inv-select-ordenar" style="width:auto; min-width:180px;">
+            <option value="nombre_asc">Nombre: A → Z</option>
+            <option value="nombre_desc">Nombre: Z → A</option>
+            <option value="stock_asc">Menor Stock (Críticos)</option>
+            <option value="stock_desc">Mayor Stock</option>
+            <option value="precio_desc">Mayor Precio Venta</option>
+            <option value="precio_asc">Menor Precio Venta</option>
+            <option value="margen_desc">Mayor Margen %</option>
+            <option value="recientes">Más Recientes</option>
+          </select>
+        </div>
+
+        <!-- Tabla de Inventario de Grado Empresarial con Encabezados Ordenables -->
         <div class="tabla-container">
           <table class="tabla-general">
             <thead>
               <tr>
-                <th style="width:115px;">Código</th>
-                <th>Descripción / Ubicación</th>
-                <th>Categoría</th>
-                <th class="text-right">P. Compra</th>
-                <th class="text-right">P. Venta</th>
-                <th class="text-right">Margen</th>
-                <th style="width:190px;">Stock Actual</th>
+                <th style="width:40px; text-align:center;">
+                  <input type="checkbox" id="inv-chk-todos" title="Seleccionar todos los visibles">
+                </th>
+                <th class="sortable" data-col="codigo" style="width:125px;">
+                  Código <span class="th-sort-indicator">⇅</span>
+                </th>
+                <th class="sortable" data-col="nombre">
+                  Descripción / Marca / Ubicación <span class="th-sort-indicator">⇅</span>
+                </th>
+                <th class="sortable" data-col="categoria">
+                  Categoría <span class="th-sort-indicator">⇅</span>
+                </th>
+                <th class="sortable text-right" data-col="compra">
+                  P. Compra <span class="th-sort-indicator">⇅</span>
+                </th>
+                <th class="sortable text-right" data-col="venta">
+                  P. Venta <span class="th-sort-indicator">⇅</span>
+                </th>
+                <th class="sortable text-right" data-col="margen">
+                  Margen <span class="th-sort-indicator">⇅</span>
+                </th>
+                <th class="sortable" data-col="stock" style="width:190px;">
+                  Stock Actual <span class="th-sort-indicator">⇅</span>
+                </th>
                 <th>Estado</th>
-                <th class="text-right" style="width:110px;">Acciones</th>
+                <th class="text-right" style="width:175px;">Acciones</th>
               </tr>
             </thead>
             <tbody id="inv-tabla-tbody"></tbody>
           </table>
+        </div>
+
+        <!-- Paginación y Contador de Registros -->
+        <div class="paginacion-wrapper" id="inv-paginacion-wrapper">
+          <div class="paginacion-info" id="inv-paginacion-info">
+            Mostrando 0 productos
+          </div>
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <label style="font-size:0.82rem; color:var(--slate-500); display:flex; align-items:center; gap:0.35rem;">
+              Filas por pág:
+              <select class="select" id="inv-filas-por-pagina" style="padding:0.25rem 0.5rem; font-size:0.82rem; width:auto;">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="todos">Todos</option>
+              </select>
+            </label>
+            <div class="paginacion-botones">
+              <button type="button" class="paginacion-btn" id="btn-pag-anterior" disabled>◀ Anterior</button>
+              <span id="inv-pag-actual-texto" style="font-size:0.82rem; font-weight:700; padding:0 0.4rem;">Pág. 1</span>
+              <button type="button" class="paginacion-btn" id="btn-pag-siguiente" disabled>Siguiente ▶</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra Flotante de Acciones en Lote (Bulk Actions) -->
+        <div class="barra-acciones-masivas" id="inv-barra-bulk" style="display:none;">
+          <div class="bulk-info">
+            <span class="bulk-counter-badge" id="inv-bulk-contador">0 seleccionados</span>
+            <span style="font-size:0.85rem; color:var(--slate-300);">Acciones masivas:</span>
+          </div>
+          <div class="bulk-acciones-grupo">
+            <button type="button" class="btn-bulk" id="btn-bulk-categoria">🏷️ Cambiar Categoría</button>
+            <button type="button" class="btn-bulk" id="btn-bulk-precios">💵 Ajustar Precios (% / S/)</button>
+            <button type="button" class="btn-bulk" id="btn-bulk-etiquetas">🏷️ Imprimir Etiquetas</button>
+            <button type="button" class="btn-bulk" id="btn-bulk-exportar">📊 Exportar a Excel</button>
+            <button type="button" class="btn-bulk btn-bulk-danger" id="btn-bulk-eliminar">🗑️ Eliminar</button>
+            <button type="button" class="btn-bulk" id="btn-bulk-deseleccionar" style="border:none; color:var(--slate-400);">✕ Cancelar</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1688,98 +2158,189 @@ body {
        MODALES DEL SISTEMA
        ====================================================================== -->
 
-  <!-- Modal: Crear / Editar Producto -->
+  <!-- Modal: Crear / Editar Producto (Con Calculadora de Rentabilidad Inteligente) -->
   <div class="modal-overlay" id="modal-producto">
-    <div class="modal-caja">
+    <div class="modal-caja" style="max-width:760px;">
       <div class="modal-head">
         <h3 id="modal-producto-titulo">Nuevo Producto de Ferretería</h3>
         <button class="modal-close-btn" type="button">✕</button>
       </div>
       <form id="form-producto">
-        <div class="modal-cuerpo">
-          <div class="grid-2">
+        <div class="modal-cuerpo" style="max-height:calc(85vh - 120px); overflow-y:auto; padding:1.25rem;">
+          
+          <!-- Bloque 1: Identificación y Clasificación -->
+          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
+            1. Información General y Clasificación
+          </div>
+          <div class="grid-3" style="margin-bottom:0.85rem;">
             <div class="campo-grupo">
-              <label for="prod-input-codigo">Código / Código de Barras</label>
-              <input type="text" class="input" id="prod-input-codigo" placeholder="Ej: FER-001 o lector de barras">
+              <label for="prod-input-codigo">Código SKU *</label>
+              <div style="display:flex; gap:0.35rem;">
+                <input type="text" class="input" id="prod-input-codigo" placeholder="Ej: FER-0001" required>
+                <button type="button" class="btn btn-outline btn-sm" id="btn-autogenerar-codigo" title="Generar código correlativo">🎲</button>
+              </div>
             </div>
             <div class="campo-grupo">
-              <label for="prod-select-categoria">Categoría</label>
+              <label for="prod-input-barcode">Código de Barras</label>
+              <input type="text" class="input" id="prod-input-barcode" placeholder="Escáner o dejar vacío">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-select-estado">Estado del Producto</label>
+              <select class="select" id="prod-select-estado">
+                <option value="activo">🟢 Activo en Ventas</option>
+                <option value="inactivo">⚪ Inactivo / Oculto</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="campo-grupo" style="margin-bottom:0.85rem;">
+            <label for="prod-input-nombre">Descripción / Nombre Completo del Producto *</label>
+            <input type="text" class="input" id="prod-input-nombre" placeholder="Ej: Cemento Sol Tipo I 42.5kg o Tubo PVC 1/2 pulgada x 3m Pavco" required style="font-weight:700; font-size:1.02rem;">
+          </div>
+
+          <div class="grid-3" style="margin-bottom:1.25rem;">
+            <div class="campo-grupo">
+              <label for="prod-select-categoria">Categoría Ferretera</label>
               <select class="select" id="prod-select-categoria"></select>
             </div>
-          </div>
-
-          <div class="campo-grupo">
-            <label for="prod-input-nombre">Descripción / Nombre del Producto *</label>
-            <input type="text" class="input" id="prod-input-nombre" placeholder="Ej: Cemento Sol Tipo I 42.5kg o Martillo 16oz" required>
-          </div>
-
-          <div class="grid-3">
             <div class="campo-grupo">
-              <label for="prod-select-unidad">Unidad</label>
+              <label for="prod-input-marca">Marca / Fabricante</label>
+              <input type="text" class="input" id="prod-input-marca" placeholder="Ej: Stanley, Pavco, Sika...">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-select-unidad">Unidad de Medida</label>
               <select class="select" id="prod-select-unidad"></select>
             </div>
+          </div>
+
+          <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:1rem;">
+
+          <!-- Bloque 2: Precios, Costos y Calculadora Bidireccional -->
+          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
+            2. Costos, Precios y Margen de Utilidad
+          </div>
+          <div class="grid-3" style="margin-bottom:0.5rem;">
             <div class="campo-grupo">
-              <label for="prod-input-compra">P. Compra (Costo)</label>
-              <input type="number" step="0.10" min="0" class="input" id="prod-input-compra" placeholder="0.00" value="0.00">
+              <label for="prod-input-compra">P. Compra / Costo (S/)</label>
+              <input type="number" step="0.01" min="0" class="input" id="prod-input-compra" placeholder="0.00" value="0.00">
             </div>
             <div class="campo-grupo">
-              <label for="prod-input-venta">P. Venta *</label>
-              <input type="number" step="0.10" min="0" class="input" id="prod-input-venta" placeholder="0.00" required>
+              <label for="prod-input-margen">Margen Deseado (%)</label>
+              <input type="number" step="0.5" min="0" class="input" id="prod-input-margen" placeholder="30.0" value="30.0">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-input-venta">Precio Venta Público (S/) *</label>
+              <input type="number" step="0.01" min="0" class="input" id="prod-input-venta" placeholder="0.00" required style="font-weight:800; font-size:1.1rem; color:var(--brand-primary);">
             </div>
           </div>
 
-          <div class="grid-3">
+          <div class="grid-2" style="margin-bottom:0.75rem;">
             <div class="campo-grupo">
-              <label for="prod-input-stock">Stock Inicial</label>
-              <input type="number" step="1" min="0" class="input" id="prod-input-stock" placeholder="0" value="0">
+              <label for="prod-input-mayor">Precio por Mayor / Especial (Opcional)</label>
+              <input type="number" step="0.01" min="0" class="input" id="prod-input-mayor" placeholder="0.00">
+            </div>
+            <div class="campo-grupo" style="display:flex; align-items:center; gap:0.5rem; margin-top:1.5rem;">
+              <input type="checkbox" id="prod-chk-fraccionada" checked style="width:18px; height:18px; accent-color:var(--brand-primary); cursor:pointer;">
+              <label for="prod-chk-fraccionada" style="margin:0; cursor:pointer; font-weight:600;">Permite venta fraccionada (ej: 1.5 metros, 0.25 kg)</label>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Diagnóstico Financiero en Tiempo Real -->
+          <div class="tarjeta-margen-calculadora" style="margin-bottom:1.25rem;">
+            <div class="margen-stat-item">
+              <span class="margen-stat-label">Costo Unitario</span>
+              <span class="margen-stat-val" id="calc-preview-costo">S/ 0.00</span>
+            </div>
+            <div class="margen-stat-item">
+              <span class="margen-stat-label">Ganancia Neta</span>
+              <span class="margen-stat-val ganancia-positiva" id="calc-preview-ganancia">+ S/ 0.00</span>
+            </div>
+            <div class="margen-stat-item">
+              <span class="margen-stat-label">Margen sobre Costo</span>
+              <span class="margen-stat-val ganancia-positiva" id="calc-preview-margen">+0.0%</span>
+            </div>
+          </div>
+
+          <hr style="border:none; border-top:1px solid var(--border-color); margin-bottom:1rem;">
+
+          <!-- Bloque 3: Stock y Almacén -->
+          <div style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--slate-400); letter-spacing:0.05em; margin-bottom:0.6rem;">
+            3. Control de Existencias y Ubicación
+          </div>
+          <div class="grid-3" style="margin-bottom:0.85rem;">
+            <div class="campo-grupo">
+              <label for="prod-input-stock">Stock Actual</label>
+              <input type="number" step="any" min="0" class="input" id="prod-input-stock" placeholder="0" value="0">
             </div>
             <div class="campo-grupo">
               <label for="prod-input-stock-min">Stock Mínimo (Alerta)</label>
-              <input type="number" step="1" min="0" class="input" id="prod-input-stock-min" placeholder="5" value="5">
+              <input type="number" step="any" min="0" class="input" id="prod-input-stock-min" placeholder="5" value="5">
             </div>
             <div class="campo-grupo">
-              <label for="prod-input-ubicacion">Ubicación / Estante</label>
-              <input type="text" class="input" id="prod-input-ubicacion" placeholder="Ej: Pasillo 2 - Nivel A">
+              <label for="prod-input-stock-max">Stock Máximo / Capacidad</label>
+              <input type="number" step="any" min="0" class="input" id="prod-input-stock-max" placeholder="Opcional">
             </div>
           </div>
+
+          <div class="grid-2">
+            <div class="campo-grupo">
+              <label for="prod-input-ubicacion">Ubicación Física en Almacén</label>
+              <input type="text" class="input" id="prod-input-ubicacion" placeholder="Ej: Pasillo 2 - Estante C - Nivel 1">
+            </div>
+            <div class="campo-grupo">
+              <label for="prod-input-descripcion">Especificaciones Técnicas / Notas</label>
+              <input type="text" class="input" id="prod-input-descripcion" placeholder="Ej: Rosca 1/4, acabado galvanizado...">
+            </div>
+          </div>
+
         </div>
         <div class="modal-pie">
           <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar Producto</button>
+          <button type="submit" class="btn btn-primary" id="btn-guardar-producto-modal">💾 Guardar Producto</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Agregar / Reabastecer Stock -->
+  <!-- Modal: Reabastecimiento y Ajuste de Stock -->
   <div class="modal-overlay" id="modal-stock">
-    <div class="modal-caja" style="max-width:480px;">
+    <div class="modal-caja" style="max-width:500px;">
       <div class="modal-head">
-        <h3>📦 Reabastecer Stock de Producto</h3>
+        <h3>📦 Reabastecer / Ajustar Stock</h3>
         <button class="modal-close-btn" type="button">✕</button>
       </div>
       <form id="form-stock">
         <div class="modal-cuerpo">
-          <div style="background:var(--slate-50); padding:0.85rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+          <div style="background:var(--slate-50); padding:0.85rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:0.75rem;">
             <div style="font-weight:800; font-size:1.05rem;" id="stock-modal-prod-nombre">-</div>
             <div style="font-size:0.85rem; color:var(--slate-500); margin-top:0.25rem;">
               Stock Actual en Almacén: <b id="stock-modal-actual" style="color:var(--slate-900);">-</b>
             </div>
           </div>
 
-          <div class="campo-grupo">
-            <label for="stock-input-cantidad">Cantidad a Ingresar (+ Stock) *</label>
-            <input type="number" step="1" min="1" class="input" id="stock-input-cantidad" placeholder="Ej: 25" required style="font-size:1.25rem; font-weight:800;">
+          <div class="campo-grupo" style="margin-bottom:0.75rem;">
+            <label for="stock-select-tipo">Tipo de Operación</label>
+            <select class="select" id="stock-select-tipo">
+              <option value="Ingreso por Compra">📥 Ingreso por Compra / Proveedor</option>
+              <option value="Ajuste de Conteo Físico">⚖️ Ajuste por Conteo Físico / Inventario</option>
+              <option value="Merma / Daño">📉 Merma o Producto Dañado</option>
+              <option value="Uso Interno">🛠️ Uso Interno del Negocio</option>
+            </select>
           </div>
 
-          <div class="campo-grupo">
-            <label for="stock-input-compra">Nuevo Precio de Compra unitario (Opcional)</label>
-            <input type="number" step="0.10" min="0" class="input" id="stock-input-compra" placeholder="Dejar igual si no varió el costo">
+          <div class="campo-grupo" style="margin-bottom:0.75rem;">
+            <label for="stock-input-cantidad">Cantidad a Ingresar / Ajustar *</label>
+            <input type="number" step="any" min="0.001" class="input" id="stock-input-cantidad" placeholder="Ej: 25" required style="font-size:1.25rem; font-weight:800;">
           </div>
 
-          <div class="campo-grupo">
-            <label for="stock-input-motivo">Proveedor / Motivo de Entrada</label>
-            <input type="text" class="input" id="stock-input-motivo" placeholder="Ej: Compra a Distribuidor S.A.C.">
+          <div class="campo-grupo" style="margin-bottom:0.75rem;">
+            <label for="stock-input-compra">Nuevo Precio de Costo / Compra (Opcional)</label>
+            <input type="number" step="0.01" min="0" class="input" id="stock-input-compra" placeholder="Dejar en blanco si el costo no cambió">
+          </div>
+
+          <div class="campo-grupo" style="margin-bottom:0.75rem;">
+            <label for="stock-input-motivo">Motivo / N° de Guía o Factura Proveedor</label>
+            <input type="text" class="input" id="stock-input-motivo" placeholder="Ej: Factura F001-4921 o Ajuste de inventario">
           </div>
 
           <div class="caja-vuelto-alert" style="background:var(--success-light); color:var(--success-dark); border-color:rgba(16,185,129,0.3); font-size:0.95rem;">
@@ -1789,7 +2350,144 @@ body {
         </div>
         <div class="modal-pie">
           <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
-          <button type="submit" class="btn btn-success">+ Aumentar Stock</button>
+          <button type="submit" class="btn btn-success" id="btn-confirmar-stock">+ Actualizar Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Auditoría y Kardex de Movimientos de Stock -->
+  <div class="modal-overlay" id="modal-kardex">
+    <div class="modal-caja" style="max-width:980px;">
+      <div class="modal-head">
+        <h3>📜 Kardex y Auditoría de Movimientos de Stock</h3>
+        <button class="modal-close-btn" type="button">✕</button>
+      </div>
+      <div class="modal-cuerpo" style="padding:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; flex:1;">
+            <input type="search" class="input" id="kardex-buscar-input" placeholder="Buscar por producto, código o motivo..." style="min-width:240px; flex:1;">
+            <select class="select" id="kardex-filtro-tipo" style="width:auto; min-width:180px;">
+              <option value="">Todos los Movimientos</option>
+              <option value="Ingreso">📥 Entradas / Compras</option>
+              <option value="Salida">🛒 Salidas por Venta</option>
+              <option value="Ajuste">⚖️ Ajustes de Inventario</option>
+              <option value="Devolución">↩️ Devoluciones</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-outline" id="btn-kardex-exportar-excel">📊 Exportar Kardex a Excel</button>
+        </div>
+
+        <div class="tabla-container" style="max-height:480px; overflow-y:auto;">
+          <table class="tabla-general">
+            <thead>
+              <tr>
+                <th style="width:130px;">Fecha y Hora</th>
+                <th style="width:100px;">Código</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th class="text-right" style="width:90px;">Cantidad</th>
+                <th class="text-right" style="width:90px;">Stock Ant.</th>
+                <th class="text-right" style="width:90px;">Nuevo Stock</th>
+                <th>Motivo / Referencia</th>
+              </tr>
+            </thead>
+            <tbody id="kardex-tabla-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-pie">
+        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Generador e Impresión de Etiquetas con Códigos de Barras -->
+  <div class="modal-overlay" id="modal-etiquetas-barcode">
+    <div class="modal-caja" style="max-width:880px;">
+      <div class="modal-head">
+        <h3>🏷️ Impresión de Etiquetas de Código de Barras</h3>
+        <button class="modal-close-btn" type="button">✕</button>
+      </div>
+      <div class="modal-cuerpo" style="padding:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem; background:var(--slate-50); padding:0.75rem 1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <label for="etiquetas-input-copias" style="font-weight:700; font-size:0.85rem;">Copias por producto:</label>
+            <input type="number" id="etiquetas-input-copias" min="1" max="100" value="2" class="input" style="width:75px; text-align:center; font-weight:800;">
+          </div>
+          <span style="font-size:0.8rem; color:var(--slate-500);">Formato sticker térmico estándar (50x30mm) con código de barras Code-128</span>
+        </div>
+
+        <div id="etiquetas-preview-contenedor" style="max-height:450px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:1rem; background:#f8fafc;">
+          <!-- Previsualización dinámica de etiquetas -->
+        </div>
+      </div>
+      <div class="modal-pie" style="justify-content:space-between;">
+        <button type="button" class="btn btn-outline btn-cancelar-modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" id="btn-imprimir-etiquetas-barcode">🖨️ Mandar a Imprimir Etiquetas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ajuste Masivo de Precios (Bulk Price Adjustment) -->
+  <div class="modal-overlay" id="modal-bulk-precios">
+    <div class="modal-caja" style="max-width:460px;">
+      <div class="modal-head">
+        <h3>💵 Ajuste Masivo de Precios</h3>
+        <button class="modal-close-btn" type="button">✕</button>
+      </div>
+      <form id="form-bulk-precios">
+        <div class="modal-cuerpo">
+          <p style="font-size:0.85rem; color:var(--slate-600); margin-bottom:1rem;">
+            Modifica el precio de venta de los <b id="bulk-precios-contador">0</b> productos seleccionados simultáneamente.
+          </p>
+
+          <div class="campo-grupo" style="margin-bottom:0.85rem;">
+            <label for="bulk-precios-tipo">Tipo de Ajuste</label>
+            <select class="select" id="bulk-precios-tipo">
+              <option value="porcentaje">Porcentaje (%) sobre Precio Actual</option>
+              <option value="monto">Monto Fijo (S/) a Sumar o Restar</option>
+            </select>
+          </div>
+
+          <div class="campo-grupo" style="margin-bottom:0.85rem;">
+            <label for="bulk-precios-valor">Valor del Ajuste (Usa números negativos para rebajas)</label>
+            <input type="number" step="0.1" class="input" id="bulk-precios-valor" placeholder="Ej: 5 (para +5%) o -2 (para -2%)" required style="font-size:1.15rem; font-weight:800;">
+          </div>
+
+          <div class="campo-grupo" style="display:flex; align-items:center; gap:0.5rem;">
+            <input type="checkbox" id="bulk-precios-redondear" checked style="width:18px; height:18px; accent-color:var(--brand-primary); cursor:pointer;">
+            <label for="bulk-precios-redondear" style="margin:0; cursor:pointer; font-weight:600; font-size:0.85rem;">Redondear a décimos limpios (ej: S/ 15.50)</label>
+          </div>
+        </div>
+        <div class="modal-pie">
+          <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-aplicar-bulk-precios">Aplicar a Seleccionados</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Cambio Masivo de Categoría (Bulk Category Assignment) -->
+  <div class="modal-overlay" id="modal-bulk-categoria">
+    <div class="modal-caja" style="max-width:440px;">
+      <div class="modal-head">
+        <h3>🏷️ Cambiar Categoría en Lote</h3>
+        <button class="modal-close-btn" type="button">✕</button>
+      </div>
+      <form id="form-bulk-categoria">
+        <div class="modal-cuerpo">
+          <p style="font-size:0.85rem; color:var(--slate-600); margin-bottom:1rem;">
+            Asigna una nueva categoría para los <b id="bulk-categoria-contador">0</b> productos seleccionados.
+          </p>
+          <div class="campo-grupo">
+            <label for="bulk-categoria-select">Nueva Categoría de Destino</label>
+            <select class="select" id="bulk-categoria-select" required></select>
+          </div>
+        </div>
+        <div class="modal-pie">
+          <button type="button" class="btn btn-outline btn-cancelar-modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-aplicar-bulk-categoria">Asignar Categoría</button>
         </div>
       </form>
     </div>
@@ -1931,7 +2629,8 @@ const Store = (() => {
     ],
     productos: [],
     ventas: [],
-    clientes: []
+    clientes: [],
+    movimientosStock: []
   };
 
   let state = JSON.parse(JSON.stringify(ESTADO_INICIAL));
@@ -2005,7 +2704,8 @@ const Store = (() => {
             unidades: Array.isArray(datos.unidades) && datos.unidades.length ? datos.unidades : ESTADO_INICIAL.unidades,
             productos: Array.isArray(datos.productos) ? datos.productos : [],
             ventas: Array.isArray(datos.ventas) ? datos.ventas : [],
-            clientes: Array.isArray(datos.clientes) ? datos.clientes : []
+            clientes: Array.isArray(datos.clientes) ? datos.clientes : [],
+            movimientosStock: Array.isArray(datos.movimientosStock) ? datos.movimientosStock : []
           };
           cargadoRemoto = true;
           guardarEnLocalStorage();
@@ -2030,7 +2730,8 @@ const Store = (() => {
             configuracion: { ...ESTADO_INICIAL.configuracion, ...(parsed.configuracion || {}) },
             productos: Array.isArray(parsed.productos) ? parsed.productos : [],
             ventas: Array.isArray(parsed.ventas) ? parsed.ventas : [],
-            clientes: Array.isArray(parsed.clientes) ? parsed.clientes : []
+            clientes: Array.isArray(parsed.clientes) ? parsed.clientes : [],
+            movimientosStock: Array.isArray(parsed.movimientosStock) ? parsed.movimientosStock : []
           };
         }
       } catch (err) {
@@ -2089,8 +2790,38 @@ const Store = (() => {
   }
 
   // ==========================================================================
-  // GESTIÓN DE PRODUCTOS E INVENTARIO
+  // GESTIÓN DE PRODUCTOS, KARDEX E INVENTARIO AVANZADO
   // ==========================================================================
+
+  /**
+   * Registro en Kardex (Auditoría de Movimientos de Stock en tiempo real)
+   */
+  function registrarMovimientoStock({ productoId, codigo, nombre, tipo, cantidad, stockAnterior, stockNuevo, motivo = "", costoUnitario = 0, referencia = "" }) {
+    if (!Array.isArray(state.movimientosStock)) {
+      state.movimientosStock = [];
+    }
+    const mov = {
+      id: "MOV-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+      fecha: new Date().toISOString(),
+      productoId: productoId || "",
+      codigo: codigo || "",
+      nombre: nombre || "",
+      tipo: tipo || "Ajuste", // 'Ingreso por Compra', 'Salida por Venta', 'Ajuste de Conteo Físico', 'Merma / Daño', 'Devolución por Anulación', 'Ingreso Inicial'
+      cantidad: round3(cantidad),
+      stockAnterior: round3(stockAnterior),
+      stockNuevo: round3(stockNuevo),
+      costoUnitario: round2(costoUnitario),
+      motivo: String(motivo || "").trim(),
+      referencia: String(referencia || "").trim()
+    };
+
+    // Mantener hasta 5,000 movimientos en memoria para alto rendimiento
+    state.movimientosStock.unshift(mov);
+    if (state.movimientosStock.length > 5000) {
+      state.movimientosStock.pop();
+    }
+    return mov;
+  }
 
   function addProduct(prod) {
     if (!prod || !prod.nombre || !String(prod.nombre).trim()) {
@@ -2102,21 +2833,49 @@ const Store = (() => {
       ? String(prod.codigo).trim()
       : "FER-" + String(state.productos.length + 1).padStart(4, "0");
 
+    const stockInicial = Math.max(0, round3(prod.stock));
+    const pCompra = Math.max(0, round2(prod.precioCompra));
+
     const producto = {
       id: nuevoId,
       codigo: nuevoCodigo,
+      codigoBarras: (prod.codigoBarras && String(prod.codigoBarras).trim()) || nuevoCodigo,
       nombre: String(prod.nombre).trim(),
       categoria: prod.categoria || "Otros",
+      marca: String(prod.marca || "").trim(),
       unidad: prod.unidad || "Unidad",
-      precioCompra: Math.max(0, round2(prod.precioCompra)),
+      precioCompra: pCompra,
       precioVenta: Math.max(0, round2(prod.precioVenta)),
-      stock: Math.max(0, round3(prod.stock)),
+      precioMayor: prod.precioMayor !== undefined && Number(prod.precioMayor) > 0 ? round2(prod.precioMayor) : 0,
+      stock: stockInicial,
       stockMinimo: Math.max(0, round3(prod.stockMinimo >= 0 ? prod.stockMinimo : 5)),
+      stockMaximo: prod.stockMaximo !== undefined && Number(prod.stockMaximo) > 0 ? round3(prod.stockMaximo) : 0,
       ubicacion: String(prod.ubicacion || "").trim(),
-      fechaCreacion: new Date().toISOString()
+      descripcion: String(prod.descripcion || "").trim(),
+      permiteDecimales: prod.permiteDecimales !== undefined ? Boolean(prod.permiteDecimales) : true,
+      estado: prod.estado === "inactivo" ? "inactivo" : "activo",
+      fechaCreacion: new Date().toISOString(),
+      fechaModificacion: new Date().toISOString()
     };
 
     state.productos.push(producto);
+
+    // Registro inicial en Kardex si tiene stock
+    if (stockInicial > 0) {
+      registrarMovimientoStock({
+        productoId: nuevoId,
+        codigo: nuevoCodigo,
+        nombre: producto.nombre,
+        tipo: "Ingreso Inicial",
+        cantidad: stockInicial,
+        stockAnterior: 0,
+        stockNuevo: stockInicial,
+        costoUnitario: pCompra,
+        motivo: "Inventario inicial al crear producto",
+        referencia: "Alta de Producto"
+      });
+    }
+
     persistir();
     notify();
     return producto;
@@ -2138,19 +2897,47 @@ const Store = (() => {
         ? String(p.codigo).trim()
         : "FER-" + String(state.productos.length + 1).padStart(4, "0");
 
-      state.productos.push({
+      const stockVal = Math.max(0, round3(p.stock));
+      const pCompra = Math.max(0, round2(p.precioCompra));
+
+      const prodObj = {
         id: nuevoId,
         codigo: nuevoCodigo,
+        codigoBarras: (p.codigoBarras && String(p.codigoBarras).trim()) || nuevoCodigo,
         nombre: String(p.nombre).trim(),
         categoria: p.categoria || "Otros",
+        marca: String(p.marca || "").trim(),
         unidad: p.unidad || "Unidad",
-        precioCompra: Math.max(0, round2(p.precioCompra)),
+        precioCompra: pCompra,
         precioVenta: Math.max(0, round2(p.precioVenta)),
-        stock: Math.max(0, round3(p.stock)),
+        precioMayor: p.precioMayor ? round2(p.precioMayor) : 0,
+        stock: stockVal,
         stockMinimo: Math.max(0, round3(p.stockMinimo >= 0 ? p.stockMinimo : 5)),
+        stockMaximo: p.stockMaximo ? round3(p.stockMaximo) : 0,
         ubicacion: String(p.ubicacion || "").trim(),
-        fechaCreacion: now
-      });
+        descripcion: String(p.descripcion || "").trim(),
+        permiteDecimales: p.permiteDecimales !== undefined ? Boolean(p.permiteDecimales) : true,
+        estado: p.estado === "inactivo" ? "inactivo" : "activo",
+        fechaCreacion: now,
+        fechaModificacion: now
+      };
+
+      state.productos.push(prodObj);
+
+      if (stockVal > 0) {
+        registrarMovimientoStock({
+          productoId: nuevoId,
+          codigo: nuevoCodigo,
+          nombre: prodObj.nombre,
+          tipo: "Ingreso Inicial",
+          cantidad: stockVal,
+          stockAnterior: 0,
+          stockNuevo: stockVal,
+          costoUnitario: pCompra,
+          motivo: "Carga masiva / Importación de inventario",
+          referencia: "Importación Excel"
+        });
+      }
       agregados++;
     }
 
@@ -2166,20 +2953,46 @@ const Store = (() => {
     if (idx === -1) return false;
 
     const actual = state.productos[idx];
+    const nuevoStock = datosActualizados.stock !== undefined ? Math.max(0, round3(datosActualizados.stock)) : actual.stock;
+    const stockAnterior = actual.stock;
+
     state.productos[idx] = {
       ...actual,
       ...datosActualizados,
       codigo: datosActualizados.codigo !== undefined ? String(datosActualizados.codigo).trim() : actual.codigo,
+      codigoBarras: datosActualizados.codigoBarras !== undefined ? String(datosActualizados.codigoBarras).trim() : (actual.codigoBarras || actual.codigo),
       nombre: datosActualizados.nombre !== undefined ? String(datosActualizados.nombre).trim() : actual.nombre,
       categoria: datosActualizados.categoria || actual.categoria,
+      marca: datosActualizados.marca !== undefined ? String(datosActualizados.marca).trim() : (actual.marca || ""),
       unidad: datosActualizados.unidad || actual.unidad,
       precioCompra: datosActualizados.precioCompra !== undefined ? Math.max(0, round2(datosActualizados.precioCompra)) : actual.precioCompra,
       precioVenta: datosActualizados.precioVenta !== undefined ? Math.max(0, round2(datosActualizados.precioVenta)) : actual.precioVenta,
-      stock: datosActualizados.stock !== undefined ? Math.max(0, round3(datosActualizados.stock)) : actual.stock,
+      precioMayor: datosActualizados.precioMayor !== undefined ? Math.max(0, round2(datosActualizados.precioMayor)) : (actual.precioMayor || 0),
+      stock: nuevoStock,
       stockMinimo: datosActualizados.stockMinimo !== undefined ? Math.max(0, round3(datosActualizados.stockMinimo)) : actual.stockMinimo,
+      stockMaximo: datosActualizados.stockMaximo !== undefined ? Math.max(0, round3(datosActualizados.stockMaximo)) : (actual.stockMaximo || 0),
       ubicacion: datosActualizados.ubicacion !== undefined ? String(datosActualizados.ubicacion).trim() : actual.ubicacion,
+      descripcion: datosActualizados.descripcion !== undefined ? String(datosActualizados.descripcion).trim() : (actual.descripcion || ""),
+      permiteDecimales: datosActualizados.permiteDecimales !== undefined ? Boolean(datosActualizados.permiteDecimales) : actual.permiteDecimales,
+      estado: datosActualizados.estado !== undefined ? (datosActualizados.estado === "inactivo" ? "inactivo" : "activo") : (actual.estado || "activo"),
       fechaModificacion: new Date().toISOString()
     };
+
+    // Si el stock cambió directamente en la edición, registrar movimiento de ajuste en Kardex
+    if (stockAnterior !== nuevoStock) {
+      registrarMovimientoStock({
+        productoId: actual.id,
+        codigo: actual.codigo,
+        nombre: state.productos[idx].nombre,
+        tipo: "Ajuste de Conteo Físico",
+        cantidad: round3(nuevoStock - stockAnterior),
+        stockAnterior: stockAnterior,
+        stockNuevo: nuevoStock,
+        costoUnitario: state.productos[idx].precioCompra,
+        motivo: "Ajuste directo al editar producto",
+        referencia: "Edición Manual"
+      });
+    }
 
     persistir();
     notify();
@@ -2195,11 +3008,36 @@ const Store = (() => {
     return true;
   }
 
+  function duplicateProduct(id) {
+    const prod = state.productos.find(p => p.id === id);
+    if (!prod) return null;
+
+    const correlativo = String(state.productos.length + 1).padStart(4, "0");
+    const nuevoCodigo = "FER-" + correlativo;
+    const now = new Date().toISOString();
+
+    const clon = {
+      ...JSON.parse(JSON.stringify(prod)),
+      id: "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+      codigo: nuevoCodigo,
+      codigoBarras: nuevoCodigo,
+      nombre: prod.nombre + " (Copia)",
+      stock: 0,
+      fechaCreacion: now,
+      fechaModificacion: now
+    };
+
+    state.productos.push(clon);
+    persistir(true);
+    notify();
+    return clon;
+  }
+
   /**
    * REQUISITO: "que el mismo pueda agregar el stock de sus productos"
-   * Aumenta el stock del producto de forma atómica y precisa.
+   * Aumenta el stock del producto de forma atómica y precisa, con registro en Kardex.
    */
-  function addStock(id, cantidad, motivo = "", nuevoPrecioCompra = null) {
+  function addStock(id, cantidad, motivo = "", nuevoPrecioCompra = null, tipo = "Ingreso por Compra") {
     const prod = state.productos.find(p => p.id === id);
     if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
 
@@ -2208,6 +3046,7 @@ const Store = (() => {
       return { ok: false, error: "La cantidad a ingresar debe ser un número positivo" };
     }
 
+    const stockAnterior = prod.stock;
     prod.stock = round3(prod.stock + cantNum);
 
     if (nuevoPrecioCompra !== null && !isNaN(Number(nuevoPrecioCompra)) && Number(nuevoPrecioCompra) > 0) {
@@ -2216,9 +3055,191 @@ const Store = (() => {
     prod.fechaUltimoIngreso = new Date().toISOString();
     prod.ultimoMotivoIngreso = motivo ? String(motivo).trim() : "Reabastecimiento";
 
+    // Registrar en Kardex
+    registrarMovimientoStock({
+      productoId: prod.id,
+      codigo: prod.codigo,
+      nombre: prod.nombre,
+      tipo: tipo || "Ingreso por Compra",
+      cantidad: cantNum,
+      stockAnterior: stockAnterior,
+      stockNuevo: prod.stock,
+      costoUnitario: prod.precioCompra,
+      motivo: motivo || "Reabastecimiento de existencias",
+      referencia: "Entrada de Almacén"
+    });
+
     persistir(true);
     notify();
     return { ok: true, nuevoStock: prod.stock, producto: prod };
+  }
+
+  /**
+   * Ajuste de stock por inventario físico / merma / conteo
+   */
+  function adjustStock(id, nuevoStock, motivo = "Conteo Físico", tipo = "Ajuste de Conteo Físico") {
+    const prod = state.productos.find(p => p.id === id);
+    if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
+
+    const stockFinal = Math.max(0, round3(nuevoStock));
+    const stockAnterior = prod.stock;
+    const delta = round3(stockFinal - stockAnterior);
+
+    prod.stock = stockFinal;
+    prod.fechaModificacion = new Date().toISOString();
+
+    registrarMovimientoStock({
+      productoId: prod.id,
+      codigo: prod.codigo,
+      nombre: prod.nombre,
+      tipo: tipo || "Ajuste de Conteo Físico",
+      cantidad: delta,
+      stockAnterior: stockAnterior,
+      stockNuevo: stockFinal,
+      costoUnitario: prod.precioCompra,
+      motivo: motivo || "Ajuste de inventario",
+      referencia: "Auditoría de Stock"
+    });
+
+    persistir(true);
+    notify();
+    return { ok: true, nuevoStock: prod.stock, producto: prod };
+  }
+
+  // ==========================================================================
+  // OPERACIONES MASIVAS (BULK ACTIONS TIPO SHOPIFY/SQUARE)
+  // ==========================================================================
+
+  function deleteProductsBatch(idsArray) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0) return 0;
+    const set = new Set(idsArray);
+    const totalAntes = state.productos.length;
+    state.productos = state.productos.filter(p => !set.has(p.id));
+    const eliminados = totalAntes - state.productos.length;
+    if (eliminados > 0) {
+      persistir(true);
+      notify();
+    }
+    return eliminados;
+  }
+
+  function updateCategoryBatch(idsArray, newCategory) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0 || !newCategory) return 0;
+    const set = new Set(idsArray);
+    let actualizados = 0;
+    const now = new Date().toISOString();
+    state.productos.forEach(p => {
+      if (set.has(p.id)) {
+        p.categoria = newCategory;
+        p.fechaModificacion = now;
+        actualizados++;
+      }
+    });
+    if (actualizados > 0) {
+      persistir(true);
+      notify();
+    }
+    return actualizados;
+  }
+
+  function adjustPricesBatch(idsArray, { tipo = "porcentaje", valor = 0, redondear = true }) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0) return 0;
+    const set = new Set(idsArray);
+    let actualizados = 0;
+    const now = new Date().toISOString();
+    const val = Number(valor) || 0;
+
+    state.productos.forEach(p => {
+      if (set.has(p.id)) {
+        let nuevoPrecio = p.precioVenta;
+        if (tipo === "porcentaje") {
+          nuevoPrecio = p.precioVenta * (1 + val / 100);
+        } else {
+          nuevoPrecio = p.precioVenta + val;
+        }
+        nuevoPrecio = Math.max(0, round2(nuevoPrecio));
+        if (redondear) {
+          nuevoPrecio = round2(Math.round(nuevoPrecio * 10) / 10);
+        }
+        p.precioVenta = nuevoPrecio;
+        p.fechaModificacion = now;
+        actualizados++;
+      }
+    });
+    if (actualizados > 0) {
+      persistir(true);
+      notify();
+    }
+    return actualizados;
+  }
+
+  function changeStatusBatch(idsArray, nuevoEstado) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0) return 0;
+    const estadoValido = nuevoEstado === "inactivo" ? "inactivo" : "activo";
+    const set = new Set(idsArray);
+    let actualizados = 0;
+    const now = new Date().toISOString();
+    state.productos.forEach(p => {
+      if (set.has(p.id)) {
+        p.estado = estadoValido;
+        p.fechaModificacion = now;
+        actualizados++;
+      }
+    });
+    if (actualizados > 0) {
+      persistir(true);
+      notify();
+    }
+    return actualizados;
+  }
+
+  function getStockMovements(productoId = null, limite = 300) {
+    let movs = state.movimientosStock || [];
+    if (productoId) {
+      movs = movs.filter(m => m.productoId === productoId);
+    }
+    return movs.slice(0, limite);
+  }
+
+  function getKpiInventario() {
+    const prods = state.productos || [];
+    const total = prods.length;
+    const activos = prods.filter(p => p.estado !== "inactivo").length;
+    const inactivos = total - activos;
+
+    let valorCosto = 0;
+    let valorVenta = 0;
+    let bajoStock = 0;
+    let agotados = 0;
+
+    prods.forEach(p => {
+      const s = Number(p.stock) || 0;
+      const sMin = Number(p.stockMinimo) || 5;
+      const pc = Number(p.precioCompra) || 0;
+      const pv = Number(p.precioVenta) || 0;
+
+      valorCosto += s * pc;
+      valorVenta += s * pv;
+
+      if (s <= 0) {
+        agotados++;
+      } else if (s <= sMin) {
+        bajoStock++;
+      }
+    });
+
+    const margenGlobal = valorCosto > 0 ? (((valorVenta - valorCosto) / valorCosto) * 100) : 0;
+
+    return {
+      total,
+      activos,
+      inactivos,
+      valorCosto: round2(valorCosto),
+      valorVenta: round2(valorVenta),
+      margenGlobal: round2(margenGlobal),
+      bajoStock,
+      agotados
+    };
   }
 
   // ==========================================================================
@@ -2268,10 +3289,24 @@ const Store = (() => {
       const ganancia = round2(subtotal - costo);
 
       // DESCUENTO REAL DEL STOCK
+      const stockAnterior = prod.stock;
       prod.stock = Math.max(0, round3(prod.stock - cantidad));
 
       totalVenta = round2(totalVenta + subtotal);
       totalCosto = round2(totalCosto + costo);
+
+      registrarMovimientoStock({
+        productoId: prod.id,
+        codigo: prod.codigo,
+        nombre: prod.nombre,
+        tipo: "Salida por Venta",
+        cantidad: -cantidad,
+        stockAnterior: stockAnterior,
+        stockNuevo: prod.stock,
+        costoUnitario: precioCompra,
+        motivo: `Venta ${tipoComprobante || 'POS'}`,
+        referencia: cliente && cliente !== "Cliente General" ? `Cliente: ${cliente}` : "Venta Mostrador"
+      });
 
       itemsProcesados.push({
         productoId: prod.id,
@@ -2364,7 +3399,20 @@ const Store = (() => {
       const it = venta.items[i];
       const prod = state.productos.find(p => p.id === it.productoId);
       if (prod) {
+        const stockAnterior = prod.stock;
         prod.stock = round3(prod.stock + it.cantidad);
+        registrarMovimientoStock({
+          productoId: prod.id,
+          codigo: prod.codigo,
+          nombre: prod.nombre,
+          tipo: "Devolución por Anulación",
+          cantidad: it.cantidad,
+          stockAnterior: stockAnterior,
+          stockNuevo: prod.stock,
+          costoUnitario: it.precioCompra || prod.precioCompra,
+          motivo: motivo || "Anulación de venta",
+          referencia: venta.numero
+        });
       }
     }
 
@@ -2523,7 +3571,8 @@ const Store = (() => {
           unidades: Array.isArray(jsonData.unidades) && jsonData.unidades.length ? jsonData.unidades : ESTADO_INICIAL.unidades,
           productos: Array.isArray(jsonData.productos) ? jsonData.productos : [],
           ventas: Array.isArray(jsonData.ventas) ? jsonData.ventas : [],
-          clientes: Array.isArray(jsonData.clientes) ? jsonData.clientes : []
+          clientes: Array.isArray(jsonData.clientes) ? jsonData.clientes : [],
+          movimientosStock: Array.isArray(jsonData.movimientosStock) ? jsonData.movimientosStock : []
         };
         persistir(true);
         notify();
@@ -2550,7 +3599,16 @@ const Store = (() => {
     addProductsBatch,
     updateProduct,
     deleteProduct,
+    duplicateProduct,
     addStock,
+    adjustStock,
+    deleteProductsBatch,
+    updateCategoryBatch,
+    adjustPricesBatch,
+    changeStatusBatch,
+    getStockMovements,
+    getKpiInventario,
+    registrarMovimientoStock,
     recordSale,
     annulSale,
     getSalesSummary,
@@ -2589,16 +3647,21 @@ const ExportManager = (() => {
   }
 
   // ==========================================================================
-  // EXPORTAR INVENTARIO A EXCEL
+  // EXPORTAR INVENTARIO A EXCEL (COMPLETO O SELECCIONADOS)
   // ==========================================================================
-  function exportarInventarioExcel() {
+  function exportarInventarioExcel(idsSeleccionados = null) {
     if (typeof XLSX === 'undefined') {
       alert("La biblioteca de Excel (SheetJS) no está disponible en este momento.");
       return;
     }
 
     const state = Store.getState();
-    const productos = state.productos || [];
+    let productos = state.productos || [];
+
+    if (Array.isArray(idsSeleccionados) && idsSeleccionados.length > 0) {
+      const set = new Set(idsSeleccionados);
+      productos = productos.filter(p => set.has(p.id));
+    }
 
     if (productos.length === 0) {
       alert("No hay productos en el inventario para exportar.");
@@ -2615,15 +3678,19 @@ const ExportManager = (() => {
 
       return {
         "Código": p.codigo || "",
+        "Código de Barras": p.codigoBarras || p.codigo || "",
         "Descripción del Producto": p.nombre || "",
         "Categoría": p.categoria || "Otros",
+        "Marca": p.marca || "-",
         "Unidad": p.unidad || "Unidad",
         "P. Compra": pCompra,
         "P. Venta": pVenta,
+        "P. Mayorista": p.precioMayor || 0,
         "Margen %": margen,
         "Stock Actual": stock,
         "Stock Mínimo": p.stockMinimo || 5,
-        "Estado": estado,
+        "Stock Máximo": p.stockMaximo || 0,
+        "Estado": p.estado === "inactivo" ? "Inactivo" : estado,
         "Valor Total (Venta)": valorTotal,
         "Ubicación": p.ubicacion || ""
       };
@@ -2633,14 +3700,57 @@ const ExportManager = (() => {
     const ws = XLSX.utils.json_to_sheet(filas);
 
     ws['!cols'] = [
-      { wch: 14 }, { wch: 38 }, { wch: 24 }, { wch: 12 },
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 },
-      { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 20 }
+      { wch: 14 }, { wch: 18 }, { wch: 38 }, { wch: 22 }, { wch: 16 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 14 },
+      { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 20 }
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Inventario_Ferretería");
     const fecha = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `Inventario_Ferreteria_${fecha}.xlsx`);
+    const sufijo = idsSeleccionados ? "_Seleccionados" : "";
+    XLSX.writeFile(wb, `Inventario_Ferreteria${sufijo}_${fecha}.xlsx`);
+  }
+
+  // ==========================================================================
+  // EXPORTAR AUDITORÍA / KARDEX DE INVENTARIO A EXCEL
+  // ==========================================================================
+  function exportarKardexExcel(productoId = null) {
+    if (typeof XLSX === 'undefined') {
+      alert("La biblioteca de Excel (SheetJS) no está disponible en este momento.");
+      return;
+    }
+
+    const movimientos = Store.getStockMovements(productoId, 5000);
+    if (!movimientos || movimientos.length === 0) {
+      alert("No hay movimientos registrados en el Kardex para exportar.");
+      return;
+    }
+
+    const filas = movimientos.map(m => ({
+      "Fecha y Hora": m.fecha ? m.fecha.replace("T", " ").slice(0, 19) : "",
+      "Código": m.codigo || "",
+      "Producto": m.nombre || "",
+      "Tipo de Movimiento": m.tipo || "Ajuste",
+      "Cantidad": Number(m.cantidad) || 0,
+      "Stock Anterior": Number(m.stockAnterior) || 0,
+      "Stock Resultante": Number(m.stockNuevo) || 0,
+      "Costo Unitario": Number(m.costoUnitario) || 0,
+      "Motivo": m.motivo || "",
+      "Referencia": m.referencia || ""
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
+
+    ws['!cols'] = [
+      { wch: 20 }, { wch: 15 }, { wch: 36 }, { wch: 24 },
+      { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
+      { wch: 30 }, { wch: 24 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Kardex_Movimientos");
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Kardex_Movimientos_Ferreteria_${fecha}.xlsx`);
   }
 
   // ==========================================================================
@@ -2917,12 +4027,122 @@ const ExportManager = (() => {
     `;
   }
 
+  // ==========================================================================
+  // GENERADOR NATIVO DE CÓDIGO DE BARRAS EN SVG (CODE 128-B)
+  // 100% Vectorial, nítido a cualquier resolución e imprimible en cualquier térmico
+  // ==========================================================================
+  function generarCodigoBarrasSVG(texto, opciones = {}) {
+    const str = String(texto || "").trim();
+    if (!str) return "";
+    const altura = opciones.altura || 42;
+    const anchoModulo = opciones.anchoModulo || 1.6;
+    const mostrarTexto = opciones.mostrarTexto !== false;
+
+    // Tabla oficial de 107 patrones Code 128 (anchuras de barras y espacios)
+    const CODE128_PATRONES = [
+      "212222","222122","222221","121223","121322","131222","122213","122312","132212","221213",
+      "221312","231212","112232","122132","122231","113222","123122","123221","223211","221132",
+      "221231","213212","223112","312131","311222","321122","321221","312212","322112","322211",
+      "212123","212321","232121","111323","131123","131321","112313","132113","132311","211313",
+      "231113","231311","112133","112331","132131","113123","113321","133121","313121","211331",
+      "231131","213113","213311","213131","311123","311321","331121","312113","312311","332111",
+      "314111","221411","431111","111224","111422","121124","121421","141122","141221","112214",
+      "112412","122114","122411","142112","142211","241211","221114","413111","241112","134111",
+      "111242","121142","121241","114212","124112","124211","411212","421112","421211","212141",
+      "214121","412121","111143","111341","131141","114113","114311","411113","411311","113141",
+      "114131","311141","411131","211412","211214","211232","2331112"
+    ];
+
+    // Inicio Code 128B (índice 104)
+    const valores = [104];
+    let checksum = 104;
+
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      const val = (code >= 32 && code <= 126) ? (code - 32) : 0;
+      valores.push(val);
+      checksum += val * (i + 1);
+    }
+
+    valores.push(checksum % 103);
+    valores.push(106); // Stop pattern
+
+    let rectangulos = "";
+    let currentX = 8;
+    for (let v = 0; v < valores.length; v++) {
+      const patron = CODE128_PATRONES[valores[v]] || "212222";
+      for (let p = 0; p < patron.length; p++) {
+        const w = parseInt(patron[p], 10) * anchoModulo;
+        if (p % 2 === 0) {
+          rectangulos += `<rect x="${currentX.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${altura}" fill="#000000" />`;
+        }
+        currentX += w;
+      }
+    }
+
+    const anchoTotal = Math.ceil(currentX + 8);
+    const altoTotal = mostrarTexto ? (altura + 16) : altura;
+
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${anchoTotal} ${altoTotal}" width="${anchoTotal}" height="${altoTotal}" style="display:block; margin:0 auto; max-width:100%;">
+        <rect x="0" y="0" width="${anchoTotal}" height="${altoTotal}" fill="#ffffff" />
+        ${rectangulos}
+        ${mostrarTexto ? `<text x="${(anchoTotal / 2).toFixed(1)}" y="${altura + 12}" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#0f172a">${escapeHtml(str)}</text>` : ''}
+      </svg>
+    `;
+  }
+
+  // ==========================================================================
+  // GENERAR HOJA DE ETIQUETAS DE CÓDIGO DE BARRAS PARA IMPRESIÓN
+  // ==========================================================================
+  function generarEtiquetasHTML(itemsEtiquetas) {
+    if (!Array.isArray(itemsEtiquetas) || itemsEtiquetas.length === 0) return "";
+
+    const state = Store.getState();
+    const config = state.configuracion || {};
+    const nombreEmpresa = config.empresa || "Ferretería Sullcairi";
+    const moneda = config.moneda || "S/";
+
+    const tarjetas = [];
+    itemsEtiquetas.forEach(item => {
+      const prod = item.producto;
+      const copias = Math.max(1, parseInt(item.copias, 10) || 1);
+      const codigoBarras = prod.codigoBarras || prod.codigo || "FER-000";
+      const svg = generarCodigoBarrasSVG(codigoBarras, { altura: 36, anchoModulo: 1.4, mostrarTexto: true });
+
+      for (let c = 0; c < copias; c++) {
+        tarjetas.push(`
+          <div class="etiqueta-sticker-item">
+            <div class="etiqueta-sticker-empresa">${escapeHtml(nombreEmpresa)}</div>
+            <div class="etiqueta-sticker-nombre" title="${escapeHtml(prod.nombre)}">${escapeHtml(prod.nombre)}</div>
+            <div class="etiqueta-sticker-cat">${escapeHtml(prod.categoria || 'General')}${prod.marca ? ` • ${escapeHtml(prod.marca)}` : ''}</div>
+            <div class="etiqueta-sticker-barcode">${svg}</div>
+            <div class="etiqueta-sticker-precio">
+              <span class="etiqueta-sticker-moneda">${moneda}</span>
+              <span class="etiqueta-sticker-monto">${Number(prod.precioVenta || 0).toFixed(2)}</span>
+              <span class="etiqueta-sticker-unidad">x ${escapeHtml(prod.unidad || 'Und')}</span>
+            </div>
+          </div>
+        `);
+      }
+    });
+
+    return `
+      <div class="contenedor-hoja-etiquetas">
+        ${tarjetas.join('')}
+      </div>
+    `;
+  }
+
   return {
     fmt,
     exportarInventarioExcel,
+    exportarKardexExcel,
     exportarReporteVentasExcel,
     descargarPlantillaExcel,
     importarProductosExcel,
+    generarCodigoBarrasSVG,
+    generarEtiquetasHTML,
     generarTicketHTML
   };
 })();
@@ -2946,6 +4166,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let busquedaPOS = "";
   let periodoVentasSeleccionado = "hoy";
   let filtroStockInventario = "";
+  let ordenInventario = "nombre_asc";
+  let filtroMarcaInventario = "";
+  let filasPorPagina = 25;
+  let paginaActual = 1;
+  const productosSeleccionados = new Set();
+  let productosParaEtiquetas = [];
+  let productoFiltroKardex = null;
   let productoEnEdicion = null;
   let productoParaStock = null;
   let ventaActivaParaTicket = null;
@@ -3498,33 +4725,54 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // MÓDULO 2: INVENTARIO / PRODUCTOS Y AGREGAR STOCK
+  // MÓDULO 2: ADMINISTRACIÓN DE PRODUCTOS, KARDEX E INVENTARIO PRO
+  // (Inspirado en Shopify, Square Inventory y ERPs modernos de retail)
   // ==========================================================================
 
   function renderInventario(state) {
     const moneda = (state.configuracion && state.configuracion.moneda) || "S/";
     const productos = state.productos || [];
+    const kpis = Store.getKpiInventario();
 
+    // Actualizar Tarjetas KPIs
     const kpiTotalProd = document.getElementById('inv-kpi-total-prod');
     const kpiValorInv = document.getElementById('inv-kpi-valor-total');
     const kpiBajoStock = document.getElementById('inv-kpi-bajo-stock');
     const kpiAgotados = document.getElementById('inv-kpi-agotados');
 
-    const totalProdCount = productos.length;
-    const valorTotalInv = productos.reduce((sum, p) => sum + ((Number(p.stock) || 0) * (Number(p.precioVenta) || 0)), 0);
-    const bajoStockCount = productos.filter(p => Number(p.stock) > 0 && Number(p.stock) <= (Number(p.stockMinimo) || 5)).length;
-    const agotadosCount = productos.filter(p => (Number(p.stock) || 0) <= 0).length;
+    if (kpiTotalProd) kpiTotalProd.textContent = String(kpis.total);
+    if (kpiValorInv) kpiValorInv.textContent = `${moneda} ${kpis.valorVenta.toFixed(2)}`;
+    if (kpiBajoStock) kpiBajoStock.textContent = String(kpis.bajoStock);
+    if (kpiAgotados) kpiAgotados.textContent = String(kpis.agotados);
 
-    if (kpiTotalProd) kpiTotalProd.textContent = String(totalProdCount);
-    if (kpiValorInv) kpiValorInv.textContent = `${moneda} ${valorTotalInv.toFixed(2)}`;
-    if (kpiBajoStock) kpiBajoStock.textContent = String(bajoStockCount);
-    if (kpiAgotados) kpiAgotados.textContent = String(agotadosCount);
+    // Actualizar Contadores de las Pestañas de Estado (Shopify Style)
+    const tabTodos = document.getElementById('tab-cnt-todos');
+    const tabNormal = document.getElementById('tab-cnt-normal');
+    const tabBajo = document.getElementById('tab-cnt-bajo');
+    const tabAgotado = document.getElementById('tab-cnt-agotado');
+    const tabInactivo = document.getElementById('tab-cnt-inactivo');
 
+    if (tabTodos) tabTodos.textContent = String(kpis.total);
+    if (tabNormal) tabNormal.textContent = String(kpis.activos - kpis.bajoStock - kpis.agotados);
+    if (tabBajo) tabBajo.textContent = String(kpis.bajoStock);
+    if (tabAgotado) tabAgotado.textContent = String(kpis.agotados);
+    if (tabInactivo) tabInactivo.textContent = String(kpis.inactivos);
+
+    // Llenar Filtro de Categorías
     const selectFiltroCat = document.getElementById('inv-filtro-categoria');
     if (selectFiltroCat) {
       const catActual = selectFiltroCat.value;
       selectFiltroCat.innerHTML = `<option value="">Todas las Categorías</option>` +
         (state.categorias || []).map(c => `<option value="${escapeHtml(c)}" ${catActual === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
+    }
+
+    // Llenar Filtro de Marcas dinámicas
+    const selectFiltroMarca = document.getElementById('inv-filtro-marca');
+    if (selectFiltroMarca) {
+      const marcaActual = selectFiltroMarca.value;
+      const marcasUnicas = Array.from(new Set(productos.map(p => p.marca).filter(Boolean))).sort();
+      selectFiltroMarca.innerHTML = `<option value="">Todas las Marcas</option>` +
+        marcasUnicas.map(m => `<option value="${escapeHtml(m)}" ${marcaActual === m ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
     }
 
     renderTablaInventario(state);
@@ -3537,53 +4785,176 @@ document.addEventListener('DOMContentLoaded', () => {
     const moneda = (state.configuracion && state.configuracion.moneda) || "S/";
     const busqueda = (document.getElementById('inv-buscar-input')?.value || "").toLowerCase().trim();
     const catFiltro = document.getElementById('inv-filtro-categoria')?.value || "";
+    const marcaFiltro = document.getElementById('inv-filtro-marca')?.value || "";
 
-    const filtrados = (state.productos || []).filter(p => {
+    // Toggle botón limpiar búsqueda
+    const btnLimpiarBusq = document.getElementById('btn-limpiar-busqueda-inv');
+    if (btnLimpiarBusq) {
+      btnLimpiarBusq.style.display = busqueda ? 'block' : 'none';
+    }
+
+    // 1. Filtrado Multicriterio
+    let filtrados = (state.productos || []).filter(p => {
       const stock = Number(p.stock) || 0;
       const stockMin = Number(p.stockMinimo) || 5;
+      const esInactivo = p.estado === "inactivo";
 
-      const matchBusqueda = !busqueda || 
-        (p.nombre && p.nombre.toLowerCase().includes(busqueda)) ||
-        (p.codigo && p.codigo.toLowerCase().includes(busqueda)) ||
-        (p.categoria && p.categoria.toLowerCase().includes(busqueda));
+      // Filtro de Pestaña de Estado
+      if (filtroStockInventario === 'normal' && (stock <= stockMin || esInactivo)) return false;
+      if (filtroStockInventario === 'bajo' && (stock <= 0 || stock > stockMin || esInactivo)) return false;
+      if (filtroStockInventario === 'agotado' && (stock > 0 || esInactivo)) return false;
+      if (filtroStockInventario === 'inactivo' && !esInactivo) return false;
+      if (filtroStockInventario === '' && esInactivo) return false; // "Todos" muestra catálogo activo por defecto
 
-      const matchCat = !catFiltro || p.categoria === catFiltro;
+      // Filtro Categoría
+      if (catFiltro && p.categoria !== catFiltro) return false;
 
-      let matchStock = true;
-      if (filtroStockInventario === 'normal') matchStock = stock > stockMin;
-      if (filtroStockInventario === 'bajo') matchStock = stock > 0 && stock <= stockMin;
-      if (filtroStockInventario === 'agotado') matchStock = stock <= 0;
+      // Filtro Marca
+      if (marcaFiltro && p.marca !== marcaFiltro) return false;
 
-      return matchBusqueda && matchCat && matchStock;
+      // Filtro Búsqueda de texto (código, código de barras, nombre, marca, ubicación)
+      if (busqueda) {
+        const strNombre = (p.nombre || "").toLowerCase();
+        const strCodigo = (p.codigo || "").toLowerCase();
+        const strBarcode = (p.codigoBarras || "").toLowerCase();
+        const strMarca = (p.marca || "").toLowerCase();
+        const strUbicacion = (p.ubicacion || "").toLowerCase();
+        const strCat = (p.categoria || "").toLowerCase();
+
+        const coincide = strNombre.includes(busqueda) ||
+          strCodigo.includes(busqueda) ||
+          strBarcode.includes(busqueda) ||
+          strMarca.includes(busqueda) ||
+          strUbicacion.includes(busqueda) ||
+          strCat.includes(busqueda);
+
+        if (!coincide) return false;
+      }
+
+      return true;
     });
 
-    if (filtrados.length === 0) {
+    // 2. Ordenamiento por Columna
+    filtrados.sort((a, b) => {
+      const sA = Number(a.stock) || 0;
+      const sB = Number(b.stock) || 0;
+      const pVA = Number(a.precioVenta) || 0;
+      const pVB = Number(b.precioVenta) || 0;
+      const pCA = Number(a.precioCompra) || 0;
+      const pCB = Number(b.precioCompra) || 0;
+      const margA = pCA > 0 ? ((pVA - pCA) / pCA) : 0;
+      const margB = pCB > 0 ? ((pVB - pCB) / pCB) : 0;
+
+      switch (ordenInventario) {
+        case "nombre_asc":
+          return (a.nombre || "").localeCompare(b.nombre || "");
+        case "nombre_desc":
+          return (b.nombre || "").localeCompare(a.nombre || "");
+        case "stock_asc":
+          return sA - sB;
+        case "stock_desc":
+          return sB - sA;
+        case "precio_asc":
+          return pVA - pVB;
+        case "precio_desc":
+          return pVB - pVA;
+        case "margen_desc":
+          return margB - margA;
+        case "compra_asc":
+          return pCA - pCB;
+        case "compra_desc":
+          return pCB - pCA;
+        case "categoria":
+          return (a.categoria || "").localeCompare(b.categoria || "");
+        case "recientes":
+        default:
+          return new Date(b.fechaCreacion || 0) - new Date(a.fechaCreacion || 0);
+      }
+    });
+
+    // 3. Paginación Inteligente
+    const totalRegistros = filtrados.length;
+    let limiteFilas = filasPorPagina === "todos" ? totalRegistros : parseInt(filasPorPagina, 10);
+    if (!limiteFilas || limiteFilas < 1) limiteFilas = 25;
+
+    const totalPaginas = Math.max(1, Math.ceil(totalRegistros / limiteFilas));
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    if (paginaActual < 1) paginaActual = 1;
+
+    const inicioIdx = (paginaActual - 1) * limiteFilas;
+    const finIdx = filasPorPagina === "todos" ? totalRegistros : Math.min(inicioIdx + limiteFilas, totalRegistros);
+    const registrosPagina = filtrados.slice(inicioIdx, finIdx);
+
+    // Actualizar Controles de Paginación en DOM
+    const pagInfo = document.getElementById('inv-paginacion-info');
+    const pagTexto = document.getElementById('inv-pag-actual-texto');
+    const btnAnt = document.getElementById('btn-pag-anterior');
+    const btnSig = document.getElementById('btn-pag-siguiente');
+
+    if (pagInfo) {
+      if (totalRegistros === 0) {
+        pagInfo.textContent = "Mostrando 0 productos";
+      } else {
+        pagInfo.textContent = `Mostrando ${inicioIdx + 1} a ${finIdx} de ${totalRegistros} productos`;
+      }
+    }
+    if (pagTexto) pagTexto.textContent = `Pág. ${paginaActual} de ${totalPaginas}`;
+    if (btnAnt) btnAnt.disabled = paginaActual <= 1;
+    if (btnSig) btnSig.disabled = paginaActual >= totalPaginas;
+
+    // Sincronizar select de orden
+    const selOrden = document.getElementById('inv-select-ordenar');
+    if (selOrden && selOrden.value !== ordenInventario) {
+      selOrden.value = ordenInventario;
+    }
+
+    // 4. Renderizado de Filas
+    if (registrosPagina.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="9" style="text-align:center; padding: 3rem 1.5rem; color: #64748b;">
-            <div style="font-size:2.5rem; margin-bottom:0.5rem;">📦</div>
-            <p style="font-weight:700; font-size:1rem; color:#1e293b;">No hay productos para el criterio seleccionado</p>
-            <p style="font-size:0.85rem; margin-top:0.25rem;">Haz clic en <b>"+ Nuevo Producto"</b> para agregar artículos a tu inventario.</p>
+          <td colspan="10" style="text-align:center; padding: 3.5rem 1.5rem; color: #64748b;">
+            <div style="font-size:2.8rem; margin-bottom:0.6rem;">📦</div>
+            <p style="font-weight:800; font-size:1.05rem; color:#1e293b;">No hay productos para el criterio seleccionado</p>
+            <p style="font-size:0.85rem; margin-top:0.35rem; color:#64748b;">Haz clic en <b>"+ Nuevo Producto"</b> para registrar artículos o ajusta los filtros superiores.</p>
           </td>
         </tr>
       `;
+      actualizarBarraAccionesMasivas();
       return;
     }
 
-    tbody.innerHTML = filtrados.map(p => {
+    tbody.innerHTML = registrosPagina.map(p => {
       const stock = Number(p.stock) || 0;
       const stockMin = Number(p.stockMinimo) || 5;
       const pCompra = Number(p.precioCompra) || 0;
       const pVenta = Number(p.precioVenta) || 0;
       const margen = pCompra > 0 ? (((pVenta - pCompra) / pCompra) * 100).toFixed(0) : "0";
+      const margenNum = Number(margen);
+      const esInactivo = p.estado === "inactivo";
+      const estaSeleccionado = productosSeleccionados.has(p.id);
 
+      // Color e indicador de margen de utilidad
+      let claseMargen = "color:#10b981;"; // Verde > 30%
+      if (margenNum < 15) {
+        claseMargen = "color:#ef4444;"; // Rojo < 15%
+      } else if (margenNum < 30) {
+        claseMargen = "color:#f59e0b;"; // Naranja 15-30%
+      }
+
+      // Estado de stock y barra visual
       let tagClase = "ok";
       let tagTexto = `${stock} ${p.unidad}`;
       let estadoBadge = `<span class="stock-tag ok">En Stock</span>`;
-      if (stock <= 0) {
+      let porcentajeBarra = Math.min(100, Math.max(5, (stock / Math.max(stockMin * 3, p.stockMaximo || 20)) * 100));
+
+      if (esInactivo) {
+        tagClase = "cero";
+        estadoBadge = `<span class="stock-tag" style="background:#f1f5f9; color:#64748b;">Inactivo</span>`;
+      } else if (stock <= 0) {
         tagClase = "cero";
         tagTexto = `0 ${p.unidad}`;
         estadoBadge = `<span class="stock-tag cero">Agotado</span>`;
+        porcentajeBarra = 0;
       } else if (stock <= stockMin) {
         tagClase = "alerta";
         tagTexto = `${stock} ${p.unidad}`;
@@ -3591,28 +4962,52 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       return `
-        <tr>
-          <td><code style="font-weight:700; color:#334155; font-family:var(--font-mono);">${escapeHtml(p.codigo || '-')}</code></td>
-          <td>
-            <div style="font-weight:700; color:#0f172a;">${escapeHtml(p.nombre)}</div>
-            ${p.ubicacion ? `<div style="font-size:0.75rem; color:#64748b;">📍 ${escapeHtml(p.ubicacion)}</div>` : ''}
+        <tr class="${estaSeleccionado ? 'fila-seleccionada' : ''} ${esInactivo ? 'fila-anulada' : ''}">
+          <td style="text-align:center;">
+            <input type="checkbox" class="chk-prod-item" data-id="${p.id}" ${estaSeleccionado ? 'checked' : ''} style="cursor:pointer; width:16px; height:16px; accent-color:var(--brand-primary);">
           </td>
-          <td><span class="chip-cat" style="font-size:0.75rem; padding:0.15rem 0.5rem;">${escapeHtml(p.categoria || 'Otros')}</span></td>
-          <td class="text-right">${moneda} ${pCompra.toFixed(2)}</td>
-          <td class="text-right" style="font-weight:800; color:var(--brand-primary);">${moneda} ${pVenta.toFixed(2)}</td>
-          <td class="text-right"><span style="font-size:0.8rem; color:#10b981; font-weight:700;">+${margen}%</span></td>
           <td>
-            <div style="display:flex; align-items:center; gap:0.45rem;">
-              <span class="stock-tag ${tagClase}">${tagTexto}</span>
-              <button type="button" class="btn btn-outline-primary btn-sm btn-agregar-stock" data-id="${p.id}" title="Reabastecer / Agregar Stock">
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <code style="font-weight:700; color:#334155; font-family:var(--font-mono); font-size:0.85rem;">${escapeHtml(p.codigo || '-')}</code>
+              ${p.codigoBarras && p.codigoBarras !== p.codigo ? `<span style="font-size:0.7rem; color:#94a3b8; font-family:var(--font-mono);">🏷️ ${escapeHtml(p.codigoBarras)}</span>` : ''}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight:800; color:#0f172a; font-size:0.92rem;">${escapeHtml(p.nombre)}</div>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:2px; flex-wrap:wrap;">
+              ${p.marca ? `<span class="marca-tag" style="font-size:0.7rem; font-weight:700; background:#f1f5f9; color:#475569; padding:1px 6px; border-radius:4px; border:1px solid #e2e8f0;">${escapeHtml(p.marca)}</span>` : ''}
+              ${p.ubicacion ? `<span style="font-size:0.72rem; color:#64748b;">📍 ${escapeHtml(p.ubicacion)}</span>` : ''}
+            </div>
+          </td>
+          <td>
+            <span class="chip-cat" style="font-size:0.75rem; padding:0.18rem 0.55rem;">${escapeHtml(p.categoria || 'Otros')}</span>
+          </td>
+          <td class="text-right" style="font-family:var(--font-mono); color:#475569;">${moneda} ${pCompra.toFixed(2)}</td>
+          <td class="text-right">
+            <div style="font-weight:900; color:var(--brand-primary); font-family:var(--font-mono); font-size:0.95rem;">${moneda} ${pVenta.toFixed(2)}</div>
+            ${p.precioMayor ? `<div style="font-size:0.7rem; color:#64748b;">x Mayor: ${moneda} ${Number(p.precioMayor).toFixed(2)}</div>` : ''}
+          </td>
+          <td class="text-right">
+            <span style="font-size:0.82rem; font-weight:800; font-family:var(--font-mono); ${claseMargen}">+${margen}%</span>
+          </td>
+          <td>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span class="stock-tag ${tagClase}" style="font-weight:800;">${tagTexto}</span>
+              <button type="button" class="btn btn-outline btn-sm btn-agregar-stock" data-id="${p.id}" title="Reabastecer o ingresar stock (+ Stock)" style="padding:0.2rem 0.45rem; font-size:0.75rem; border-color:var(--brand-primary); color:var(--brand-primary);">
                 <b>+ Stock</b>
               </button>
+            </div>
+            <div class="stock-nivel-barra" title="Nivel de existencias">
+              <div class="stock-nivel-llenado ${tagClase}" style="width:${porcentajeBarra}%;"></div>
             </div>
           </td>
           <td>${estadoBadge}</td>
           <td class="text-right">
-            <div style="display:inline-flex; gap:0.35rem;">
-              <button type="button" class="btn btn-outline btn-sm btn-editar-prod" data-id="${p.id}" title="Editar producto">✏️</button>
+            <div style="display:inline-flex; gap:0.25rem;">
+              <button type="button" class="btn btn-outline btn-sm btn-editar-prod" data-id="${p.id}" title="Editar ficha de producto">✏️</button>
+              <button type="button" class="btn btn-outline btn-sm btn-duplicar-prod" data-id="${p.id}" title="Duplicar / Clonar producto">📄</button>
+              <button type="button" class="btn btn-outline btn-sm btn-etiqueta-prod" data-id="${p.id}" title="Imprimir etiqueta con código de barras">🏷️</button>
+              <button type="button" class="btn btn-outline btn-sm btn-kardex-prod" data-id="${p.id}" title="Ver historial y movimientos en Kardex">📜</button>
               <button type="button" class="btn btn-outline btn-sm btn-eliminar-prod" data-id="${p.id}" title="Eliminar producto" style="color:var(--danger);">🗑️</button>
             </div>
           </td>
@@ -3620,7 +5015,20 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Asignación defensiva de eventos a filas generadas dinámicamente
+    // Bindeo de eventos en elementos de fila
+    tbody.querySelectorAll('.chk-prod-item').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const id = chk.getAttribute('data-id');
+        if (chk.checked) {
+          productosSeleccionados.add(id);
+        } else {
+          productosSeleccionados.delete(id);
+        }
+        actualizarBarraAccionesMasivas();
+        actualizarCheckboxMaestro();
+      });
+    });
+
     tbody.querySelectorAll('.btn-agregar-stock').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
@@ -3635,31 +5043,310 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    tbody.querySelectorAll('.btn-duplicar-prod').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        if (id) {
+          const clon = Store.duplicateProduct(id);
+          if (clon) {
+            abrirModalEditarProducto(clon.id);
+          }
+        }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-etiqueta-prod').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const prod = (Store.getState().productos || []).find(p => p.id === id);
+        if (prod) {
+          abrirModalEtiquetasBarcode([prod]);
+        }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-kardex-prod').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        if (id) abrirModalKardex(id);
+      });
+    });
+
     tbody.querySelectorAll('.btn-eliminar-prod').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         const prod = (Store.getState().productos || []).find(p => p.id === id);
         if (prod && confirm(`¿Deseas eliminar definitivamente "${prod.nombre}" del catálogo?`)) {
+          productosSeleccionados.delete(id);
           Store.deleteProduct(id);
         }
       });
     });
+
+    actualizarBarraAccionesMasivas();
+    actualizarCheckboxMaestro();
   }
 
-  // Filtros de inventario
-  document.getElementById('inv-buscar-input')?.addEventListener('input', () => renderTablaInventario(Store.getState()));
-  document.getElementById('inv-filtro-categoria')?.addEventListener('change', () => renderTablaInventario(Store.getState()));
+  function actualizarCheckboxMaestro() {
+    const chkMaestro = document.getElementById('inv-chk-todos');
+    if (!chkMaestro) return;
 
-  document.querySelectorAll('.pastilla-stock').forEach(pst => {
-    pst.addEventListener('click', () => {
-      document.querySelectorAll('.pastilla-stock').forEach(p => p.classList.remove('activa'));
-      pst.classList.add('activa');
-      filtroStockInventario = pst.getAttribute('data-filtro') || "";
+    const chksVisibles = Array.from(document.querySelectorAll('.chk-prod-item'));
+    if (chksVisibles.length === 0) {
+      chkMaestro.checked = false;
+      chkMaestro.indeterminate = false;
+      return;
+    }
+
+    const todosMarcados = chksVisibles.every(c => c.checked);
+    const algunoMarcado = chksVisibles.some(c => c.checked);
+
+    chkMaestro.checked = todosMarcados;
+    chkMaestro.indeterminate = !todosMarcados && algunoMarcado;
+  }
+
+  function actualizarBarraAccionesMasivas() {
+    const barra = document.getElementById('inv-barra-bulk');
+    const contador = document.getElementById('inv-bulk-contador');
+    if (!barra) return;
+
+    const cant = productosSeleccionados.size;
+    if (cant > 0) {
+      barra.style.display = 'flex';
+      if (contador) contador.textContent = `${cant} producto${cant > 1 ? 's' : ''} seleccionado${cant > 1 ? 's' : ''}`;
+    } else {
+      barra.style.display = 'none';
+    }
+  }
+
+  // Checkbox Maestro Seleccionar Todos los Visibles
+  document.getElementById('inv-chk-todos')?.addEventListener('change', (e) => {
+    const marcar = e.target.checked;
+    document.querySelectorAll('.chk-prod-item').forEach(chk => {
+      chk.checked = marcar;
+      const id = chk.getAttribute('data-id');
+      if (marcar) {
+        productosSeleccionados.add(id);
+      } else {
+        productosSeleccionados.delete(id);
+      }
+    });
+    actualizarBarraAccionesMasivas();
+  });
+
+  // Acciones en Lote (Bulk Actions)
+  document.getElementById('btn-bulk-deseleccionar')?.addEventListener('click', () => {
+    productosSeleccionados.clear();
+    document.querySelectorAll('.chk-prod-item').forEach(c => c.checked = false);
+    actualizarCheckboxMaestro();
+    actualizarBarraAccionesMasivas();
+  });
+
+  document.getElementById('btn-bulk-eliminar')?.addEventListener('click', () => {
+    const cant = productosSeleccionados.size;
+    if (cant === 0) return;
+    if (confirm(`¿Estás seguro de eliminar los ${cant} productos seleccionados? Esta acción es definitiva.`)) {
+      Store.deleteProductsBatch(Array.from(productosSeleccionados));
+      productosSeleccionados.clear();
+      actualizarBarraAccionesMasivas();
+    }
+  });
+
+  document.getElementById('btn-bulk-exportar')?.addEventListener('click', () => {
+    if (productosSeleccionados.size === 0) return;
+    ExportManager.exportarInventarioExcel(Array.from(productosSeleccionados));
+  });
+
+  document.getElementById('btn-bulk-etiquetas')?.addEventListener('click', () => {
+    const prods = (Store.getState().productos || []).filter(p => productosSeleccionados.has(p.id));
+    if (prods.length > 0) {
+      abrirModalEtiquetasBarcode(prods);
+    }
+  });
+
+  document.getElementById('btn-bulk-categoria')?.addEventListener('click', () => {
+    if (productosSeleccionados.size === 0) return;
+    const modal = document.getElementById('modal-bulk-categoria');
+    const cnt = document.getElementById('bulk-categoria-contador');
+    const sel = document.getElementById('bulk-categoria-select');
+    if (!modal) return;
+
+    if (cnt) cnt.textContent = String(productosSeleccionados.size);
+    if (sel) {
+      sel.innerHTML = (Store.getState().categorias || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+    modal.classList.add('activo');
+  });
+
+  document.getElementById('form-bulk-categoria')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nuevaCat = document.getElementById('bulk-categoria-select')?.value;
+    if (nuevaCat && productosSeleccionados.size > 0) {
+      Store.updateCategoryBatch(Array.from(productosSeleccionados), nuevaCat);
+      cerrarModales();
+    }
+  });
+
+  document.getElementById('btn-bulk-precios')?.addEventListener('click', () => {
+    if (productosSeleccionados.size === 0) return;
+    const modal = document.getElementById('modal-bulk-precios');
+    const cnt = document.getElementById('bulk-precios-contador');
+    if (!modal) return;
+    if (cnt) cnt.textContent = String(productosSeleccionados.size);
+    modal.classList.add('activo');
+  });
+
+  document.getElementById('form-bulk-precios')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const tipo = document.getElementById('bulk-precios-tipo')?.value || "porcentaje";
+    const valor = parseFloat(document.getElementById('bulk-precios-valor')?.value) || 0;
+    const redondear = document.getElementById('bulk-precios-redondear')?.checked !== false;
+
+    if (productosSeleccionados.size > 0) {
+      Store.adjustPricesBatch(Array.from(productosSeleccionados), { tipo, valor, redondear });
+      cerrarModales();
+    }
+  });
+
+  // Filtros y Paginación de Inventario
+  document.getElementById('inv-buscar-input')?.addEventListener('input', () => {
+    paginaActual = 1;
+    renderTablaInventario(Store.getState());
+  });
+
+  document.getElementById('btn-limpiar-busqueda-inv')?.addEventListener('click', () => {
+    const input = document.getElementById('inv-buscar-input');
+    if (input) {
+      input.value = "";
+      paginaActual = 1;
+      renderTablaInventario(Store.getState());
+      input.focus();
+    }
+  });
+
+  document.getElementById('inv-filtro-categoria')?.addEventListener('change', () => {
+    paginaActual = 1;
+    renderTablaInventario(Store.getState());
+  });
+
+  document.getElementById('inv-filtro-marca')?.addEventListener('change', () => {
+    paginaActual = 1;
+    renderTablaInventario(Store.getState());
+  });
+
+  document.getElementById('inv-select-ordenar')?.addEventListener('change', (e) => {
+    ordenInventario = e.target.value;
+    paginaActual = 1;
+    renderTablaInventario(Store.getState());
+  });
+
+  document.getElementById('inv-filas-por-pagina')?.addEventListener('change', (e) => {
+    filasPorPagina = e.target.value;
+    paginaActual = 1;
+    renderTablaInventario(Store.getState());
+  });
+
+  document.getElementById('btn-pag-anterior')?.addEventListener('click', () => {
+    if (paginaActual > 1) {
+      paginaActual--;
+      renderTablaInventario(Store.getState());
+    }
+  });
+
+  document.getElementById('btn-pag-siguiente')?.addEventListener('click', () => {
+    paginaActual++;
+    renderTablaInventario(Store.getState());
+  });
+
+  // Pestañas de Estado con Contadores (Shopify Style)
+  document.querySelectorAll('.pastilla-stock').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.pastilla-stock').forEach(t => t.classList.remove('activo'));
+      tab.classList.add('activo');
+      filtroStockInventario = tab.getAttribute('data-filtro') || "";
+      paginaActual = 1;
       renderTablaInventario(Store.getState());
     });
   });
 
-  // Modal: Crear / Editar Producto
+  // Encabezados Ordenables de Tabla (Click en th.sortable)
+  document.querySelectorAll('.tabla-general th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.getAttribute('data-col');
+      if (col === 'nombre') {
+        ordenInventario = ordenInventario === 'nombre_asc' ? 'nombre_desc' : 'nombre_asc';
+      } else if (col === 'stock') {
+        ordenInventario = ordenInventario === 'stock_asc' ? 'stock_desc' : 'stock_asc';
+      } else if (col === 'venta') {
+        ordenInventario = ordenInventario === 'precio_desc' ? 'precio_asc' : 'precio_desc';
+      } else if (col === 'compra') {
+        ordenInventario = ordenInventario === 'compra_desc' ? 'compra_asc' : 'compra_desc';
+      } else if (col === 'margen') {
+        ordenInventario = 'margen_desc';
+      } else if (col === 'categoria') {
+        ordenInventario = 'categoria';
+      } else if (col === 'codigo') {
+        ordenInventario = 'recientes';
+      }
+      renderTablaInventario(Store.getState());
+    });
+  });
+
+  // ==========================================================================
+  // MODAL PRODUCTO CON CALCULADORA DE RENTABILIDAD EN VIVO
+  // ==========================================================================
+
+  const inputCompraProd = document.getElementById('prod-input-compra');
+  const inputMargenProd = document.getElementById('prod-input-margen');
+  const inputVentaProd = document.getElementById('prod-input-venta');
+
+  function actualizarCalculadoraMargen(origen = 'costo') {
+    const costo = parseFloat(inputCompraProd?.value) || 0;
+    const margenDeseado = parseFloat(inputMargenProd?.value) || 0;
+    let venta = parseFloat(inputVentaProd?.value) || 0;
+
+    if (origen === 'costo' || origen === 'margen') {
+      if (costo > 0) {
+        venta = Math.round((costo * (1 + margenDeseado / 100)) * 100) / 100;
+        if (inputVentaProd) inputVentaProd.value = venta.toFixed(2);
+      }
+    } else if (origen === 'venta') {
+      if (costo > 0 && venta > 0) {
+        const nuevoMargen = Math.round((((venta - costo) / costo) * 100) * 10) / 10;
+        if (inputMargenProd) inputMargenProd.value = nuevoMargen.toFixed(1);
+      }
+    }
+
+    const ganancia = Math.round((venta - costo) * 100) / 100;
+    const margenCalc = costo > 0 ? (((venta - costo) / costo) * 100).toFixed(1) : "0.0";
+
+    const prevCosto = document.getElementById('calc-preview-costo');
+    const prevGanancia = document.getElementById('calc-preview-ganancia');
+    const prevMargen = document.getElementById('calc-preview-margen');
+
+    if (prevCosto) prevCosto.textContent = `S/ ${costo.toFixed(2)}`;
+    if (prevGanancia) {
+      prevGanancia.textContent = `${ganancia >= 0 ? '+' : ''} S/ ${ganancia.toFixed(2)}`;
+      prevGanancia.className = `margen-stat-val ${ganancia >= 0 ? 'ganancia-positiva' : 'ganancia-negativa'}`;
+    }
+    if (prevMargen) {
+      prevMargen.textContent = `${Number(margenCalc) >= 0 ? '+' : ''}${margenCalc}%`;
+      prevMargen.className = `margen-stat-val ${Number(margenCalc) >= 0 ? 'ganancia-positiva' : 'ganancia-negativa'}`;
+    }
+  }
+
+  inputCompraProd?.addEventListener('input', () => actualizarCalculadoraMargen('costo'));
+  inputMargenProd?.addEventListener('input', () => actualizarCalculadoraMargen('margen'));
+  inputVentaProd?.addEventListener('input', () => actualizarCalculadoraMargen('venta'));
+
+  document.getElementById('btn-autogenerar-codigo')?.addEventListener('click', () => {
+    const inputCod = document.getElementById('prod-input-codigo');
+    if (inputCod) {
+      const correlativo = String((Store.getState().productos || []).length + 1).padStart(4, "0");
+      inputCod.value = "FER-" + correlativo;
+    }
+  });
+
   document.getElementById('btn-inv-nuevo-producto')?.addEventListener('click', () => {
     abrirModalNuevoProducto();
   });
@@ -3674,6 +5361,17 @@ document.addEventListener('DOMContentLoaded', () => {
     titulo.textContent = "Nuevo Producto de Ferretería";
     form.reset();
     poblarSelectsProducto();
+
+    // Generar código sugerido por defecto
+    const correlativo = String((Store.getState().productos || []).length + 1).padStart(4, "0");
+    const codInput = document.getElementById('prod-input-codigo');
+    if (codInput) codInput.value = "FER-" + correlativo;
+
+    if (inputMargenProd) inputMargenProd.value = "30.0";
+    if (inputCompraProd) inputCompraProd.value = "0.00";
+    if (inputVentaProd) inputVentaProd.value = "0.00";
+    actualizarCalculadoraMargen('costo');
+
     modal.classList.add('activo');
     document.getElementById('prod-input-nombre')?.focus();
   }
@@ -3696,15 +5394,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     setVal('prod-input-codigo', prod.codigo);
+    setVal('prod-input-barcode', prod.codigoBarras || prod.codigo);
+    setVal('prod-select-estado', prod.estado || "activo");
     setVal('prod-input-nombre', prod.nombre);
     setVal('prod-select-categoria', prod.categoria || "Otros");
+    setVal('prod-input-marca', prod.marca || "");
     setVal('prod-select-unidad', prod.unidad || "Unidad");
     setVal('prod-input-compra', prod.precioCompra);
     setVal('prod-input-venta', prod.precioVenta);
+    setVal('prod-input-mayor', prod.precioMayor || "");
     setVal('prod-input-stock', prod.stock);
     setVal('prod-input-stock-min', prod.stockMinimo);
+    setVal('prod-input-stock-max', prod.stockMaximo || "");
     setVal('prod-input-ubicacion', prod.ubicacion);
+    setVal('prod-input-descripcion', prod.descripcion || "");
 
+    const chkFrac = document.getElementById('prod-chk-fraccionada');
+    if (chkFrac) chkFrac.checked = prod.permiteDecimales !== false;
+
+    actualizarCalculadoraMargen('venta');
     modal.classList.add('activo');
   }
 
@@ -3721,38 +5429,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Guardar Formulario Producto
   document.getElementById('form-producto')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const codigo = document.getElementById('prod-input-codigo')?.value.trim();
+    const codigoBarras = document.getElementById('prod-input-barcode')?.value.trim();
+    const estado = document.getElementById('prod-select-estado')?.value || "activo";
     const nombre = document.getElementById('prod-input-nombre')?.value.trim();
     const categoria = document.getElementById('prod-select-categoria')?.value;
+    const marca = document.getElementById('prod-input-marca')?.value.trim();
     const unidad = document.getElementById('prod-select-unidad')?.value;
     const precioCompra = parseFloat(document.getElementById('prod-input-compra')?.value) || 0;
     const precioVenta = parseFloat(document.getElementById('prod-input-venta')?.value) || 0;
+    const precioMayor = parseFloat(document.getElementById('prod-input-mayor')?.value) || 0;
+    const permiteDecimales = document.getElementById('prod-chk-fraccionada')?.checked !== false;
     const stock = parseFloat(document.getElementById('prod-input-stock')?.value) || 0;
     const stockMinimo = parseFloat(document.getElementById('prod-input-stock-min')?.value) || 5;
+    const stockMaximo = parseFloat(document.getElementById('prod-input-stock-max')?.value) || 0;
     const ubicacion = document.getElementById('prod-input-ubicacion')?.value.trim();
+    const descripcion = document.getElementById('prod-input-descripcion')?.value.trim();
 
     if (!nombre) {
       alert("El nombre del producto es obligatorio.");
       return;
     }
 
+    const payload = {
+      codigo, codigoBarras, estado, nombre, categoria, marca, unidad,
+      precioCompra, precioVenta, precioMayor, permiteDecimales,
+      stock, stockMinimo, stockMaximo, ubicacion, descripcion
+    };
+
     if (productoEnEdicion) {
-      Store.updateProduct(productoEnEdicion.id, {
-        codigo, nombre, categoria, unidad, precioCompra, precioVenta, stock, stockMinimo, ubicacion
-      });
+      Store.updateProduct(productoEnEdicion.id, payload);
     } else {
-      Store.addProduct({
-        codigo, nombre, categoria, unidad, precioCompra, precioVenta, stock, stockMinimo, ubicacion
-      });
+      Store.addProduct(payload);
     }
 
     cerrarModales();
   });
 
-  // Modal: Agregar / Reabastecer Stock (+ Stock)
+  // ==========================================================================
+  // MODAL REABASTECIMIENTO Y AJUSTE DE STOCK (+ STOCK)
+  // ==========================================================================
+
   function abrirModalAgregarStock(id) {
     const prod = (Store.getState().productos || []).find(p => p.id === id);
     if (!prod) return;
@@ -3769,13 +5488,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modal.classList.add('activo');
     const inputCant = document.getElementById('stock-input-cantidad');
+    const selectTipo = document.getElementById('stock-select-tipo');
+
+    const actualizarPreviewStock = () => {
+      const val = parseFloat(inputCant?.value) || 0;
+      const tipo = selectTipo?.value || "Ingreso por Compra";
+      let total = prod.stock;
+      if (tipo === "Merma / Daño" || tipo === "Uso Interno") {
+        total = Math.max(0, Math.round(((Number(prod.stock) || 0) - val) * 1000) / 1000);
+        document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (-${val})`;
+      } else if (tipo === "Ajuste de Conteo Físico") {
+        total = val;
+        document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (Fijado a ${val})`;
+      } else {
+        total = Math.round(((Number(prod.stock) || 0) + val) * 1000) / 1000;
+        document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (+${val})`;
+      }
+    };
+
     if (inputCant) {
       inputCant.focus();
-      inputCant.oninput = () => {
-        const val = parseFloat(inputCant.value) || 0;
-        const total = Math.round(((Number(prod.stock) || 0) + val) * 1000) / 1000;
-        document.getElementById('stock-preview-nuevo').textContent = `${total} ${prod.unidad} (+${val})`;
-      };
+      inputCant.oninput = actualizarPreviewStock;
+    }
+    if (selectTipo) {
+      selectTipo.onchange = actualizarPreviewStock;
     }
   }
 
@@ -3789,15 +5525,151 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const tipo = document.getElementById('stock-select-tipo')?.value || "Ingreso por Compra";
     const nuevoCosto = document.getElementById('stock-input-compra')?.value;
-    const motivo = document.getElementById('stock-input-motivo')?.value || "Reabastecimiento";
+    const motivo = document.getElementById('stock-input-motivo')?.value || tipo;
 
-    const res = Store.addStock(productoParaStock.id, cantidad, motivo, nuevoCosto ? parseFloat(nuevoCosto) : null);
-    if (res.ok) {
+    let res;
+    if (tipo === "Ajuste de Conteo Físico") {
+      res = Store.adjustStock(productoParaStock.id, cantidad, motivo, tipo);
+    } else if (tipo === "Merma / Daño" || tipo === "Uso Interno") {
+      const nuevoStock = Math.max(0, productoParaStock.stock - cantidad);
+      res = Store.adjustStock(productoParaStock.id, nuevoStock, motivo, tipo);
+    } else {
+      res = Store.addStock(productoParaStock.id, cantidad, motivo, nuevoCosto ? parseFloat(nuevoCosto) : null, tipo);
+    }
+
+    if (res && res.ok) {
       cerrarModales();
     } else {
-      alert("Error: " + res.error);
+      alert("Error: " + (res?.error || "No se pudo actualizar el stock"));
     }
+  });
+
+  // ==========================================================================
+  // MODAL KARDEX / AUDITORÍA DE MOVIMIENTOS DE STOCK
+  // ==========================================================================
+
+  document.getElementById('btn-inv-abrir-kardex')?.addEventListener('click', () => {
+    abrirModalKardex(null);
+  });
+
+  function abrirModalKardex(productoId = null) {
+    productoFiltroKardex = productoId;
+    const modal = document.getElementById('modal-kardex');
+    if (!modal) return;
+
+    renderTablaKardex();
+    modal.classList.add('activo');
+  }
+
+  function renderTablaKardex() {
+    const tbody = document.getElementById('kardex-tabla-tbody');
+    if (!tbody) return;
+
+    const busqueda = (document.getElementById('kardex-buscar-input')?.value || "").toLowerCase().trim();
+    const filtroTipo = document.getElementById('kardex-filtro-tipo')?.value || "";
+    let movs = Store.getStockMovements(productoFiltroKardex, 500);
+
+    if (filtroTipo) {
+      movs = movs.filter(m => m.tipo && m.tipo.includes(filtroTipo));
+    }
+    if (busqueda) {
+      movs = movs.filter(m =>
+        (m.nombre && m.nombre.toLowerCase().includes(busqueda)) ||
+        (m.codigo && m.codigo.toLowerCase().includes(busqueda)) ||
+        (m.motivo && m.motivo.toLowerCase().includes(busqueda)) ||
+        (m.referencia && m.referencia.toLowerCase().includes(busqueda))
+      );
+    }
+
+    if (movs.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; padding:2rem; color:#64748b;">
+            No hay registros de movimientos en el Kardex para este criterio.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = movs.map(m => {
+      let claseBadge = "ajuste";
+      if (m.tipo.includes("Ingreso")) claseBadge = "ingreso";
+      else if (m.tipo.includes("Salida")) claseBadge = "salida";
+      else if (m.tipo.includes("Devolución")) claseBadge = "devolucion";
+
+      const deltaPositivo = Number(m.cantidad) >= 0;
+      const claseDelta = deltaPositivo ? "kardex-delta-positivo" : "kardex-delta-negativo";
+      const signo = deltaPositivo ? "+" : "";
+
+      return `
+        <tr>
+          <td style="font-size:0.75rem; color:#475569;">${m.fecha ? m.fecha.replace("T", " ").slice(0, 19) : "-"}</td>
+          <td><code style="font-family:var(--font-mono); font-weight:700;">${escapeHtml(m.codigo)}</code></td>
+          <td style="font-weight:700; color:#0f172a;">${escapeHtml(m.nombre)}</td>
+          <td><span class="kardex-badge ${claseBadge}">${escapeHtml(m.tipo)}</span></td>
+          <td class="text-right ${claseDelta}">${signo}${m.cantidad}</td>
+          <td class="text-right" style="font-family:var(--font-mono); color:#64748b;">${m.stockAnterior}</td>
+          <td class="text-right" style="font-family:var(--font-mono); font-weight:800; color:#0f172a;">${m.stockNuevo}</td>
+          <td>
+            <div style="font-size:0.8rem; color:#334155;">${escapeHtml(m.motivo || '-')}</div>
+            ${m.referencia ? `<div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(m.referencia)}</div>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('kardex-buscar-input')?.addEventListener('input', renderTablaKardex);
+  document.getElementById('kardex-filtro-tipo')?.addEventListener('change', renderTablaKardex);
+  document.getElementById('btn-kardex-exportar-excel')?.addEventListener('click', () => {
+    ExportManager.exportarKardexExcel(productoFiltroKardex);
+  });
+
+  // ==========================================================================
+  // MODAL ETIQUETAS CON CÓDIGO DE BARRAS
+  // ==========================================================================
+
+  document.getElementById('btn-inv-abrir-etiquetas')?.addEventListener('click', () => {
+    const todosActivos = (Store.getState().productos || []).filter(p => p.estado !== "inactivo");
+    if (todosActivos.length === 0) {
+      alert("No hay productos registrados en el inventario para imprimir etiquetas.");
+      return;
+    }
+    abrirModalEtiquetasBarcode(todosActivos.slice(0, 20)); // Sugerir los primeros 20
+  });
+
+  function abrirModalEtiquetasBarcode(productos) {
+    productosParaEtiquetas = productos;
+    const modal = document.getElementById('modal-etiquetas-barcode');
+    if (!modal) return;
+
+    renderPrevisualizacionEtiquetas();
+    modal.classList.add('activo');
+  }
+
+  function renderPrevisualizacionEtiquetas() {
+    const contenedor = document.getElementById('etiquetas-preview-contenedor');
+    const inputCopias = document.getElementById('etiquetas-input-copias');
+    if (!contenedor) return;
+
+    const copias = parseInt(inputCopias?.value, 10) || 2;
+    const items = productosParaEtiquetas.map(p => ({ producto: p, copias: copias }));
+    const htmlEtiquetas = ExportManager.generarEtiquetasHTML(items);
+    contenedor.innerHTML = htmlEtiquetas;
+  }
+
+  document.getElementById('etiquetas-input-copias')?.addEventListener('input', renderPrevisualizacionEtiquetas);
+
+  document.getElementById('btn-imprimir-etiquetas-barcode')?.addEventListener('click', () => {
+    const contenedor = document.getElementById('etiquetas-preview-contenedor');
+    const seccionImpresion = document.getElementById('seccion-impresion');
+    if (!contenedor || !seccionImpresion) return;
+
+    seccionImpresion.innerHTML = contenedor.innerHTML;
+    window.print();
   });
 
   // ==========================================================================
@@ -4093,6 +5965,20 @@ document.addEventListener('DOMContentLoaded', () => {
         cerrarModales();
       }
     }
+  });
+
+  // Disparadores explícitos para botones de envío de modales
+  document.getElementById('btn-guardar-producto-modal')?.addEventListener('click', () => {
+    document.getElementById('form-producto')?.requestSubmit?.();
+  });
+  document.getElementById('btn-confirmar-stock')?.addEventListener('click', () => {
+    document.getElementById('form-stock')?.requestSubmit?.();
+  });
+  document.getElementById('btn-aplicar-bulk-precios')?.addEventListener('click', () => {
+    document.getElementById('form-bulk-precios')?.requestSubmit?.();
+  });
+  document.getElementById('btn-aplicar-bulk-categoria')?.addEventListener('click', () => {
+    document.getElementById('form-bulk-categoria')?.requestSubmit?.();
   });
 
   // ==========================================================================

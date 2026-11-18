@@ -37,7 +37,8 @@ const Store = (() => {
     ],
     productos: [],
     ventas: [],
-    clientes: []
+    clientes: [],
+    movimientosStock: []
   };
 
   let state = JSON.parse(JSON.stringify(ESTADO_INICIAL));
@@ -111,7 +112,8 @@ const Store = (() => {
             unidades: Array.isArray(datos.unidades) && datos.unidades.length ? datos.unidades : ESTADO_INICIAL.unidades,
             productos: Array.isArray(datos.productos) ? datos.productos : [],
             ventas: Array.isArray(datos.ventas) ? datos.ventas : [],
-            clientes: Array.isArray(datos.clientes) ? datos.clientes : []
+            clientes: Array.isArray(datos.clientes) ? datos.clientes : [],
+            movimientosStock: Array.isArray(datos.movimientosStock) ? datos.movimientosStock : []
           };
           cargadoRemoto = true;
           guardarEnLocalStorage();
@@ -136,7 +138,8 @@ const Store = (() => {
             configuracion: { ...ESTADO_INICIAL.configuracion, ...(parsed.configuracion || {}) },
             productos: Array.isArray(parsed.productos) ? parsed.productos : [],
             ventas: Array.isArray(parsed.ventas) ? parsed.ventas : [],
-            clientes: Array.isArray(parsed.clientes) ? parsed.clientes : []
+            clientes: Array.isArray(parsed.clientes) ? parsed.clientes : [],
+            movimientosStock: Array.isArray(parsed.movimientosStock) ? parsed.movimientosStock : []
           };
         }
       } catch (err) {
@@ -195,8 +198,38 @@ const Store = (() => {
   }
 
   // ==========================================================================
-  // GESTIÓN DE PRODUCTOS E INVENTARIO
+  // GESTIÓN DE PRODUCTOS, KARDEX E INVENTARIO AVANZADO
   // ==========================================================================
+
+  /**
+   * Registro en Kardex (Auditoría de Movimientos de Stock en tiempo real)
+   */
+  function registrarMovimientoStock({ productoId, codigo, nombre, tipo, cantidad, stockAnterior, stockNuevo, motivo = "", costoUnitario = 0, referencia = "" }) {
+    if (!Array.isArray(state.movimientosStock)) {
+      state.movimientosStock = [];
+    }
+    const mov = {
+      id: "MOV-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+      fecha: new Date().toISOString(),
+      productoId: productoId || "",
+      codigo: codigo || "",
+      nombre: nombre || "",
+      tipo: tipo || "Ajuste", // 'Ingreso por Compra', 'Salida por Venta', 'Ajuste de Conteo Físico', 'Merma / Daño', 'Devolución por Anulación', 'Ingreso Inicial'
+      cantidad: round3(cantidad),
+      stockAnterior: round3(stockAnterior),
+      stockNuevo: round3(stockNuevo),
+      costoUnitario: round2(costoUnitario),
+      motivo: String(motivo || "").trim(),
+      referencia: String(referencia || "").trim()
+    };
+
+    // Mantener hasta 5,000 movimientos en memoria para alto rendimiento
+    state.movimientosStock.unshift(mov);
+    if (state.movimientosStock.length > 5000) {
+      state.movimientosStock.pop();
+    }
+    return mov;
+  }
 
   function addProduct(prod) {
     if (!prod || !prod.nombre || !String(prod.nombre).trim()) {
@@ -208,21 +241,49 @@ const Store = (() => {
       ? String(prod.codigo).trim()
       : "FER-" + String(state.productos.length + 1).padStart(4, "0");
 
+    const stockInicial = Math.max(0, round3(prod.stock));
+    const pCompra = Math.max(0, round2(prod.precioCompra));
+
     const producto = {
       id: nuevoId,
       codigo: nuevoCodigo,
+      codigoBarras: (prod.codigoBarras && String(prod.codigoBarras).trim()) || nuevoCodigo,
       nombre: String(prod.nombre).trim(),
       categoria: prod.categoria || "Otros",
+      marca: String(prod.marca || "").trim(),
       unidad: prod.unidad || "Unidad",
-      precioCompra: Math.max(0, round2(prod.precioCompra)),
+      precioCompra: pCompra,
       precioVenta: Math.max(0, round2(prod.precioVenta)),
-      stock: Math.max(0, round3(prod.stock)),
+      precioMayor: prod.precioMayor !== undefined && Number(prod.precioMayor) > 0 ? round2(prod.precioMayor) : 0,
+      stock: stockInicial,
       stockMinimo: Math.max(0, round3(prod.stockMinimo >= 0 ? prod.stockMinimo : 5)),
+      stockMaximo: prod.stockMaximo !== undefined && Number(prod.stockMaximo) > 0 ? round3(prod.stockMaximo) : 0,
       ubicacion: String(prod.ubicacion || "").trim(),
-      fechaCreacion: new Date().toISOString()
+      descripcion: String(prod.descripcion || "").trim(),
+      permiteDecimales: prod.permiteDecimales !== undefined ? Boolean(prod.permiteDecimales) : true,
+      estado: prod.estado === "inactivo" ? "inactivo" : "activo",
+      fechaCreacion: new Date().toISOString(),
+      fechaModificacion: new Date().toISOString()
     };
 
     state.productos.push(producto);
+
+    // Registro inicial en Kardex si tiene stock
+    if (stockInicial > 0) {
+      registrarMovimientoStock({
+        productoId: nuevoId,
+        codigo: nuevoCodigo,
+        nombre: producto.nombre,
+        tipo: "Ingreso Inicial",
+        cantidad: stockInicial,
+        stockAnterior: 0,
+        stockNuevo: stockInicial,
+        costoUnitario: pCompra,
+        motivo: "Inventario inicial al crear producto",
+        referencia: "Alta de Producto"
+      });
+    }
+
     persistir();
     notify();
     return producto;
@@ -244,19 +305,47 @@ const Store = (() => {
         ? String(p.codigo).trim()
         : "FER-" + String(state.productos.length + 1).padStart(4, "0");
 
-      state.productos.push({
+      const stockVal = Math.max(0, round3(p.stock));
+      const pCompra = Math.max(0, round2(p.precioCompra));
+
+      const prodObj = {
         id: nuevoId,
         codigo: nuevoCodigo,
+        codigoBarras: (p.codigoBarras && String(p.codigoBarras).trim()) || nuevoCodigo,
         nombre: String(p.nombre).trim(),
         categoria: p.categoria || "Otros",
+        marca: String(p.marca || "").trim(),
         unidad: p.unidad || "Unidad",
-        precioCompra: Math.max(0, round2(p.precioCompra)),
+        precioCompra: pCompra,
         precioVenta: Math.max(0, round2(p.precioVenta)),
-        stock: Math.max(0, round3(p.stock)),
+        precioMayor: p.precioMayor ? round2(p.precioMayor) : 0,
+        stock: stockVal,
         stockMinimo: Math.max(0, round3(p.stockMinimo >= 0 ? p.stockMinimo : 5)),
+        stockMaximo: p.stockMaximo ? round3(p.stockMaximo) : 0,
         ubicacion: String(p.ubicacion || "").trim(),
-        fechaCreacion: now
-      });
+        descripcion: String(p.descripcion || "").trim(),
+        permiteDecimales: p.permiteDecimales !== undefined ? Boolean(p.permiteDecimales) : true,
+        estado: p.estado === "inactivo" ? "inactivo" : "activo",
+        fechaCreacion: now,
+        fechaModificacion: now
+      };
+
+      state.productos.push(prodObj);
+
+      if (stockVal > 0) {
+        registrarMovimientoStock({
+          productoId: nuevoId,
+          codigo: nuevoCodigo,
+          nombre: prodObj.nombre,
+          tipo: "Ingreso Inicial",
+          cantidad: stockVal,
+          stockAnterior: 0,
+          stockNuevo: stockVal,
+          costoUnitario: pCompra,
+          motivo: "Carga masiva / Importación de inventario",
+          referencia: "Importación Excel"
+        });
+      }
       agregados++;
     }
 
@@ -272,20 +361,46 @@ const Store = (() => {
     if (idx === -1) return false;
 
     const actual = state.productos[idx];
+    const nuevoStock = datosActualizados.stock !== undefined ? Math.max(0, round3(datosActualizados.stock)) : actual.stock;
+    const stockAnterior = actual.stock;
+
     state.productos[idx] = {
       ...actual,
       ...datosActualizados,
       codigo: datosActualizados.codigo !== undefined ? String(datosActualizados.codigo).trim() : actual.codigo,
+      codigoBarras: datosActualizados.codigoBarras !== undefined ? String(datosActualizados.codigoBarras).trim() : (actual.codigoBarras || actual.codigo),
       nombre: datosActualizados.nombre !== undefined ? String(datosActualizados.nombre).trim() : actual.nombre,
       categoria: datosActualizados.categoria || actual.categoria,
+      marca: datosActualizados.marca !== undefined ? String(datosActualizados.marca).trim() : (actual.marca || ""),
       unidad: datosActualizados.unidad || actual.unidad,
       precioCompra: datosActualizados.precioCompra !== undefined ? Math.max(0, round2(datosActualizados.precioCompra)) : actual.precioCompra,
       precioVenta: datosActualizados.precioVenta !== undefined ? Math.max(0, round2(datosActualizados.precioVenta)) : actual.precioVenta,
-      stock: datosActualizados.stock !== undefined ? Math.max(0, round3(datosActualizados.stock)) : actual.stock,
+      precioMayor: datosActualizados.precioMayor !== undefined ? Math.max(0, round2(datosActualizados.precioMayor)) : (actual.precioMayor || 0),
+      stock: nuevoStock,
       stockMinimo: datosActualizados.stockMinimo !== undefined ? Math.max(0, round3(datosActualizados.stockMinimo)) : actual.stockMinimo,
+      stockMaximo: datosActualizados.stockMaximo !== undefined ? Math.max(0, round3(datosActualizados.stockMaximo)) : (actual.stockMaximo || 0),
       ubicacion: datosActualizados.ubicacion !== undefined ? String(datosActualizados.ubicacion).trim() : actual.ubicacion,
+      descripcion: datosActualizados.descripcion !== undefined ? String(datosActualizados.descripcion).trim() : (actual.descripcion || ""),
+      permiteDecimales: datosActualizados.permiteDecimales !== undefined ? Boolean(datosActualizados.permiteDecimales) : actual.permiteDecimales,
+      estado: datosActualizados.estado !== undefined ? (datosActualizados.estado === "inactivo" ? "inactivo" : "activo") : (actual.estado || "activo"),
       fechaModificacion: new Date().toISOString()
     };
+
+    // Si el stock cambió directamente en la edición, registrar movimiento de ajuste en Kardex
+    if (stockAnterior !== nuevoStock) {
+      registrarMovimientoStock({
+        productoId: actual.id,
+        codigo: actual.codigo,
+        nombre: state.productos[idx].nombre,
+        tipo: "Ajuste de Conteo Físico",
+        cantidad: round3(nuevoStock - stockAnterior),
+        stockAnterior: stockAnterior,
+        stockNuevo: nuevoStock,
+        costoUnitario: state.productos[idx].precioCompra,
+        motivo: "Ajuste directo al editar producto",
+        referencia: "Edición Manual"
+      });
+    }
 
     persistir();
     notify();
@@ -301,11 +416,36 @@ const Store = (() => {
     return true;
   }
 
+  function duplicateProduct(id) {
+    const prod = state.productos.find(p => p.id === id);
+    if (!prod) return null;
+
+    const correlativo = String(state.productos.length + 1).padStart(4, "0");
+    const nuevoCodigo = "FER-" + correlativo;
+    const now = new Date().toISOString();
+
+    const clon = {
+      ...JSON.parse(JSON.stringify(prod)),
+      id: "PROD-" + Date.now() + "-" + Math.floor(Math.random() * 100000),
+      codigo: nuevoCodigo,
+      codigoBarras: nuevoCodigo,
+      nombre: prod.nombre + " (Copia)",
+      stock: 0,
+      fechaCreacion: now,
+      fechaModificacion: now
+    };
+
+    state.productos.push(clon);
+    persistir(true);
+    notify();
+    return clon;
+  }
+
   /**
    * REQUISITO: "que el mismo pueda agregar el stock de sus productos"
-   * Aumenta el stock del producto de forma atómica y precisa.
+   * Aumenta el stock del producto de forma atómica y precisa, con registro en Kardex.
    */
-  function addStock(id, cantidad, motivo = "", nuevoPrecioCompra = null) {
+  function addStock(id, cantidad, motivo = "", nuevoPrecioCompra = null, tipo = "Ingreso por Compra") {
     const prod = state.productos.find(p => p.id === id);
     if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
 
@@ -314,6 +454,7 @@ const Store = (() => {
       return { ok: false, error: "La cantidad a ingresar debe ser un número positivo" };
     }
 
+    const stockAnterior = prod.stock;
     prod.stock = round3(prod.stock + cantNum);
 
     if (nuevoPrecioCompra !== null && !isNaN(Number(nuevoPrecioCompra)) && Number(nuevoPrecioCompra) > 0) {
@@ -322,9 +463,191 @@ const Store = (() => {
     prod.fechaUltimoIngreso = new Date().toISOString();
     prod.ultimoMotivoIngreso = motivo ? String(motivo).trim() : "Reabastecimiento";
 
+    // Registrar en Kardex
+    registrarMovimientoStock({
+      productoId: prod.id,
+      codigo: prod.codigo,
+      nombre: prod.nombre,
+      tipo: tipo || "Ingreso por Compra",
+      cantidad: cantNum,
+      stockAnterior: stockAnterior,
+      stockNuevo: prod.stock,
+      costoUnitario: prod.precioCompra,
+      motivo: motivo || "Reabastecimiento de existencias",
+      referencia: "Entrada de Almacén"
+    });
+
     persistir(true);
     notify();
     return { ok: true, nuevoStock: prod.stock, producto: prod };
+  }
+
+  /**
+   * Ajuste de stock por inventario físico / merma / conteo
+   */
+  function adjustStock(id, nuevoStock, motivo = "Conteo Físico", tipo = "Ajuste de Conteo Físico") {
+    const prod = state.productos.find(p => p.id === id);
+    if (!prod) return { ok: false, error: "Producto no encontrado en inventario" };
+
+    const stockFinal = Math.max(0, round3(nuevoStock));
+    const stockAnterior = prod.stock;
+    const delta = round3(stockFinal - stockAnterior);
+
+    prod.stock = stockFinal;
+    prod.fechaModificacion = new Date().toISOString();
+
+    registrarMovimientoStock({
+      productoId: prod.id,
+      codigo: prod.codigo,
+      nombre: prod.nombre,
+      tipo: tipo || "Ajuste de Conteo Físico",
+      cantidad: delta,
+      stockAnterior: stockAnterior,
+      stockNuevo: stockFinal,
+      costoUnitario: prod.precioCompra,
+      motivo: motivo || "Ajuste de inventario",
+      referencia: "Auditoría de Stock"
+    });
+
+    persistir(true);
+    notify();
+    return { ok: true, nuevoStock: prod.stock, producto: prod };
+  }
+
+  // ==========================================================================
+  // OPERACIONES MASIVAS (BULK ACTIONS TIPO SHOPIFY/SQUARE)
+  // ==========================================================================
+
+  function deleteProductsBatch(idsArray) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0) return 0;
+    const set = new Set(idsArray);
+    const totalAntes = state.productos.length;
+    state.productos = state.productos.filter(p => !set.has(p.id));
+    const eliminados = totalAntes - state.productos.length;
+    if (eliminados > 0) {
+      persistir(true);
+      notify();
+    }
+    return eliminados;
+  }
+
+  function updateCategoryBatch(idsArray, newCategory) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0 || !newCategory) return 0;
+    const set = new Set(idsArray);
+    let actualizados = 0;
+    const now = new Date().toISOString();
+    state.productos.forEach(p => {
+      if (set.has(p.id)) {
+        p.categoria = newCategory;
+        p.fechaModificacion = now;
+        actualizados++;
+      }
+    });
+    if (actualizados > 0) {
+      persistir(true);
+      notify();
+    }
+    return actualizados;
+  }
+
+  function adjustPricesBatch(idsArray, { tipo = "porcentaje", valor = 0, redondear = true }) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0) return 0;
+    const set = new Set(idsArray);
+    let actualizados = 0;
+    const now = new Date().toISOString();
+    const val = Number(valor) || 0;
+
+    state.productos.forEach(p => {
+      if (set.has(p.id)) {
+        let nuevoPrecio = p.precioVenta;
+        if (tipo === "porcentaje") {
+          nuevoPrecio = p.precioVenta * (1 + val / 100);
+        } else {
+          nuevoPrecio = p.precioVenta + val;
+        }
+        nuevoPrecio = Math.max(0, round2(nuevoPrecio));
+        if (redondear) {
+          nuevoPrecio = round2(Math.round(nuevoPrecio * 10) / 10);
+        }
+        p.precioVenta = nuevoPrecio;
+        p.fechaModificacion = now;
+        actualizados++;
+      }
+    });
+    if (actualizados > 0) {
+      persistir(true);
+      notify();
+    }
+    return actualizados;
+  }
+
+  function changeStatusBatch(idsArray, nuevoEstado) {
+    if (!Array.isArray(idsArray) || idsArray.length === 0) return 0;
+    const estadoValido = nuevoEstado === "inactivo" ? "inactivo" : "activo";
+    const set = new Set(idsArray);
+    let actualizados = 0;
+    const now = new Date().toISOString();
+    state.productos.forEach(p => {
+      if (set.has(p.id)) {
+        p.estado = estadoValido;
+        p.fechaModificacion = now;
+        actualizados++;
+      }
+    });
+    if (actualizados > 0) {
+      persistir(true);
+      notify();
+    }
+    return actualizados;
+  }
+
+  function getStockMovements(productoId = null, limite = 300) {
+    let movs = state.movimientosStock || [];
+    if (productoId) {
+      movs = movs.filter(m => m.productoId === productoId);
+    }
+    return movs.slice(0, limite);
+  }
+
+  function getKpiInventario() {
+    const prods = state.productos || [];
+    const total = prods.length;
+    const activos = prods.filter(p => p.estado !== "inactivo").length;
+    const inactivos = total - activos;
+
+    let valorCosto = 0;
+    let valorVenta = 0;
+    let bajoStock = 0;
+    let agotados = 0;
+
+    prods.forEach(p => {
+      const s = Number(p.stock) || 0;
+      const sMin = Number(p.stockMinimo) || 5;
+      const pc = Number(p.precioCompra) || 0;
+      const pv = Number(p.precioVenta) || 0;
+
+      valorCosto += s * pc;
+      valorVenta += s * pv;
+
+      if (s <= 0) {
+        agotados++;
+      } else if (s <= sMin) {
+        bajoStock++;
+      }
+    });
+
+    const margenGlobal = valorCosto > 0 ? (((valorVenta - valorCosto) / valorCosto) * 100) : 0;
+
+    return {
+      total,
+      activos,
+      inactivos,
+      valorCosto: round2(valorCosto),
+      valorVenta: round2(valorVenta),
+      margenGlobal: round2(margenGlobal),
+      bajoStock,
+      agotados
+    };
   }
 
   // ==========================================================================
@@ -374,10 +697,24 @@ const Store = (() => {
       const ganancia = round2(subtotal - costo);
 
       // DESCUENTO REAL DEL STOCK
+      const stockAnterior = prod.stock;
       prod.stock = Math.max(0, round3(prod.stock - cantidad));
 
       totalVenta = round2(totalVenta + subtotal);
       totalCosto = round2(totalCosto + costo);
+
+      registrarMovimientoStock({
+        productoId: prod.id,
+        codigo: prod.codigo,
+        nombre: prod.nombre,
+        tipo: "Salida por Venta",
+        cantidad: -cantidad,
+        stockAnterior: stockAnterior,
+        stockNuevo: prod.stock,
+        costoUnitario: precioCompra,
+        motivo: `Venta ${tipoComprobante || 'POS'}`,
+        referencia: cliente && cliente !== "Cliente General" ? `Cliente: ${cliente}` : "Venta Mostrador"
+      });
 
       itemsProcesados.push({
         productoId: prod.id,
@@ -470,7 +807,20 @@ const Store = (() => {
       const it = venta.items[i];
       const prod = state.productos.find(p => p.id === it.productoId);
       if (prod) {
+        const stockAnterior = prod.stock;
         prod.stock = round3(prod.stock + it.cantidad);
+        registrarMovimientoStock({
+          productoId: prod.id,
+          codigo: prod.codigo,
+          nombre: prod.nombre,
+          tipo: "Devolución por Anulación",
+          cantidad: it.cantidad,
+          stockAnterior: stockAnterior,
+          stockNuevo: prod.stock,
+          costoUnitario: it.precioCompra || prod.precioCompra,
+          motivo: motivo || "Anulación de venta",
+          referencia: venta.numero
+        });
       }
     }
 
@@ -629,7 +979,8 @@ const Store = (() => {
           unidades: Array.isArray(jsonData.unidades) && jsonData.unidades.length ? jsonData.unidades : ESTADO_INICIAL.unidades,
           productos: Array.isArray(jsonData.productos) ? jsonData.productos : [],
           ventas: Array.isArray(jsonData.ventas) ? jsonData.ventas : [],
-          clientes: Array.isArray(jsonData.clientes) ? jsonData.clientes : []
+          clientes: Array.isArray(jsonData.clientes) ? jsonData.clientes : [],
+          movimientosStock: Array.isArray(jsonData.movimientosStock) ? jsonData.movimientosStock : []
         };
         persistir(true);
         notify();
@@ -656,7 +1007,16 @@ const Store = (() => {
     addProductsBatch,
     updateProduct,
     deleteProduct,
+    duplicateProduct,
     addStock,
+    adjustStock,
+    deleteProductsBatch,
+    updateCategoryBatch,
+    adjustPricesBatch,
+    changeStatusBatch,
+    getStockMovements,
+    getKpiInventario,
+    registrarMovimientoStock,
     recordSale,
     annulSale,
     getSalesSummary,

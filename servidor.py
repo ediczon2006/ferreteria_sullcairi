@@ -65,7 +65,8 @@ VACIO: Dict[str, Any] = {
     ],
     "productos": [],
     "ventas": [],
-    "clientes": []
+    "clientes": [],
+    "movimientosStock": []
 }
 
 
@@ -79,6 +80,9 @@ def validar_esquema(datos: Any) -> Tuple[bool, str]:
 
     if "ventas" in datos and not isinstance(datos["ventas"], list):
         return False, "El campo 'ventas' debe ser una lista"
+
+    if "movimientosStock" in datos and not isinstance(datos["movimientosStock"], list):
+        return False, "El campo 'movimientosStock' debe ser una lista"
 
     if "configuracion" in datos and not isinstance(datos["configuracion"], dict):
         return False, "El campo 'configuracion' debe ser un objeto"
@@ -131,7 +135,7 @@ def leer_datos() -> Dict[str, Any]:
         base = dict(VACIO)
         base.update(datos)
         # Asegurar listas mínimas
-        for clave in ("productos", "ventas", "clientes", "categorias", "unidades"):
+        for clave in ("productos", "ventas", "clientes", "categorias", "unidades", "movimientosStock"):
             if clave not in base or not isinstance(base[clave], list):
                 base[clave] = list(VACIO[clave])
         return base

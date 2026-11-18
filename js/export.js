@@ -23,16 +23,21 @@ const ExportManager = (() => {
   }
 
   // ==========================================================================
-  // EXPORTAR INVENTARIO A EXCEL
+  // EXPORTAR INVENTARIO A EXCEL (COMPLETO O SELECCIONADOS)
   // ==========================================================================
-  function exportarInventarioExcel() {
+  function exportarInventarioExcel(idsSeleccionados = null) {
     if (typeof XLSX === 'undefined') {
       alert("La biblioteca de Excel (SheetJS) no está disponible en este momento.");
       return;
     }
 
     const state = Store.getState();
-    const productos = state.productos || [];
+    let productos = state.productos || [];
+
+    if (Array.isArray(idsSeleccionados) && idsSeleccionados.length > 0) {
+      const set = new Set(idsSeleccionados);
+      productos = productos.filter(p => set.has(p.id));
+    }
 
     if (productos.length === 0) {
       alert("No hay productos en el inventario para exportar.");
@@ -49,15 +54,19 @@ const ExportManager = (() => {
 
       return {
         "Código": p.codigo || "",
+        "Código de Barras": p.codigoBarras || p.codigo || "",
         "Descripción del Producto": p.nombre || "",
         "Categoría": p.categoria || "Otros",
+        "Marca": p.marca || "-",
         "Unidad": p.unidad || "Unidad",
         "P. Compra": pCompra,
         "P. Venta": pVenta,
+        "P. Mayorista": p.precioMayor || 0,
         "Margen %": margen,
         "Stock Actual": stock,
         "Stock Mínimo": p.stockMinimo || 5,
-        "Estado": estado,
+        "Stock Máximo": p.stockMaximo || 0,
+        "Estado": p.estado === "inactivo" ? "Inactivo" : estado,
         "Valor Total (Venta)": valorTotal,
         "Ubicación": p.ubicacion || ""
       };
@@ -67,14 +76,57 @@ const ExportManager = (() => {
     const ws = XLSX.utils.json_to_sheet(filas);
 
     ws['!cols'] = [
-      { wch: 14 }, { wch: 38 }, { wch: 24 }, { wch: 12 },
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 },
-      { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 20 }
+      { wch: 14 }, { wch: 18 }, { wch: 38 }, { wch: 22 }, { wch: 16 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 14 },
+      { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 20 }
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Inventario_Ferretería");
     const fecha = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `Inventario_Ferreteria_${fecha}.xlsx`);
+    const sufijo = idsSeleccionados ? "_Seleccionados" : "";
+    XLSX.writeFile(wb, `Inventario_Ferreteria${sufijo}_${fecha}.xlsx`);
+  }
+
+  // ==========================================================================
+  // EXPORTAR AUDITORÍA / KARDEX DE INVENTARIO A EXCEL
+  // ==========================================================================
+  function exportarKardexExcel(productoId = null) {
+    if (typeof XLSX === 'undefined') {
+      alert("La biblioteca de Excel (SheetJS) no está disponible en este momento.");
+      return;
+    }
+
+    const movimientos = Store.getStockMovements(productoId, 5000);
+    if (!movimientos || movimientos.length === 0) {
+      alert("No hay movimientos registrados en el Kardex para exportar.");
+      return;
+    }
+
+    const filas = movimientos.map(m => ({
+      "Fecha y Hora": m.fecha ? m.fecha.replace("T", " ").slice(0, 19) : "",
+      "Código": m.codigo || "",
+      "Producto": m.nombre || "",
+      "Tipo de Movimiento": m.tipo || "Ajuste",
+      "Cantidad": Number(m.cantidad) || 0,
+      "Stock Anterior": Number(m.stockAnterior) || 0,
+      "Stock Resultante": Number(m.stockNuevo) || 0,
+      "Costo Unitario": Number(m.costoUnitario) || 0,
+      "Motivo": m.motivo || "",
+      "Referencia": m.referencia || ""
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
+
+    ws['!cols'] = [
+      { wch: 20 }, { wch: 15 }, { wch: 36 }, { wch: 24 },
+      { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 14 },
+      { wch: 30 }, { wch: 24 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Kardex_Movimientos");
+    const fecha = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Kardex_Movimientos_Ferreteria_${fecha}.xlsx`);
   }
 
   // ==========================================================================
@@ -351,12 +403,122 @@ const ExportManager = (() => {
     `;
   }
 
+  // ==========================================================================
+  // GENERADOR NATIVO DE CÓDIGO DE BARRAS EN SVG (CODE 128-B)
+  // 100% Vectorial, nítido a cualquier resolución e imprimible en cualquier térmico
+  // ==========================================================================
+  function generarCodigoBarrasSVG(texto, opciones = {}) {
+    const str = String(texto || "").trim();
+    if (!str) return "";
+    const altura = opciones.altura || 42;
+    const anchoModulo = opciones.anchoModulo || 1.6;
+    const mostrarTexto = opciones.mostrarTexto !== false;
+
+    // Tabla oficial de 107 patrones Code 128 (anchuras de barras y espacios)
+    const CODE128_PATRONES = [
+      "212222","222122","222221","121223","121322","131222","122213","122312","132212","221213",
+      "221312","231212","112232","122132","122231","113222","123122","123221","223211","221132",
+      "221231","213212","223112","312131","311222","321122","321221","312212","322112","322211",
+      "212123","212321","232121","111323","131123","131321","112313","132113","132311","211313",
+      "231113","231311","112133","112331","132131","113123","113321","133121","313121","211331",
+      "231131","213113","213311","213131","311123","311321","331121","312113","312311","332111",
+      "314111","221411","431111","111224","111422","121124","121421","141122","141221","112214",
+      "112412","122114","122411","142112","142211","241211","221114","413111","241112","134111",
+      "111242","121142","121241","114212","124112","124211","411212","421112","421211","212141",
+      "214121","412121","111143","111341","131141","114113","114311","411113","411311","113141",
+      "114131","311141","411131","211412","211214","211232","2331112"
+    ];
+
+    // Inicio Code 128B (índice 104)
+    const valores = [104];
+    let checksum = 104;
+
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      const val = (code >= 32 && code <= 126) ? (code - 32) : 0;
+      valores.push(val);
+      checksum += val * (i + 1);
+    }
+
+    valores.push(checksum % 103);
+    valores.push(106); // Stop pattern
+
+    let rectangulos = "";
+    let currentX = 8;
+    for (let v = 0; v < valores.length; v++) {
+      const patron = CODE128_PATRONES[valores[v]] || "212222";
+      for (let p = 0; p < patron.length; p++) {
+        const w = parseInt(patron[p], 10) * anchoModulo;
+        if (p % 2 === 0) {
+          rectangulos += `<rect x="${currentX.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${altura}" fill="#000000" />`;
+        }
+        currentX += w;
+      }
+    }
+
+    const anchoTotal = Math.ceil(currentX + 8);
+    const altoTotal = mostrarTexto ? (altura + 16) : altura;
+
+    return `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${anchoTotal} ${altoTotal}" width="${anchoTotal}" height="${altoTotal}" style="display:block; margin:0 auto; max-width:100%;">
+        <rect x="0" y="0" width="${anchoTotal}" height="${altoTotal}" fill="#ffffff" />
+        ${rectangulos}
+        ${mostrarTexto ? `<text x="${(anchoTotal / 2).toFixed(1)}" y="${altura + 12}" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#0f172a">${escapeHtml(str)}</text>` : ''}
+      </svg>
+    `;
+  }
+
+  // ==========================================================================
+  // GENERAR HOJA DE ETIQUETAS DE CÓDIGO DE BARRAS PARA IMPRESIÓN
+  // ==========================================================================
+  function generarEtiquetasHTML(itemsEtiquetas) {
+    if (!Array.isArray(itemsEtiquetas) || itemsEtiquetas.length === 0) return "";
+
+    const state = Store.getState();
+    const config = state.configuracion || {};
+    const nombreEmpresa = config.empresa || "Ferretería Sullcairi";
+    const moneda = config.moneda || "S/";
+
+    const tarjetas = [];
+    itemsEtiquetas.forEach(item => {
+      const prod = item.producto;
+      const copias = Math.max(1, parseInt(item.copias, 10) || 1);
+      const codigoBarras = prod.codigoBarras || prod.codigo || "FER-000";
+      const svg = generarCodigoBarrasSVG(codigoBarras, { altura: 36, anchoModulo: 1.4, mostrarTexto: true });
+
+      for (let c = 0; c < copias; c++) {
+        tarjetas.push(`
+          <div class="etiqueta-sticker-item">
+            <div class="etiqueta-sticker-empresa">${escapeHtml(nombreEmpresa)}</div>
+            <div class="etiqueta-sticker-nombre" title="${escapeHtml(prod.nombre)}">${escapeHtml(prod.nombre)}</div>
+            <div class="etiqueta-sticker-cat">${escapeHtml(prod.categoria || 'General')}${prod.marca ? ` • ${escapeHtml(prod.marca)}` : ''}</div>
+            <div class="etiqueta-sticker-barcode">${svg}</div>
+            <div class="etiqueta-sticker-precio">
+              <span class="etiqueta-sticker-moneda">${moneda}</span>
+              <span class="etiqueta-sticker-monto">${Number(prod.precioVenta || 0).toFixed(2)}</span>
+              <span class="etiqueta-sticker-unidad">x ${escapeHtml(prod.unidad || 'Und')}</span>
+            </div>
+          </div>
+        `);
+      }
+    });
+
+    return `
+      <div class="contenedor-hoja-etiquetas">
+        ${tarjetas.join('')}
+      </div>
+    `;
+  }
+
   return {
     fmt,
     exportarInventarioExcel,
+    exportarKardexExcel,
     exportarReporteVentasExcel,
     descargarPlantillaExcel,
     importarProductosExcel,
+    generarCodigoBarrasSVG,
+    generarEtiquetasHTML,
     generarTicketHTML
   };
 })();
